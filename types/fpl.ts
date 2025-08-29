@@ -49,3 +49,19 @@ export interface ClassicLeagueResponse {
     results: LeagueStandingsEntry[];
   };
 }
+
+export interface FplEvent {
+  id: number;
+  name: string;
+  deadline_time: string;
+  average_entry_score: number;
+  finished: boolean;
+  data_checked: boolean;
+  highest_scoring_entry: number | null;
+  deadline_time_epoch: number;
+  deadline_time_game_offset: number;
+  highest_score: number | null;
+  is_previous: boolean;
+  is_current: boolean;
+  is_next: boolean;
+}
