@@ -8,6 +8,7 @@ import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
 import { LeagueStatsCards } from "@/components/dashboard/LeagueStatsCards";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TransfersTab } from "@/components/dashboard/TransfersTab";
+import { ChipsTab } from "@/components/dashboard/ChipsTab";
 
 export default async function DashboardLayout({
   children,
@@ -52,11 +53,11 @@ export default async function DashboardLayout({
     </TabsContent>
 
     <TabsContent value="transfers" className="mt-6">
-  <TransfersTab leagueId={leagueId} currentGw={currentGw} />
-</TabsContent>
+      <TransfersTab leagueId={leagueId} currentGw={currentGw} />
+    </TabsContent>
 
     <TabsContent value="chips" className="mt-6">
-      <div>Chips tab coming soon...</div>
+      <ChipsTab leagueId={leagueId} currentGw={currentGw} />
     </TabsContent>
   </Tabs>
 </main>

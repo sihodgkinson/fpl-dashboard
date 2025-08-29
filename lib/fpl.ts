@@ -203,3 +203,23 @@ export async function getPlayers(): Promise<Player[]> {
   const data = await res.json();
   return data.elements as Player[];
 }
+
+export interface Chip {
+  name: string;
+  time: string;
+  event: number;
+}
+
+export async function getTeamChips(entryId: number): Promise<Chip[]> {
+  const res = await fetch(
+    `https://fantasy.premierleague.com/api/entry/${entryId}/history/`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch chips for team ${entryId}`);
+  }
+
+  const data = await res.json();
+  return data.chips as Chip[];
+}
