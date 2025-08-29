@@ -9,7 +9,7 @@ export async function getClassicLeague(
   const res = await fetch(
     `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`,
     {
-      next: { revalidate: 60 }, // revalidate every 60s
+      next: { revalidate: 60 }, // safe to cache, small response
     }
   );
 
@@ -41,7 +41,7 @@ export async function getTeamEventData(
   const res = await fetch(
     `https://fantasy.premierleague.com/api/entry/${entryId}/event/${gw}/picks/`,
     {
-      next: { revalidate: 60 },
+      next: { revalidate: 60 }, // small response, can cache
     }
   );
 
@@ -59,7 +59,7 @@ export async function getCurrentGameweek(): Promise<number> {
   const res = await fetch(
     "https://fantasy.premierleague.com/api/bootstrap-static/",
     {
-      next: { revalidate: 60 },
+      cache: "no-store", // disable caching (response > 2MB)
     }
   );
 
@@ -81,7 +81,7 @@ export async function getMaxGameweek(): Promise<number> {
   const res = await fetch(
     "https://fantasy.premierleague.com/api/bootstrap-static/",
     {
-      next: { revalidate: 60 },
+      cache: "no-store", // disable caching (response > 2MB)
     }
   );
 

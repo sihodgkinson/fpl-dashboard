@@ -1,4 +1,9 @@
-import { getClassicLeague, getTeamEventData, getCurrentGameweek, getMaxGameweek } from "@/lib/fpl";
+import {
+  getClassicLeague,
+  getTeamEventData,
+  getCurrentGameweek,
+  getMaxGameweek,
+} from "@/lib/fpl";
 import { LeagueStandingsEntry } from "@/types/fpl";
 import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
 import { redirect } from "next/navigation";
@@ -6,7 +11,7 @@ import { redirect } from "next/navigation";
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: { gw?: string };
+  searchParams: Promise<{ gw?: string }>;
 }) {
   const leagueId = 430552;
 
@@ -15,8 +20,11 @@ export default async function DashboardPage({
     getMaxGameweek(),
   ]);
 
+  // Await searchParams (required in Next.js 15)
+  const params = await searchParams;
+
   // Use ?gw= if provided, otherwise default to current
-  const gw = searchParams.gw ? Number(searchParams.gw) : currentGw;
+  const gw = params.gw ? Number(params.gw) : currentGw;
 
   // Prevent selecting future GWs
   if (gw > maxGw) {
