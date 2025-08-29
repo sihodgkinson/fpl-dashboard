@@ -5,7 +5,6 @@ import {
   getMaxGameweek,
 } from "@/lib/fpl";
 import { LeagueStandingsEntry } from "@/types/fpl";
-import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage({
@@ -49,37 +48,42 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-4">
-      {/* Gameweek Selector */}
-      <div className="flex justify-end">
-        <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
-      </div>
-
+      
       {/* League Table */}
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b">
+            <tr className="border-b bg-muted/50 text-foreground">
               <th className="px-4 py-2 text-left">Pos</th>
               <th className="px-4 py-2 text-left">Team</th>
               <th className="px-4 py-2 text-left">Manager</th>
-              <th className="px-4 py-2 text-left">GW Points</th>
-              <th className="px-4 py-2 text-left">Transfers</th>
-              <th className="px-4 py-2 text-left">Hit</th>
-              <th className="px-4 py-2 text-left">Bench Points</th>
-              <th className="px-4 py-2 text-left">Total Points</th>
+              <th className="px-4 py-2 text-right">GW Points</th>
+              <th className="px-4 py-2 text-right">Transfers</th>
+              <th className="px-4 py-2 text-right">Hit</th>
+              <th className="px-4 py-2 text-right">Bench Points</th>
+              <th className="px-4 py-2 text-right">Total Points</th>
             </tr>
           </thead>
           <tbody>
             {enrichedStandings.map((entry) => (
-              <tr key={entry.entry} className="border-b">
-                <td className="px-4 py-2">{entry.rank}</td>
+              <tr
+                key={entry.entry}
+                className="border-b hover:bg-muted/30"
+              >
+                <td className="px-4 py-2 font-mono">{entry.rank}</td>
                 <td className="px-4 py-2">{entry.entry_name}</td>
                 <td className="px-4 py-2">{entry.player_name}</td>
-                <td className="px-4 py-2">{entry.event_total}</td>
-                <td className="px-4 py-2">{entry.transfers}</td>
-                <td className="px-4 py-2">{entry.hit}</td>
-                <td className="px-4 py-2">{entry.benchPoints}</td>
-                <td className="px-4 py-2">{entry.total}</td>
+                <td className="px-4 py-2 text-right font-mono">
+                  {entry.event_total}
+                </td>
+                <td className="px-4 py-2 text-right font-mono">
+                  {entry.transfers}
+                </td>
+                <td className="px-4 py-2 text-right font-mono">{entry.hit}</td>
+                <td className="px-4 py-2 text-right font-mono">
+                  {entry.benchPoints}
+                </td>
+                <td className="px-4 py-2 text-right font-mono">{entry.total}</td>
               </tr>
             ))}
           </tbody>

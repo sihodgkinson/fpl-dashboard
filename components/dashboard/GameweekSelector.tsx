@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface GameweekSelectorProps {
   currentGw: number;
@@ -20,16 +22,32 @@ export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
 
   const selectedGw = Number(searchParams.get("gw")) || currentGw;
 
-  const handleChange = (value: string) => {
+  const updateGw = (gw: number) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("gw", value);
+    params.set("gw", String(gw));
     router.push(`/dashboard?${params.toString()}`);
   };
 
+  const handleChange = (value: string) => {
+    updateGw(Number(value));
+  };
+
+  const handlePrev = () => {
+    if (selectedGw > 1) {
+      updateGw(selectedGw - 1);
+    }
+  };
+
+  const handleNext = () => {
+    if (selectedGw < maxGw) {
+      updateGw(selectedGw + 1);
+    }
+  };
+
   return (
-    <div className="ml-auto w-40">
+    <div className="flex items-center gap-2">
       <Select onValueChange={handleChange} value={String(selectedGw)}>
-        <SelectTrigger>
+        <SelectTrigger className="w-40">
           <SelectValue placeholder="Select GW" />
         </SelectTrigger>
         <SelectContent>
@@ -40,6 +58,24 @@ export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
           ))}
         </SelectContent>
       </Select>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handlePrev}
+        disabled={selectedGw <= 1}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleNext}
+        disabled={selectedGw >= maxGw}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
     </div>
   );
 }
