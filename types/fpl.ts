@@ -76,5 +76,5 @@ export interface EnrichedStanding {
   hit: number;
   benchPoints: number;
   rank: number;
-  movement?: number; // optional, since we may add movement later
+  movement: number; // optional, since we may add movement later
 }

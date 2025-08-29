@@ -55,14 +55,41 @@ export async function GET(req: Request) {
         hit: -teamData.entry_history.event_transfers_cost,
         benchPoints: teamData.entry_history.points_on_bench,
         rank: 0, // placeholder, will assign below
+        movement: 0, // placeholder, will assign below
       };
     })
   );
 
   // Sort by totalPoints and assign ranks
-  const ranked: EnrichedStanding[] = enrichedStandings
+  let ranked: EnrichedStanding[] = enrichedStandings
     .sort((a, b) => b.totalPoints - a.totalPoints)
     .map((team, index) => ({ ...team, rank: index + 1 }));
+
+  // --- Calculate movement vs previous GW ---
+  if (gw > 1) {
+    const prevStandings = await Promise.all(
+      standings.map(async (entry) => {
+        const teamData = await getTeamEventData(entry.entry, gw - 1);
+        return {
+          entry: entry.entry,
+          totalPoints: teamData.entry_history.total_points,
+        };
+      })
+    );
+
+    const prevRanks = prevStandings
+      .sort((a, b) => b.totalPoints - a.totalPoints)
+      .map((team, index) => ({
+        entry: team.entry,
+        prevRank: index + 1,
+      }));
+
+    ranked = ranked.map((team) => {
+      const prev = prevRanks.find((p) => p.entry === team.entry);
+      const movement = prev ? prev.prevRank - team.rank : 0; // +ve = moved up
+      return { ...team, movement };
+    });
+  }
 
   // --- Calculate card stats ---
   const mostPoints = ranked.reduce((max, team) =>
