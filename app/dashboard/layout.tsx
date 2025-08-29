@@ -6,8 +6,7 @@ import {
   getMaxGameweek,
 } from "@/lib/fpl";
 import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
-import { Card } from "@/components/ui/card";
-import { headers } from "next/headers";
+import { LeagueStatsCards } from "@/components/dashboard/LeagueStatsCards";
 
 export default async function DashboardLayout({
   children,
@@ -23,19 +22,6 @@ export default async function DashboardLayout({
     getMaxGameweek(),
   ]);
 
-  // Build base URL dynamically (works in dev + prod)
-  const headersList = await headers();
-  const host = headersList.get("host");
-  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
-  const baseUrl = `${protocol}://${host}`;
-
-  // Fetch stats for the current GW
-  const res = await fetch(
-    `${baseUrl}/api/standings?leagueId=${leagueId}&gw=${currentGw}&currentGw=${currentGw}`,
-    { cache: "no-store" }
-  );
-  const { stats } = await res.json();
-
   return (
     <div className="flex min-h-screen flex-col font-sans">
       {/* Topbar */}
@@ -45,37 +31,8 @@ export default async function DashboardLayout({
 
       {/* Main content */}
       <main className="flex-1 p-6 space-y-6">
-        {/* Stats cards row */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Most Points</p>
-            <h2 className="text-2xl font-bold">{stats.mostPoints.gwPoints}</h2>
-            <p className="text-sm">
-              {stats.mostPoints.entry_name} ({stats.mostPoints.player_name})
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Fewest Points</p>
-            <h2 className="text-2xl font-bold">{stats.fewestPoints.gwPoints}</h2>
-            <p className="text-sm">
-              {stats.fewestPoints.entry_name} ({stats.fewestPoints.player_name})
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Most Bench Points</p>
-            <h2 className="text-2xl font-bold">{stats.mostBench.benchPoints}</h2>
-            <p className="text-sm">
-              {stats.mostBench.entry_name} ({stats.mostBench.player_name})
-            </p>
-          </Card>
-          <Card className="p-4">
-            <p className="text-sm text-muted-foreground">Most Transfers</p>
-            <h2 className="text-2xl font-bold">{stats.mostTransfers.transfers}</h2>
-            <p className="text-sm">
-              {stats.mostTransfers.entry_name} ({stats.mostTransfers.player_name})
-            </p>
-          </Card>
-        </div>
+        {/* Stats cards row (client-side, updates with GW) */}
+        <LeagueStatsCards leagueId={leagueId} currentGw={currentGw} />
 
         {/* Tabs + Gameweek Selector */}
         <div className="flex items-center gap-4">
