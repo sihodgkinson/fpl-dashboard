@@ -63,7 +63,7 @@ export default async function DashboardPage({
             <TabsTrigger value="chips">Chips</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="league" className="mt-6">
+          <TabsContent value="league" className="mt-4">
             <LeagueTable
               leagueId={selectedLeagueId}
               gw={gw}
@@ -71,11 +71,11 @@ export default async function DashboardPage({
             />
           </TabsContent>
 
-          <TabsContent value="transfers" className="mt-6">
+          <TabsContent value="transfers" className="mt-4">
             <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
 
-          <TabsContent value="chips" className="mt-6">
+          <TabsContent value="chips" className="mt-4">
             <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
         </Tabs>

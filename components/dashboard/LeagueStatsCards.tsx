@@ -46,7 +46,7 @@ function StatCard({
     <Card className="p-4">
       <p className="text-sm text-muted-foreground">{title}</p>
       <h2
-        className={`text-2xl font-mono font-bold transition-colors ${
+        className={`text-5xl font-mono font-semi-bold transition-colors ${
           animate ? "text-primary" : "text-foreground"
         }`}
       >

@@ -51,9 +51,9 @@ export function ChipsTab({
       <table className="w-full table-auto text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left">Team</th>
-            <th className="px-4 py-2 text-left">Manager</th>
-            <th className="px-4 py-2 text-left">Chip Used</th>
+            <th className="px-4 py-2 text-left font-semibold">Team</th>
+            <th className="px-4 py-2 text-left font-semibold">Manager</th>
+            <th className="px-4 py-2 text-left font-semibold">Chip Used</th>
           </tr>
         </thead>
         <tbody>
@@ -66,11 +66,11 @@ export function ChipsTab({
               <td className="px-4 py-2">{row.manager}</td>
               <td className="px-4 py-2">
                 {row.chip ? (
-                  <span className="font-semibold">{formatChipName(row.chip)}</span>
+                    <span>{formatChipName(row.chip)}</span>
                 ) : (
-                  <span className="text-muted-foreground">—</span>
+                    <span className="text-muted-foreground">—</span>
                 )}
-              </td>
+                </td>
             </tr>
           ))}
         </tbody>

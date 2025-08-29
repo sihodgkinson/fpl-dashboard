@@ -41,14 +41,14 @@ export function LeagueTable({
       <table className="w-full table-auto text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left">Pos</th>
-            <th className="px-4 py-2 text-left">Team</th>
-            <th className="px-4 py-2 text-left">Manager</th>
-            <th className="px-4 py-2 text-right">GW Points</th>
-            <th className="px-4 py-2 text-right">Transfers</th>
-            <th className="px-4 py-2 text-right">Hit</th>
-            <th className="px-4 py-2 text-right">Bench Points</th>
-            <th className="px-4 py-2 text-right">Total Points</th>
+            <th className="px-4 py-2 text-left font-semibold">Pos</th>
+            <th className="px-4 py-2 text-left font-semibold">Team</th>
+            <th className="px-4 py-2 text-left font-semibold">Manager</th>
+            <th className="px-4 py-2 text-right font-semibold">GW Points</th>
+            <th className="px-4 py-2 text-right font-semibold">Transfers</th>
+            <th className="px-4 py-2 text-right font-semibold">Hit</th>
+            <th className="px-4 py-2 text-right font-semibold">Bench Points</th>
+            <th className="px-4 py-2 text-right font-semibold">Total Points</th>
           </tr>
         </thead>
         <tbody>

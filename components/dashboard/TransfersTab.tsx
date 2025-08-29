@@ -38,9 +38,9 @@ export function TransfersTab({
       <table className="w-full table-auto text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left">Team</th>
-            <th className="px-4 py-2 text-left">Manager</th>
-            <th className="px-4 py-2 text-left">Transfers</th>
+            <th className="px-4 py-2 text-left font-semibold">Team</th>
+            <th className="px-4 py-2 text-left font-semibold">Manager</th>
+            <th className="px-4 py-2 text-left font-semibold">Transfers</th>
           </tr>
         </thead>
         <tbody>
