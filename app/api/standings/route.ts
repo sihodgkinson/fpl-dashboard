@@ -64,5 +64,27 @@ export async function GET(req: Request) {
     .sort((a, b) => b.totalPoints - a.totalPoints)
     .map((team, index) => ({ ...team, rank: index + 1 }));
 
-  return NextResponse.json(ranked);
+  // --- Calculate card stats ---
+  const mostPoints = ranked.reduce((max, team) =>
+    team.gwPoints > max.gwPoints ? team : max
+  );
+  const fewestPoints = ranked.reduce((min, team) =>
+    team.gwPoints < min.gwPoints ? team : min
+  );
+  const mostBench = ranked.reduce((max, team) =>
+    team.benchPoints > max.benchPoints ? team : max
+  );
+  const mostTransfers = ranked.reduce((max, team) =>
+    team.transfers > max.transfers ? team : max
+  );
+
+  return NextResponse.json({
+    standings: ranked,
+    stats: {
+      mostPoints,
+      fewestPoints,
+      mostBench,
+      mostTransfers,
+    },
+  });
 }

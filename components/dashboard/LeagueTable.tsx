@@ -6,6 +6,16 @@ import { EnrichedStanding } from "@/types/fpl";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+interface StandingsResponse {
+  standings: EnrichedStanding[];
+  stats: {
+    mostPoints: EnrichedStanding;
+    fewestPoints: EnrichedStanding;
+    mostBench: EnrichedStanding;
+    mostTransfers: EnrichedStanding;
+  };
+}
+
 export function LeagueTable({
   leagueId,
   gw,
@@ -15,14 +25,16 @@ export function LeagueTable({
   gw: number;
   currentGw: number;
 }) {
-  const { data, error } = useSWR<EnrichedStanding[]>(
+  const { data, error } = useSWR<StandingsResponse>(
     `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
-    { refreshInterval: 30000 } // auto-refresh every 30s
+    { refreshInterval: 30000 }
   );
 
   if (error) return <div>Error loading standings</div>;
   if (!data) return <div>Loading...</div>;
+
+  const { standings } = data;
 
   return (
     <div className="w-full overflow-x-auto rounded-md border border-border overflow-hidden">
@@ -40,7 +52,7 @@ export function LeagueTable({
           </tr>
         </thead>
         <tbody>
-          {data.map((entry) => (
+          {standings.map((entry) => (
             <tr
               key={entry.entry}
               className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
