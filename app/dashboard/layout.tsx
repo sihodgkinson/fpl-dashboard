@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getClassicLeague,
   getCurrentGameweek,
@@ -7,6 +6,8 @@ import {
 } from "@/lib/fpl";
 import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
 import { LeagueStatsCards } from "@/components/dashboard/LeagueStatsCards";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TransfersTab } from "@/components/dashboard/TransfersTab";
 
 export default async function DashboardLayout({
   children,
@@ -31,25 +32,34 @@ export default async function DashboardLayout({
 
       {/* Main content */}
       <main className="flex-1 p-6 space-y-6">
-        {/* Stats cards row (client-side, updates with GW) */}
-        <LeagueStatsCards leagueId={leagueId} currentGw={currentGw} />
+  {/* Stats cards row */}
+  <LeagueStatsCards leagueId={leagueId} currentGw={currentGw} />
 
-        {/* Tabs + Gameweek Selector */}
-        <div className="flex items-center gap-4">
-          <Tabs defaultValue="league">
-            <TabsList>
-              <TabsTrigger value="league">League Table</TabsTrigger>
-              <TabsTrigger value="transfers">Transfers</TabsTrigger>
-              <TabsTrigger value="chips">Chips</TabsTrigger>
-            </TabsList>
-          </Tabs>
+  {/* Tabs + Gameweek Selector */}
+  <Tabs defaultValue="league" className="w-full">
+    <div className="flex items-center gap-4">
+      <TabsList>
+        <TabsTrigger value="league">League Table</TabsTrigger>
+        <TabsTrigger value="transfers">Transfers</TabsTrigger>
+        <TabsTrigger value="chips">Chips</TabsTrigger>
+      </TabsList>
 
-          <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
-        </div>
+      <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
+    </div>
 
-        {/* Page content (LeagueTable renders table only) */}
-        <div>{children}</div>
-      </main>
+    <TabsContent value="league" className="mt-6">
+      {children} {/* LeagueTable from page.tsx */}
+    </TabsContent>
+
+    <TabsContent value="transfers" className="mt-6">
+  <TransfersTab leagueId={leagueId} currentGw={currentGw} />
+</TabsContent>
+
+    <TabsContent value="chips" className="mt-6">
+      <div>Chips tab coming soon...</div>
+    </TabsContent>
+  </Tabs>
+</main>
     </div>
   );
 }

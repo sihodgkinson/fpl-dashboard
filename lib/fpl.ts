@@ -161,3 +161,45 @@ export async function getLiveEventData(
   const data = await res.json();
   return data.elements as LivePlayerStats[];
 }
+
+export interface Transfer {
+  element_in: number;
+  element_in_cost: number;
+  element_out: number;
+  element_out_cost: number;
+  event: number;
+}
+
+export async function getTeamTransfers(entryId: number): Promise<Transfer[]> {
+  const res = await fetch(
+    `https://fantasy.premierleague.com/api/entry/${entryId}/transfers/`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch transfers for team ${entryId}`);
+  }
+
+  return res.json();
+}
+
+export interface Player {
+  id: number;
+  web_name: string;
+  team: number;
+  element_type: number;
+}
+
+export async function getPlayers(): Promise<Player[]> {
+  const res = await fetch(
+    "https://fantasy.premierleague.com/api/bootstrap-static/",
+    { cache: "force-cache" }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch players");
+  }
+
+  const data = await res.json();
+  return data.elements as Player[];
+}
