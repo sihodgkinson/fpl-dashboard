@@ -65,3 +65,16 @@ export interface FplEvent {
   is_current: boolean;
   is_next: boolean;
 }
+
+export interface EnrichedStanding {
+  entry: number;
+  entry_name: string;
+  player_name: string;
+  gwPoints: number;
+  totalPoints: number;
+  transfers: number;
+  hit: number;
+  benchPoints: number;
+  rank: number;
+  movement?: number; // optional, since we may add movement later
+}

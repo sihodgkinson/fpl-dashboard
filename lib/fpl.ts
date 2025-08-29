@@ -1,4 +1,8 @@
-import { ClassicLeagueResponse, FplEvent } from "@/types/fpl";
+import {
+  ClassicLeagueResponse,
+  FplEvent,
+  EnrichedStanding,
+} from "@/types/fpl";
 
 /**
  * Fetch a classic league standings
@@ -21,6 +25,37 @@ export async function getClassicLeague(
 }
 
 /**
+ * Fetch enriched standings from our API route
+ * (used client-side with SWR for auto-refresh)
+ */
+export async function getEnrichedStandings(
+  leagueId: number,
+  gw: number,
+  currentGw: number
+): Promise<EnrichedStanding[]> {
+  const res = await fetch(
+    `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+    { cache: "no-store" }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch enriched standings");
+  }
+
+  return res.json();
+}
+
+/**
+ * Team picks type
+ */
+export interface TeamPick {
+  element: number; // player ID
+  multiplier: number; // 1, 2 (captain), 3 (triple captain)
+  is_captain: boolean;
+  is_vice_captain: boolean;
+}
+
+/**
  * Fetch a team's event data (transfers, hits, bench points, etc.)
  */
 export interface TeamEventData {
@@ -32,6 +67,7 @@ export interface TeamEventData {
     event_transfers_cost: number;
     points_on_bench: number;
   };
+  picks: TeamPick[];
 }
 
 export async function getTeamEventData(
@@ -93,4 +129,35 @@ export async function getMaxGameweek(): Promise<number> {
   const events: FplEvent[] = data.events;
 
   return events.filter((e) => e.finished || e.is_current).length;
+}
+
+/**
+ * Live player stats type
+ */
+export interface LivePlayerStats {
+  id: number;
+  stats: {
+    total_points: number;
+  };
+}
+
+/**
+ * Fetch live event data (real-time player points)
+ */
+export async function getLiveEventData(
+  gw: number
+): Promise<LivePlayerStats[]> {
+  const res = await fetch(
+    `https://fantasy.premierleague.com/api/event/${gw}/live/`,
+    {
+      cache: "no-store", // always fetch fresh
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch live data for GW ${gw}`);
+  }
+
+  const data = await res.json();
+  return data.elements as LivePlayerStats[];
 }
