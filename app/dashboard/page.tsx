@@ -1,4 +1,12 @@
-export default function DashboardPage() {
+import { getClassicLeague } from "@/lib/fpl";
+import { LeagueStandingsEntry } from "@/types/fpl";
+
+export default async function DashboardPage() {
+  const leagueId = 430552;
+  const data = await getClassicLeague(leagueId);
+
+  const standings: LeagueStandingsEntry[] = data.standings.results;
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
@@ -8,23 +16,19 @@ export default function DashboardPage() {
             <th className="px-4 py-2 text-left">Team</th>
             <th className="px-4 py-2 text-left">Manager</th>
             <th className="px-4 py-2 text-left">GW Points</th>
-            <th className="px-4 py-2 text-left">Transfers</th>
-            <th className="px-4 py-2 text-left">Hit</th>
-            <th className="px-4 py-2 text-left">Bench Points</th>
             <th className="px-4 py-2 text-left">Total Points</th>
           </tr>
         </thead>
         <tbody>
-          <tr className="border-b">
-            <td className="px-4 py-2">1</td>
-            <td className="px-4 py-2">Melchester Rovers</td>
-            <td className="px-4 py-2">Simon Hodgkinson</td>
-            <td className="px-4 py-2">68</td>
-            <td className="px-4 py-2">3</td>
-            <td className="px-4 py-2">-4</td>
-            <td className="px-4 py-2">15</td>
-            <td className="px-4 py-2">168</td>
-          </tr>
+          {standings.map((entry) => (
+            <tr key={entry.entry} className="border-b">
+              <td className="px-4 py-2">{entry.rank}</td>
+              <td className="px-4 py-2">{entry.entry_name}</td>
+              <td className="px-4 py-2">{entry.player_name}</td>
+              <td className="px-4 py-2">{entry.event_total}</td>
+              <td className="px-4 py-2">{entry.total}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
