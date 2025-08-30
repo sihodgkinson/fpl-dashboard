@@ -70,7 +70,7 @@ export function GameweekSelector({
         size="icon"
         onClick={handlePrev}
         disabled={selectedGw <= 1}
-        className="h-12 w-12 sm:h-12 sm:w-12"
+        className="h-12 w-12"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -80,7 +80,7 @@ export function GameweekSelector({
         size="icon"
         onClick={handleNext}
         disabled={selectedGw >= maxGw}
-        className="h-12 w-12 sm:h-12 sm:w-12"
+        className="h-12 w-12"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>
