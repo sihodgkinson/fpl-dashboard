@@ -68,10 +68,16 @@ export default function DashboardClient({
 
         {/* ✅ Mobile dropdown for tabs */}
         <div className="block sm:hidden w-full">
-        <Select value={tab} onValueChange={setTab}>
-            <SelectTrigger
-            className="w-full !h-12 text-base focus:scroll-m-0 focus:outline-none focus:ring-0"
-            >
+        <Select
+            value={tab}
+            onValueChange={(val) => {
+            setTab(val);
+            if (document.activeElement instanceof HTMLElement) {
+                document.activeElement.blur();
+            }
+            }}
+        >
+            <SelectTrigger className="w-full !h-12 text-base">
             <SelectValue placeholder="Select view" />
             </SelectTrigger>
             <SelectContent>
