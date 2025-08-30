@@ -37,18 +37,18 @@ export function LeagueTable({
   const { standings } = data;
 
   return (
-    <div className="w-full overflow-x-auto rounded-md border border-border overflow-hidden">
+    <div className="w-full h-[calc(100vh-395px)] overflow-x-auto overflow-y-auto rounded-md border border-border">
       <table className="w-full table-auto text-sm">
-        <thead>
-          <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left font-semibold w-1/10">Pos</th>
-            <th className="px-4 py-2 text-left font-semibold w-2/10">Team</th>
-            <th className="px-4 py-2 text-left font-semibold w-2/10">Manager</th>
-            <th className="px-4 py-2 text-right font-semibold w-1/10">GW Points</th>
-            <th className="px-4 py-2 text-right font-semibold w-1/10">Transfers</th>
-            <th className="px-4 py-2 text-right font-semibold w-1/10">Hit</th>
-            <th className="px-4 py-2 text-right font-semibold w-1/10">Bench Points</th>
-            <th className="px-4 py-2 text-right font-semibold w-1/10">Total Points</th>
+        <thead className="sticky top-0 bg-muted z-10">
+          <tr className="border-b text-foreground">
+            <th className="px-4 py-2 text-left font-semibold w-6/100">Pos</th>
+            <th className="px-4 py-2 text-left font-semibold w-22/100">Team</th>
+            <th className="px-4 py-2 text-left font-semibold w-22/100">Manager</th>
+            <th className="px-4 py-2 text-right font-semibold w-10/100">GW Points</th>
+            <th className="px-4 py-2 text-right font-semibold w-10/100">Transfers</th>
+            <th className="px-4 py-2 text-right font-semibold w-10/100">Hit</th>
+            <th className="px-4 py-2 text-right font-semibold w-10/100">Bench Points</th>
+            <th className="px-4 py-2 text-right font-semibold w-10/100">Total Points</th>
           </tr>
         </thead>
         <tbody>
