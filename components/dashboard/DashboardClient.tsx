@@ -50,7 +50,7 @@ export default function DashboardClient({
           </div>
 
           {/* Bottom row (on mobile): Gameweek selector + dark mode toggle */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
             <GameweekSelector
               currentGw={currentGw}
               maxGw={maxGw}
