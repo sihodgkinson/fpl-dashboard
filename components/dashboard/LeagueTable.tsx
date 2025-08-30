@@ -42,34 +42,34 @@ export function LeagueTable({
       className="
         w-full overflow-x-auto rounded-md border border-border
         h-auto overflow-y-visible
-        sm:h-[calc(100vh-395px)] sm:overflow-y-auto
+        sm:h-[calc(100vh-435px)] sm:overflow-y-auto
       "
     >
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted z-10">
-          <tr className="border-b text-foreground">
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-left font-semibold w-6/100">
+          <tr className="border-b text-foreground font-semibold">
+            <th className="p-2 sm:p-4 text-left w-6/100">
               Pos
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-left font-semibold w-22/100">
+            <th className="p-2 sm:p-4 text-left w-22/100">
               Team
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-left font-semibold w-22/100">
+            <th className="p-2 sm:p-4 text-left w-22/100">
               Manager
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-right font-semibold w-10/100">
+            <th className="p-2 sm:p-4 text-right w-10/100">
               GW Points
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-right font-semibold w-10/100">
+            <th className="p-2 sm:p-4 text-right w-10/100">
               Transfers
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-right font-semibold w-10/100">
+            <th className="p-2 sm:p-4 text-right w-10/100">
               Hit
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-right font-semibold w-10/100">
+            <th className="p-2 sm:p-4 text-right w-10/100">
               Bench Points
             </th>
-            <th className="px-2 py-1 sm:px-4 sm:py-2 text-right font-semibold w-10/100">
+            <th className="p-2 sm:p-4 text-right w-10/100">
               Total Points
             </th>
           </tr>
@@ -81,7 +81,7 @@ export function LeagueTable({
               className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
             >
               {/* Position + movement */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 font-mono">
+              <td className="p-2 sm:p-4 font-mono">
                 <div className="flex items-center gap-1">
                   <span>{entry.rank}</span>
                   {entry.movement > 0 && (
@@ -97,11 +97,11 @@ export function LeagueTable({
               </td>
 
               {/* Team + Manager */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2">{entry.entry_name}</td>
-              <td className="px-2 py-1 sm:px-4 sm:py-2">{entry.player_name}</td>
+              <td className="p-2 sm:p-4">{entry.entry_name}</td>
+              <td className="p-2 sm:p-4">{entry.player_name}</td>
 
               {/* GW Points with hover/popover */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 text-right font-mono">
+              <td className="p-2 sm:p-4 text-right font-mono">
                 <ResponsiveInfoCard
                   trigger={
                     <button className="cursor-pointer underline decoration-dotted">
@@ -134,7 +134,7 @@ export function LeagueTable({
               </td>
 
               {/* Transfers with hover/popover */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 text-right font-mono">
+              <td className="p-2 sm:p-4 text-right font-mono">
                 <ResponsiveInfoCard
                   trigger={
                     <button className="cursor-pointer underline decoration-dotted">
@@ -167,12 +167,12 @@ export function LeagueTable({
               </td>
 
               {/* Hit */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 text-right font-mono">
+              <td className="p-2 sm:p-4 text-right font-mono">
                 {entry.hit}
               </td>
 
               {/* Bench Points with hover/popover */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 text-right font-mono">
+              <td className="p-2 sm:p-4 text-right font-mono">
                 <ResponsiveInfoCard
                   trigger={
                     <button className="cursor-pointer underline decoration-dotted">
@@ -203,7 +203,7 @@ export function LeagueTable({
               </td>
 
               {/* Total Points */}
-              <td className="px-2 py-1 sm:px-4 sm:py-2 text-right font-mono">
+              <td className="p-2 sm:p-4 text-right font-mono">
                 {entry.totalPoints}
               </td>
             </tr>

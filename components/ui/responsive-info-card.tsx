@@ -42,7 +42,7 @@ export function ResponsiveInfoCard({
   }
 
   return (
-    <HoverCard>
+    <HoverCard openDelay={50} closeDelay={50}>
       <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
       <HoverCardContent className={className}>{content}</HoverCardContent>
     </HoverCard>
