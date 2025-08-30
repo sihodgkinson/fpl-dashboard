@@ -48,8 +48,8 @@ export function LeagueTable({
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted z-10">
           <tr className="border-b text-foreground font-semibold">
-            <th className="p-2 sm:p-4 text-left w-6/100">Pos</th>
-            <th className="p-2 sm:p-4 text-left w-22/100">Team</th>
+            <th className="p-2 sm:p-4 text-left w-3/100">Pos</th>
+            <th className="p-2 sm:p-4 text-left w-25/100">Team</th>
             <th className="p-2 sm:p-4 text-left w-22/100 hidden sm:table-cell">
               Manager
             </th>
