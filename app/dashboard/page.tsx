@@ -19,7 +19,10 @@ export default async function DashboardPage({
   const leagues = await Promise.all(
     leagueIds.map(async (id) => {
       const data = await getClassicLeague(id);
-      return { id, name: data.league.name };
+      return {
+        id,
+        name: data?.league?.name ?? "Unknown League",
+      };
     })
   );
 

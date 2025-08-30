@@ -1,3 +1,4 @@
+// lib/fpl.ts
 import {
   ClassicLeagueResponse,
   FplEvent,
@@ -5,59 +6,109 @@ import {
 } from "@/types/fpl";
 
 /**
- * Fetch a classic league standings
+ * Generic FPL fetch wrapper with caching + error handling
  */
-export async function getClassicLeague(
-  leagueId: number
-): Promise<ClassicLeagueResponse> {
-  const res = await fetch(
-    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`,
-    {
-      next: { revalidate: 60 }, // safe to cache, small response
+async function fplFetch<T>(
+  url: string,
+  options?: RequestInit & { revalidate?: number }
+): Promise<T | null> {
+  try {
+    const res = await fetch(url, {
+      ...options,
+      next: options?.revalidate
+        ? { revalidate: options.revalidate }
+        : undefined,
+    });
+
+    if (!res.ok) {
+      console.error(`FPL API error: ${res.status} ${res.statusText} (${url})`);
+      return null;
     }
-  );
 
-  if (!res.ok) {
-    throw new Error(`Failed to fetch league ${leagueId}`);
+    return res.json();
+  } catch (err) {
+    console.error(`FPL API fetch failed (${url}):`, err);
+    return null;
   }
-
-  return res.json();
 }
 
-/**
- * Fetch enriched standings from our API route
- * (used client-side with SWR for auto-refresh)
- */
+/* -------------------------------------------------------------------------- */
+/*                                League Data                                 */
+/* -------------------------------------------------------------------------- */
+
+export async function getClassicLeague(
+  leagueId: number
+): Promise<ClassicLeagueResponse | null> {
+  return fplFetch<ClassicLeagueResponse>(
+    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`,
+    { revalidate: 60 }
+  );
+}
+
 export async function getEnrichedStandings(
   leagueId: number,
   gw: number,
   currentGw: number
-): Promise<EnrichedStanding[]> {
-  const res = await fetch(
+): Promise<EnrichedStanding[] | null> {
+  return fplFetch<EnrichedStanding[]>(
     `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     { cache: "no-store" }
   );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch enriched standings");
-  }
-
-  return res.json();
 }
 
-/**
- * Team picks type
- */
+/* -------------------------------------------------------------------------- */
+/*                              Bootstrap Static                              */
+/* -------------------------------------------------------------------------- */
+
+interface BootstrapStatic {
+  events: FplEvent[];
+  elements: Player[];
+  // add other fields if needed
+}
+
+export async function getBootstrapStatic(): Promise<BootstrapStatic | null> {
+  return fplFetch<BootstrapStatic>(
+    "https://fantasy.premierleague.com/api/bootstrap-static/",
+    { revalidate: 300 } // cache for 5 minutes
+  );
+}
+
+export async function getCurrentGameweek(): Promise<number> {
+  const data = await getBootstrapStatic();
+  if (!data) return 1;
+  const current = data.events.find((e) => e.is_current);
+  return current?.id ?? 1;
+}
+
+export async function getMaxGameweek(): Promise<number> {
+  const data = await getBootstrapStatic();
+  if (!data) return 1;
+  return data.events.filter((e) => e.finished || e.is_current).length;
+}
+
+export interface Player {
+  id: number;
+  web_name: string;
+  team: number;
+  element_type: number;
+}
+
+export async function getPlayers(): Promise<Player[]> {
+  const data = await getBootstrapStatic();
+  return data?.elements ?? [];
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                Team Events                                 */
+/* -------------------------------------------------------------------------- */
+
 export interface TeamPick {
-  element: number; // player ID
-  multiplier: number; // 1, 2 (captain), 3 (triple captain)
+  element: number;
+  multiplier: number;
   is_captain: boolean;
   is_vice_captain: boolean;
 }
 
-/**
- * Fetch a team's event data (transfers, hits, bench points, etc.)
- */
 export interface TeamEventData {
   entry_history: {
     event: number;
@@ -73,67 +124,17 @@ export interface TeamEventData {
 export async function getTeamEventData(
   entryId: number,
   gw: number
-): Promise<TeamEventData> {
-  const res = await fetch(
+): Promise<TeamEventData | null> {
+  return fplFetch<TeamEventData>(
     `https://fantasy.premierleague.com/api/entry/${entryId}/event/${gw}/picks/`,
-    {
-      next: { revalidate: 60 }, // small response, can cache
-    }
+    { revalidate: 60 }
   );
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch team ${entryId} for GW ${gw}`);
-  }
-
-  return res.json();
 }
 
-/**
- * Get the current gameweek ID
- */
-export async function getCurrentGameweek(): Promise<number> {
-  const res = await fetch(
-    "https://fantasy.premierleague.com/api/bootstrap-static/",
-    {
-      cache: "no-store", // disable caching (response > 2MB)
-    }
-  );
+/* -------------------------------------------------------------------------- */
+/*                                Live Events                                 */
+/* -------------------------------------------------------------------------- */
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch bootstrap-static");
-  }
-
-  const data = await res.json();
-  const events: FplEvent[] = data.events;
-
-  const current = events.find((e) => e.is_current);
-  return current?.id ?? 1;
-}
-
-/**
- * Get the maximum available gameweek (finished or current)
- */
-export async function getMaxGameweek(): Promise<number> {
-  const res = await fetch(
-    "https://fantasy.premierleague.com/api/bootstrap-static/",
-    {
-      cache: "no-store", // disable caching (response > 2MB)
-    }
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch bootstrap-static");
-  }
-
-  const data = await res.json();
-  const events: FplEvent[] = data.events;
-
-  return events.filter((e) => e.finished || e.is_current).length;
-}
-
-/**
- * Live player stats type
- */
 export interface LivePlayerStats {
   id: number;
   stats: {
@@ -141,26 +142,19 @@ export interface LivePlayerStats {
   };
 }
 
-/**
- * Fetch live event data (real-time player points)
- */
 export async function getLiveEventData(
   gw: number
-): Promise<LivePlayerStats[]> {
-  const res = await fetch(
+): Promise<LivePlayerStats[] | null> {
+  const data = await fplFetch<{ elements: LivePlayerStats[] }>(
     `https://fantasy.premierleague.com/api/event/${gw}/live/`,
-    {
-      cache: "no-store", // always fetch fresh
-    }
+    { cache: "no-store" }
   );
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch live data for GW ${gw}`);
-  }
-
-  const data = await res.json();
-  return data.elements as LivePlayerStats[];
+  return data?.elements ?? [];
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                Transfers                                   */
+/* -------------------------------------------------------------------------- */
 
 export interface Transfer {
   element_in: number;
@@ -170,39 +164,18 @@ export interface Transfer {
   event: number;
 }
 
-export async function getTeamTransfers(entryId: number): Promise<Transfer[]> {
-  const res = await fetch(
+export async function getTeamTransfers(
+  entryId: number
+): Promise<Transfer[] | null> {
+  return fplFetch<Transfer[]>(
     `https://fantasy.premierleague.com/api/entry/${entryId}/transfers/`,
-    { cache: "no-store" }
+    { revalidate: 60 }
   );
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch transfers for team ${entryId}`);
-  }
-
-  return res.json();
 }
 
-export interface Player {
-  id: number;
-  web_name: string;
-  team: number;
-  element_type: number;
-}
-
-export async function getPlayers(): Promise<Player[]> {
-  const res = await fetch(
-    "https://fantasy.premierleague.com/api/bootstrap-static/",
-    { cache: "force-cache" }
-  );
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch players");
-  }
-
-  const data = await res.json();
-  return data.elements as Player[];
-}
+/* -------------------------------------------------------------------------- */
+/*                                  Chips                                     */
+/* -------------------------------------------------------------------------- */
 
 export interface Chip {
   name: string;
@@ -210,16 +183,10 @@ export interface Chip {
   event: number;
 }
 
-export async function getTeamChips(entryId: number): Promise<Chip[]> {
-  const res = await fetch(
+export async function getTeamChips(entryId: number): Promise<Chip[] | null> {
+  const data = await fplFetch<{ chips: Chip[] }>(
     `https://fantasy.premierleague.com/api/entry/${entryId}/history/`,
-    { cache: "no-store" }
+    { revalidate: 60 }
   );
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch chips for team ${entryId}`);
-  }
-
-  const data = await res.json();
-  return data.chips as Chip[];
+  return data?.chips ?? [];
 }
