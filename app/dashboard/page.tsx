@@ -40,10 +40,10 @@ export default async function DashboardPage({
   return (
     <>
       {/* Header with selectors */}
-      <header className="border-b px-6 py-4">
-  <div className="flex items-center justify-between">
+      <header className="border-b px-4 py-3">
+  <div className="flex flex-wrap items-center gap-2 justify-between">
     {/* Left side: League + Gameweek selectors */}
-    <div className="flex gap-4">
+    <div className="flex flex-wrap gap-2">
       <LeagueSelector
         leagues={leagues}
         selectedLeagueId={selectedLeagueId}
