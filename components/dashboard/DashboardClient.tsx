@@ -107,27 +107,23 @@ export default function DashboardClient({
           </TabsList>
         </Tabs>
 
-        {/* ✅ Tab content (always rendered, controlled by `tab` state) */}
+        {/* ✅ Tab content (all pre-mounted, hidden with CSS) */}
         <div className="w-full">
-          {tab === "league" && (
-            <div className="mt-2 sm:mt-4">
-              <LeagueTable
-                leagueId={selectedLeagueId}
-                gw={gw}
-                currentGw={currentGw}
-              />
-            </div>
-          )}
-          {tab === "transfers" && (
-            <div className="mt-2 sm:mt-4">
-              <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
-            </div>
-          )}
-          {tab === "chips" && (
-            <div className="mt-2 sm:mt-4">
-              <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
-            </div>
-          )}
+          <div className={tab === "league" ? "block mt-2 sm:mt-4" : "hidden"}>
+            <LeagueTable
+              leagueId={selectedLeagueId}
+              gw={gw}
+              currentGw={currentGw}
+            />
+          </div>
+
+          <div className={tab === "transfers" ? "block mt-2 sm:mt-4" : "hidden"}>
+            <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
+          </div>
+
+          <div className={tab === "chips" ? "block mt-2 sm:mt-4" : "hidden"}>
+            <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
+          </div>
         </div>
       </main>
     </>
