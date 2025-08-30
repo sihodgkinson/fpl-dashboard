@@ -1,12 +1,6 @@
 import { NextResponse } from "next/server";
-import {
-  getClassicLeague,
-  getTeamEventData,
-  getLiveEventData,
-  getTeamTransfers,
-  getPlayers,
-  TeamEventData,
-} from "@/lib/fpl";
+import { getClassicLeague } from "@/lib/fpl";
+import { enrichStandings } from "@/lib/enrichStandings";
 import { EnrichedStanding } from "@/types/fpl";
 
 export async function GET(req: Request) {
@@ -16,129 +10,21 @@ export async function GET(req: Request) {
   const currentGw = Number(searchParams.get("currentGw"));
 
   const data = await getClassicLeague(leagueId);
-  const standings = data.standings.results as {
-    entry: number;
-    entry_name: string;
-    player_name: string;
-  }[];
 
-  // fetch all players once (to resolve names)
-  const players = await getPlayers();
-
-  // fetch live data once (for player points)
-  const liveData = await getLiveEventData(gw);
-  const livePointsMap = new Map(
-    liveData.map((p) => [p.id, p.stats.total_points])
-  );
-
-  const enrichedStandings: EnrichedStanding[] = await Promise.all(
-    standings.map(async (entry) => {
-      const teamData: TeamEventData = await getTeamEventData(entry.entry, gw);
-
-      let gwPoints = teamData.entry_history.points;
-      let totalPoints = teamData.entry_history.total_points;
-
-      // If current GW, recalc live points
-      if (gw === currentGw) {
-        gwPoints = teamData.picks.reduce((sum, pick) => {
-          const playerPoints = livePointsMap.get(pick.element) ?? 0;
-          return sum + playerPoints * pick.multiplier;
-        }, 0);
-
-        totalPoints =
-          teamData.entry_history.total_points -
-          teamData.entry_history.points +
-          gwPoints;
-      }
-
-      // --- Split starters and bench ---
-      const starters = teamData.picks.filter((pick) => pick.multiplier > 0);
-      const bench = teamData.picks.filter((pick) => pick.multiplier === 0);
-
-      // --- Build gwPlayers (starters only, sorted by points) ---
-      const gwPlayers = starters
-        .map((pick) => {
-          const player = players.find((p) => p.id === pick.element);
-          const basePoints = livePointsMap.get(pick.element) ?? 0;
-          return {
-            name: player?.web_name ?? "Unknown",
-            points: basePoints * pick.multiplier,
-            isCaptain: pick.is_captain,
-            isViceCaptain: pick.is_vice_captain,
-          };
-        })
-        .sort((a, b) => b.points - a.points);
-
-      // --- Build benchPlayers ---
-      const benchPlayers = bench.map((pick) => {
-        const player = players.find((p) => p.id === pick.element);
-        const basePoints = livePointsMap.get(pick.element) ?? 0;
-        return {
-          name: player?.web_name ?? "Unknown",
-          points: basePoints,
-        };
-      });
-
-      // --- Calculate bench points ---
-      const benchPoints = benchPlayers.reduce((sum, p) => sum + p.points, 0);
-
-      // --- Fetch transfers for this team ---
-      const transfers = await getTeamTransfers(entry.entry);
-      const gwTransfers = transfers.filter((t) => t.event === gw);
-
-      const transfersList = gwTransfers.map((t) => ({
-        in: players.find((p) => p.id === t.element_in)?.web_name ?? "Unknown",
-        out: players.find((p) => p.id === t.element_out)?.web_name ?? "Unknown",
-      }));
-
-      return {
-        entry: entry.entry,
-        entry_name: entry.entry_name,
-        player_name: entry.player_name,
-        gwPoints,
-        totalPoints,
-        transfers: gwTransfers.length,
-        transfersList,
-        hit: -teamData.entry_history.event_transfers_cost,
-        benchPoints,
-        rank: 0, // placeholder, will assign below
-        movement: 0, // placeholder, will assign below
-        gwPlayers,
-        benchPlayers,
-      };
-    })
-  );
-
-  // Sort by totalPoints and assign ranks
-  let ranked: EnrichedStanding[] = enrichedStandings
-    .sort((a, b) => b.totalPoints - a.totalPoints)
-    .map((team, index) => ({ ...team, rank: index + 1 }));
-
-  // --- Calculate movement vs previous GW ---
-  if (gw > 1) {
-    const prevStandings = await Promise.all(
-      standings.map(async (entry) => {
-        const teamData = await getTeamEventData(entry.entry, gw - 1);
-        return {
-          entry: entry.entry,
-          totalPoints: teamData.entry_history.total_points,
-        };
-      })
+  if (!data) {
+    return NextResponse.json(
+      { error: `Failed to fetch league ${leagueId}` },
+      { status: 500 }
     );
-
-    const prevRanks = prevStandings
-      .sort((a, b) => b.totalPoints - a.totalPoints)
-      .map((team, index) => ({
-        entry: team.entry,
-        prevRank: index + 1,
-      }));
-
-    ranked = ranked.map((team) => {
-      const prev = prevRanks.find((p) => p.entry === team.entry);
-      const movement = prev ? prev.prevRank - team.rank : 0; // +ve = moved up
-      return { ...team, movement };
-    });
   }
+
+  const standings = data.standings.results;
+
+  const ranked: EnrichedStanding[] = await enrichStandings(
+    standings,
+    gw,
+    currentGw
+  );
 
   // --- Calculate card stats ---
   const mostPoints = ranked.reduce((max, team) =>

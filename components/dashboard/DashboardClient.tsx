@@ -16,9 +16,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EnrichedStanding } from "@/types/fpl";
+
 
 interface DashboardClientProps {
-  leagues: { id: number; name: string }[];
+  leagues: {
+    id: number;
+    name: string;
+    standings: EnrichedStanding[] | null;
+  }[];
   selectedLeagueId: number;
   currentGw: number;
   maxGw: number;
@@ -33,6 +39,9 @@ export default function DashboardClient({
   gw,
 }: DashboardClientProps) {
   const [tab, setTab] = React.useState("league");
+
+  // Find the selected league's preloaded data
+  const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
 
   return (
     <>
@@ -63,7 +72,7 @@ export default function DashboardClient({
 
       {/* Main content */}
       <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        {/* Stats cards */}
+        {/* Stats cards (still fetches live data per league) */}
         <LeagueStatsCards leagueId={selectedLeagueId} currentGw={currentGw} />
 
         {/* ✅ Mobile dropdown for tabs */}
@@ -83,25 +92,13 @@ export default function DashboardClient({
         {/* ✅ Desktop tabs (triggers only) */}
         <Tabs value={tab} onValueChange={setTab} className="hidden sm:block w-full">
           <TabsList>
-            <TabsTrigger
-              value="league"
-              type="button"
-              className="px-3 sm:px-4 focus:scroll-m-0"
-            >
+            <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
               League Table
             </TabsTrigger>
-            <TabsTrigger
-              value="transfers"
-              type="button"
-              className="px-3 sm:px-4 focus:scroll-m-0"
-            >
+            <TabsTrigger value="transfers" type="button" className="px-3 sm:px-4">
               Transfers
             </TabsTrigger>
-            <TabsTrigger
-              value="chips"
-              type="button"
-              className="px-3 sm:px-4 focus:scroll-m-0"
-            >
+            <TabsTrigger value="chips" type="button" className="px-3 sm:px-4">
               Chips
             </TabsTrigger>
           </TabsList>
@@ -114,6 +111,7 @@ export default function DashboardClient({
               leagueId={selectedLeagueId}
               gw={gw}
               currentGw={currentGw}
+              preloadedStandings={selectedLeague?.standings ?? null}
             />
           </div>
 

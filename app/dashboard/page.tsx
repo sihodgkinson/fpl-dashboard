@@ -4,6 +4,7 @@ import {
   getMaxGameweek,
 } from "@/lib/fpl";
 import DashboardClient from "@/components/dashboard/DashboardClient";
+import { EnrichedStanding } from "@/types/fpl";
 
 const leagueIds = [430552, 4311, 1295109];
 
@@ -15,17 +16,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const selectedLeagueId = Number(params.leagueId) || leagueIds[0];
 
-  // Fetch all league names
-  const leagues = await Promise.all(
-    leagueIds.map(async (id) => {
-      const data = await getClassicLeague(id);
-      return {
-        id,
-        name: data?.league?.name ?? "Unknown League",
-      };
-    })
-  );
-
+  // Fetch current/max GW first
   const [currentGw, maxGw] = await Promise.all([
     getCurrentGameweek(),
     getMaxGameweek(),
@@ -33,7 +24,32 @@ export default async function DashboardPage({
 
   const gw = Number(params.gw) || currentGw;
 
-  // ✅ Pass data into the client component
+  // Preload all leagues (name + standings.results) for the current GW
+  const leagues: {
+    id: number;
+    name: string;
+    standings: EnrichedStanding[] | null;
+  }[] = await Promise.all(
+    leagueIds.map(async (id) => {
+      const data = await getClassicLeague(id);
+
+      if (!data) {
+        // API failed for this league
+        return {
+          id,
+          name: "Unavailable League",
+          standings: null,
+        };
+      }
+
+      return {
+        id,
+        name: data.league?.name ?? "Unknown League",
+        standings: (data.standings?.results as EnrichedStanding[]) ?? null,
+      };
+    })
+  );
+
   return (
     <DashboardClient
       leagues={leagues}

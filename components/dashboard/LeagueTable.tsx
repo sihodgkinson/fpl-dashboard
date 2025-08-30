@@ -3,7 +3,7 @@
 import useSWR from "swr";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { EnrichedStanding } from "@/types/fpl";
-import { ResponsiveInfoCard } from "@/components/ui/responsive-info-card"; // ✅ import
+import { ResponsiveInfoCard } from "@/components/ui/responsive-info-card";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -17,25 +17,38 @@ interface StandingsResponse {
   };
 }
 
+interface LeagueTableProps {
+  leagueId: number;
+  gw: number;
+  currentGw: number;
+  preloadedStandings?: EnrichedStanding[] | null;
+}
+
 export function LeagueTable({
   leagueId,
   gw,
   currentGw,
-}: {
-  leagueId: number;
-  gw: number;
-  currentGw: number;
-}) {
+  preloadedStandings,
+}: LeagueTableProps) {
+  // If we have preloaded standings (eager load), use them directly
+  const shouldUsePreloaded = preloadedStandings && gw === currentGw;
+
   const { data, error } = useSWR<StandingsResponse>(
-    `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+    shouldUsePreloaded
+      ? null // disable SWR if we already have preloaded data
+      : `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 30000 }
   );
 
-  if (error) return <div>Error loading standings</div>;
-  if (!data) return <div>Loading...</div>;
+  if (!shouldUsePreloaded) {
+    if (error) return <div>Error loading standings</div>;
+    if (!data) return <div>Loading...</div>;
+  }
 
-  const { standings } = data;
+  const standings = shouldUsePreloaded
+    ? preloadedStandings!
+    : data?.standings ?? [];
 
   return (
     <div

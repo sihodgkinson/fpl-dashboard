@@ -1,7 +1,7 @@
 // types/fpl.ts
 
 /**
- * Represents a single team/manager entry in the league standings.
+ * Represents a single team/manager entry in the league standings (raw FPL API).
  */
 export interface LeagueStandingsEntry {
   id: number;
@@ -34,7 +34,7 @@ export interface LeagueMeta {
 }
 
 /**
- * Full response from the FPL Classic League standings endpoint.
+ * Full response from the FPL Classic League standings endpoint (raw FPL API).
  */
 export interface ClassicLeagueResponse {
   league: LeagueMeta;
@@ -66,17 +66,17 @@ export interface FplEvent {
   is_next: boolean;
 }
 
-export interface EnrichedStanding {
-  entry: number;
-  entry_name: string;
-  player_name: string;
+/**
+ * Enriched version of a league standings entry.
+ * Extends the raw FPL API entry with additional computed fields.
+ */
+export interface EnrichedStanding extends LeagueStandingsEntry {
   gwPoints: number;
   totalPoints: number;
   transfers: number;
   transfersList: { in: string; out: string }[];
   hit: number;
   benchPoints: number;
-  rank: number;
   movement: number;
   gwPlayers: {
     name: string;
