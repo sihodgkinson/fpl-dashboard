@@ -41,16 +41,15 @@ export default async function DashboardPage({
     <>
       {/* Header with selectors */}
       <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           {/* Top row: League selector + Dark mode toggle */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <LeagueSelector
               leagues={leagues}
               selectedLeagueId={selectedLeagueId}
               currentGw={currentGw}
-              className="flex-1 sm:flex-none !h-12 text-base sm:h-9 sm:text-sm"
+              className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
             />
-            <ModeToggle className="h-12 w-12 sm:h-9 sm:w-9" />
           </div>
 
           {/* Bottom row (on mobile): Gameweek selector + nav buttons */}
@@ -58,8 +57,9 @@ export default async function DashboardPage({
             <GameweekSelector
               currentGw={currentGw}
               maxGw={maxGw}
-              className="flex-1 sm:flex-none !h-12 text-base sm:h-9 sm:text-sm"
+              className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
             />
+            <ModeToggle className="h-12 w-12 sm:h-12 sm:w-12" />
           </div>
         </div>
       </header>
