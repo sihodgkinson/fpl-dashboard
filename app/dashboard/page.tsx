@@ -10,6 +10,7 @@ import { ChipsTab } from "@/components/dashboard/ChipsTab";
 import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
 import { LeagueSelector } from "@/components/dashboard/LeagueSelector";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/mode-toggle";
 
 const leagueIds = [430552, 4311, 1295109];
 
@@ -40,15 +41,21 @@ export default async function DashboardPage({
     <>
       {/* Header with selectors */}
       <header className="border-b px-6 py-4">
-        <div className="flex gap-4">
-          <LeagueSelector
-            leagues={leagues}
-            selectedLeagueId={selectedLeagueId}
-            currentGw={currentGw}
-          />
-          <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
-        </div>
-      </header>
+  <div className="flex items-center justify-between">
+    {/* Left side: League + Gameweek selectors */}
+    <div className="flex gap-4">
+      <LeagueSelector
+        leagues={leagues}
+        selectedLeagueId={selectedLeagueId}
+        currentGw={currentGw}
+      />
+      <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
+    </div>
+
+    {/* Right side: Mode toggle */}
+    <ModeToggle />
+  </div>
+</header>
 
       {/* Main content */}
       <main className="p-6 space-y-6">
