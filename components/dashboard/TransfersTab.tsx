@@ -43,10 +43,12 @@ export function TransfersTab({
     >
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted z-10">
-          <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left font-semibold w-1/3">Team</th>
-            <th className="px-4 py-2 text-left font-semibold w-1/3">Manager</th>
-            <th className="px-4 py-2 text-left font-semibold w-1/3">Transfers</th>
+          <tr className="border-b bg-muted/50 text-foreground font-semibold">
+            <th className="p-2 sm:p-4 text-left w-1/3">Team</th>
+            <th className="p-2 sm:p-4 text-left w-1/3 hidden sm:table-cell">
+              Manager
+            </th>
+            <th className="p-2 sm:p-4 text-left w-1/3">Transfers</th>
           </tr>
         </thead>
         <tbody>
@@ -55,9 +57,21 @@ export function TransfersTab({
               key={idx}
               className="border-b hover:bg-muted/30 last:border-b-0"
             >
-              <td className="px-4 py-2">{row.team}</td>
-              <td className="px-4 py-2">{row.manager}</td>
-              <td className="px-4 py-2">
+              {/* Team (with Manager underneath on mobile) */}
+              <td className="p-2 sm:p-4">
+                <div className="font-medium">{row.team}</div>
+                <div className="text-muted-foreground text-xs mt-0.5 block sm:hidden">
+                  {row.manager}
+                </div>
+              </td>
+
+              {/* Manager (hidden on mobile) */}
+              <td className="p-2 sm:p-4 hidden sm:table-cell">
+                {row.manager}
+              </td>
+
+              {/* Transfers */}
+              <td className="p-2 sm:p-4">
                 {row.transfers.length > 0 ? (
                   <div className="space-y-1">
                     {row.transfers.map((t, i) => (

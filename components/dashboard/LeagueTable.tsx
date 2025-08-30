@@ -50,11 +50,19 @@ export function LeagueTable({
           <tr className="border-b text-foreground font-semibold">
             <th className="p-2 sm:p-4 text-left w-6/100">Pos</th>
             <th className="p-2 sm:p-4 text-left w-22/100">Team</th>
-            <th className="p-2 sm:p-4 text-left w-22/100">Manager</th>
+            <th className="p-2 sm:p-4 text-left w-22/100 hidden sm:table-cell">
+              Manager
+            </th>
             <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
-            <th className="p-2 sm:p-4 text-right w-10/100">Transfers</th>
-            <th className="p-2 sm:p-4 text-right w-10/100">Hit</th>
-            <th className="p-2 sm:p-4 text-right w-10/100">Bench Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
+              Transfers
+            </th>
+            <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
+              Hit
+            </th>
+            <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
+              Bench Points
+            </th>
             <th className="p-2 sm:p-4 text-right w-10/100">Total Points</th>
           </tr>
         </thead>
@@ -80,9 +88,18 @@ export function LeagueTable({
                 </div>
               </td>
 
-              {/* Team + Manager */}
-              <td className="p-2 sm:p-4">{entry.entry_name}</td>
-              <td className="p-2 sm:p-4">{entry.player_name}</td>
+              {/* Team (with Manager underneath on mobile) */}
+              <td className="p-2 sm:p-4">
+                <div className="font-medium">{entry.entry_name}</div>
+                <div className="text-muted-foreground text-xs block sm:hidden">
+                  {entry.player_name}
+                </div>
+              </td>
+
+              {/* Manager (hidden on mobile) */}
+              <td className="p-2 sm:p-4 hidden sm:table-cell">
+                {entry.player_name}
+              </td>
 
               {/* GW Points with hover/popover */}
               <td className="p-2 sm:p-4 text-right font-mono">
@@ -117,8 +134,8 @@ export function LeagueTable({
                 />
               </td>
 
-              {/* Transfers with hover/popover */}
-              <td className="p-2 sm:p-4 text-right font-mono">
+              {/* Transfers (hidden on mobile) */}
+              <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
                 <ResponsiveInfoCard
                   trigger={
                     <button className="cursor-pointer underline decoration-dotted">
@@ -130,33 +147,27 @@ export function LeagueTable({
                       <ul className="space-y-1 text-sm">
                         {entry.transfersList.map((t, i) => (
                           <li key={i}>
-                            <span className="text-muted-foreground">
-                              {t.out}
-                            </span>
+                            <span className="text-muted-foreground">{t.out}</span>
                             <span className="text-muted-foreground mx-2">→</span>
-                            <span className="text-muted-foreground">
-                              {t.in}
-                            </span>
+                            <span className="text-muted-foreground">{t.in}</span>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-muted-foreground text-sm">
-                        No transfers
-                      </p>
+                      <p className="text-muted-foreground text-sm">No transfers</p>
                     )
                   }
                   className="w-56 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
-              {/* Hit */}
-              <td className="p-2 sm:p-4 text-right font-mono">
+              {/* Hit (hidden on mobile) */}
+              <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
                 {entry.hit}
               </td>
 
-              {/* Bench Points with hover/popover */}
-              <td className="p-2 sm:p-4 text-right font-mono">
+              {/* Bench Points (hidden on mobile) */}
+              <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
                 <ResponsiveInfoCard
                   trigger={
                     <button className="cursor-pointer underline decoration-dotted">
@@ -177,9 +188,7 @@ export function LeagueTable({
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-muted-foreground text-xs">
-                        No bench players
-                      </p>
+                      <p className="text-muted-foreground text-xs">No bench players</p>
                     )
                   }
                   className="w-40 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"

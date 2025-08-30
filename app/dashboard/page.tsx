@@ -72,9 +72,9 @@ export default async function DashboardPage({
         {/* Tabs below cards */}
         <Tabs defaultValue="league" className="w-full">
           <TabsList>
-            <TabsTrigger value="league" type="button" className="px-6">League Table</TabsTrigger>
-            <TabsTrigger value="transfers" type="button" className="px-6">Transfers</TabsTrigger>
-            <TabsTrigger value="chips" type="button" className="px-6">Chips</TabsTrigger>
+            <TabsTrigger value="league" type="button" className="px-3 sm:px-4">League Table</TabsTrigger>
+            <TabsTrigger value="transfers" type="button" className="px-3 sm:px-4">Transfers</TabsTrigger>
+            <TabsTrigger value="chips" type="button" className="px-3 sm:px-4">Chips</TabsTrigger>
           </TabsList>
 
           <TabsContent value="league" className="mt-4">
