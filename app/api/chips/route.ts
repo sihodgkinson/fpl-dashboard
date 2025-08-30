@@ -13,11 +13,19 @@ export async function GET(req: Request) {
   const gw = Number(searchParams.get("gw"));
 
   const league = await getClassicLeague(leagueId);
+
+  if (!league) {
+    return NextResponse.json(
+      { error: `Failed to fetch league ${leagueId}` },
+      { status: 500 }
+    );
+  }
+
   const standings = league.standings.results as LeagueEntry[];
 
   const data = await Promise.all(
     standings.map(async (entry) => {
-      const chips: Chip[] = await getTeamChips(entry.entry);
+      const chips: Chip[] = (await getTeamChips(entry.entry)) ?? [];
       const gwChip = chips.find((c) => c.event === gw);
 
       return {

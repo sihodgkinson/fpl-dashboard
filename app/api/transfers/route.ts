@@ -19,12 +19,21 @@ export async function GET(req: Request) {
   const gw = Number(searchParams.get("gw"));
 
   const league = await getClassicLeague(leagueId);
+
+  if (!league) {
+    return NextResponse.json(
+      { error: `Failed to fetch league ${leagueId}` },
+      { status: 500 }
+    );
+  }
+
   const standings = league.standings.results as LeagueEntry[];
-  const players: Player[] = await getPlayers();
+
+  const players: Player[] = (await getPlayers()) ?? [];
 
   const data = await Promise.all(
     standings.map(async (entry) => {
-      const transfers: Transfer[] = await getTeamTransfers(entry.entry);
+      const transfers: Transfer[] = (await getTeamTransfers(entry.entry)) ?? [];
 
       const gwTransfers = transfers.filter((t) => t.event === gw);
 
