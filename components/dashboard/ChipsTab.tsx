@@ -51,9 +51,9 @@ export function ChipsTab({
       <table className="w-full table-auto text-sm">
         <thead>
           <tr className="border-b bg-muted/50 text-foreground">
-            <th className="px-4 py-2 text-left font-semibold">Team</th>
-            <th className="px-4 py-2 text-left font-semibold">Manager</th>
-            <th className="px-4 py-2 text-left font-semibold">Chip Used</th>
+            <th className="px-4 py-2 text-left font-semibold w-1/3">Team</th>
+            <th className="px-4 py-2 text-left font-semibold w-1/3">Manager</th>
+            <th className="px-4 py-2 text-left font-semibold w-1/3">Chip Used</th>
           </tr>
         </thead>
         <tbody>
