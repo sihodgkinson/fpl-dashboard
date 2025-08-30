@@ -48,30 +48,14 @@ export function LeagueTable({
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted z-10">
           <tr className="border-b text-foreground font-semibold">
-            <th className="p-2 sm:p-4 text-left w-6/100">
-              Pos
-            </th>
-            <th className="p-2 sm:p-4 text-left w-22/100">
-              Team
-            </th>
-            <th className="p-2 sm:p-4 text-left w-22/100">
-              Manager
-            </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">
-              GW Points
-            </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">
-              Transfers
-            </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">
-              Hit
-            </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">
-              Bench Points
-            </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">
-              Total Points
-            </th>
+            <th className="p-2 sm:p-4 text-left w-6/100">Pos</th>
+            <th className="p-2 sm:p-4 text-left w-22/100">Team</th>
+            <th className="p-2 sm:p-4 text-left w-22/100">Manager</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Transfers</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Hit</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Bench Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Total Points</th>
           </tr>
         </thead>
         <tbody>
@@ -129,7 +113,7 @@ export function LeagueTable({
                       <p className="text-muted-foreground text-xs">No data</p>
                     )
                   }
-                  className="w-72 p-2 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
@@ -162,7 +146,7 @@ export function LeagueTable({
                       </p>
                     )
                   }
-                  className="w-64 p-2 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
@@ -198,7 +182,7 @@ export function LeagueTable({
                       </p>
                     )
                   }
-                  className="w-64 p-2 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
