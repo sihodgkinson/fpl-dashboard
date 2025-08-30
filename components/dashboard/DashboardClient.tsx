@@ -68,24 +68,16 @@ export default function DashboardClient({
 
         {/* ✅ Mobile dropdown for tabs */}
         <div className="block sm:hidden w-full">
-        <Select
-            value={tab}
-            onValueChange={(val) => {
-            setTab(val);
-            if (document.activeElement instanceof HTMLElement) {
-                document.activeElement.blur();
-            }
-            }}
-        >
+          <Select value={tab} onValueChange={setTab}>
             <SelectTrigger className="w-full !h-12 text-base">
-            <SelectValue placeholder="Select view" />
+              <SelectValue placeholder="Select view" />
             </SelectTrigger>
             <SelectContent>
-            <SelectItem value="league">League Table</SelectItem>
-            <SelectItem value="transfers">Transfers</SelectItem>
-            <SelectItem value="chips">Chips</SelectItem>
+              <SelectItem value="league">League Table</SelectItem>
+              <SelectItem value="transfers">Transfers</SelectItem>
+              <SelectItem value="chips">Chips</SelectItem>
             </SelectContent>
-        </Select>
+          </Select>
         </div>
 
         {/* ✅ Desktop tabs (triggers only) */}
