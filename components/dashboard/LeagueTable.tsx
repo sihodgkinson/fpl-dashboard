@@ -85,7 +85,7 @@ export function LeagueTable({
                 {entry.gwPoints}
               </td>
               <td className="px-4 py-2 text-right font-mono">
-                <HoverCard>
+                <HoverCard openDelay={50} closeDelay={50}>
                   <HoverCardTrigger asChild>
                     <button className="cursor-pointer underline decoration-dotted">
                       {entry.transfers}
@@ -95,9 +95,9 @@ export function LeagueTable({
                     {entry.transfersList && entry.transfersList.length > 0 ? (
                       <ul className="space-y-1 text-sm">
                         {entry.transfersList.map((t, i) => (
-                          <li key={i} className="flex justify-between">
+                          <li key={i}>
                             <span className="text-muted-foreground">{t.out}</span>
-                            <span className="text-muted-foreground">→</span>
+                            <span className="text-muted-foreground mx-2">→</span>
                             <span className="text-muted-foreground">{t.in}</span>
                           </li>
                         ))}
