@@ -40,7 +40,7 @@ export default async function DashboardPage({
   return (
     <>
       {/* Header with selectors */}
-      <header className="border-b px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6">
+      <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
   <div className="flex flex-wrap items-center gap-2 justify-between">
     {/* Left side: League + Gameweek selectors */}
     <div className="flex flex-wrap gap-2">
@@ -58,7 +58,7 @@ export default async function DashboardPage({
 </header>
 
       {/* Main content */}
-      <main className="p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {/* Stats cards */}
         <LeagueStatsCards leagueId={selectedLeagueId} currentGw={currentGw} />
 
