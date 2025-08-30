@@ -56,7 +56,7 @@ export function ChipsTab({
     >
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted z-10">
-          <tr className="border-b bg-muted/50 text-foreground font-semibold">
+          <tr className="border-b text-foreground font-semibold bg-card">
             <th className="p-2 sm:p-4 text-left w-1/3">Team</th>
             <th className="p-2 sm:p-4 text-left w-1/3 hidden sm:table-cell">
               Manager
