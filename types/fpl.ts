@@ -77,5 +77,15 @@ export interface EnrichedStanding {
   hit: number;
   benchPoints: number;
   rank: number;
-  movement: number; // optional, since we may add movement later
+  movement: number;
+  gwPlayers: {
+    name: string;
+    points: number;
+    isCaptain: boolean;
+    isViceCaptain: boolean;
+  }[];
+  benchPlayers: {
+    name: string;
+    points: number;
+  }[];
 }

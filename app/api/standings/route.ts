@@ -22,8 +22,14 @@ export async function GET(req: Request) {
     player_name: string;
   }[];
 
-  // fetch all players once (to resolve transfer names)
+  // fetch all players once (to resolve names)
   const players = await getPlayers();
+
+  // fetch live data once (for player points)
+  const liveData = await getLiveEventData(gw);
+  const livePointsMap = new Map(
+    liveData.map((p) => [p.id, p.stats.total_points])
+  );
 
   const enrichedStandings: EnrichedStanding[] = await Promise.all(
     standings.map(async (entry) => {
@@ -34,11 +40,6 @@ export async function GET(req: Request) {
 
       // If current GW, recalc live points
       if (gw === currentGw) {
-        const liveData = await getLiveEventData(gw);
-        const livePointsMap = new Map(
-          liveData.map((p) => [p.id, p.stats.total_points])
-        );
-
         gwPoints = teamData.picks.reduce((sum, pick) => {
           const playerPoints = livePointsMap.get(pick.element) ?? 0;
           return sum + playerPoints * pick.multiplier;
@@ -49,6 +50,37 @@ export async function GET(req: Request) {
           teamData.entry_history.points +
           gwPoints;
       }
+
+      // --- Split starters and bench ---
+      const starters = teamData.picks.filter((pick) => pick.multiplier > 0);
+      const bench = teamData.picks.filter((pick) => pick.multiplier === 0);
+
+      // --- Build gwPlayers (starters only, sorted by points) ---
+      const gwPlayers = starters
+        .map((pick) => {
+          const player = players.find((p) => p.id === pick.element);
+          const basePoints = livePointsMap.get(pick.element) ?? 0;
+          return {
+            name: player?.web_name ?? "Unknown",
+            points: basePoints * pick.multiplier,
+            isCaptain: pick.is_captain,
+            isViceCaptain: pick.is_vice_captain,
+          };
+        })
+        .sort((a, b) => b.points - a.points);
+
+      // --- Build benchPlayers ---
+      const benchPlayers = bench.map((pick) => {
+        const player = players.find((p) => p.id === pick.element);
+        const basePoints = livePointsMap.get(pick.element) ?? 0;
+        return {
+          name: player?.web_name ?? "Unknown",
+          points: basePoints,
+        };
+      });
+
+      // --- Calculate bench points ---
+      const benchPoints = benchPlayers.reduce((sum, p) => sum + p.points, 0);
 
       // --- Fetch transfers for this team ---
       const transfers = await getTeamTransfers(entry.entry);
@@ -68,9 +100,11 @@ export async function GET(req: Request) {
         transfers: gwTransfers.length,
         transfersList,
         hit: -teamData.entry_history.event_transfers_cost,
-        benchPoints: teamData.entry_history.points_on_bench,
+        benchPoints,
         rank: 0, // placeholder, will assign below
         movement: 0, // placeholder, will assign below
+        gwPlayers,
+        benchPlayers,
       };
     })
   );

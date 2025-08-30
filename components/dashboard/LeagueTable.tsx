@@ -82,7 +82,31 @@ export function LeagueTable({
               <td className="px-4 py-2">{entry.entry_name}</td>
               <td className="px-4 py-2">{entry.player_name}</td>
               <td className="px-4 py-2 text-right font-mono">
-                {entry.gwPoints}
+                <HoverCard openDelay={50} closeDelay={50}>
+                  <HoverCardTrigger asChild>
+                    <button className="cursor-pointer underline decoration-dotted">
+                      {entry.gwPoints}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="p-4 rounded-sm border bg-popover text-popover-foreground shadow-sm">
+                    {entry.gwPlayers && entry.gwPlayers.length > 0 ? (
+                      <ul className="space-y-1 text-sm">
+                        {entry.gwPlayers.map((p, i) => (
+                          <li key={i} className="flex justify-between text-muted-foreground">
+                            <span>
+                              {p.name}
+                              {p.isCaptain && " (C)"}
+                              {p.isViceCaptain && " (VC)"}
+                            </span>
+                            <span className="font-mono">{p.points}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground text-xs">No data</p>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
               </td>
               <td className="px-4 py-2 text-right font-mono">
                 <HoverCard openDelay={50} closeDelay={50}>
@@ -110,7 +134,27 @@ export function LeagueTable({
               </td>
               <td className="px-4 py-2 text-right font-mono">{entry.hit}</td>
               <td className="px-4 py-2 text-right font-mono">
-                {entry.benchPoints}
+                <HoverCard openDelay={0} closeDelay={0}>
+                  <HoverCardTrigger asChild>
+                    <button className="cursor-pointer underline decoration-dotted">
+                      {entry.benchPoints}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="p-4 rounded-sm border bg-popover text-popover-foreground shadow-sm">
+                    {entry.benchPlayers && entry.benchPlayers.length > 0 ? (
+                      <ul className="space-y-1 text-sm">
+                        {entry.benchPlayers.map((p, i) => (
+                          <li key={i} className="flex justify-between text-muted-foreground">
+                            <span>{p.name}</span>
+                            <span className="font-mono">{p.points}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground text-xs">No bench players</p>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
               </td>
               <td className="px-4 py-2 text-right font-mono">
                 {entry.totalPoints}
