@@ -113,7 +113,7 @@ export function LeagueTable({
                       <p className="text-muted-foreground text-xs">No data</p>
                     )
                   }
-                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="w-48 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
@@ -146,7 +146,7 @@ export function LeagueTable({
                       </p>
                     )
                   }
-                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="w-56 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
@@ -182,7 +182,7 @@ export function LeagueTable({
                       </p>
                     )
                   }
-                  className="p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                  className="w-40 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
                 />
               </td>
 
