@@ -53,7 +53,7 @@ function StatCard({
         {displayValue}
       </h2>
       <div className="leading-tight">
-        <p className="text-sm font-semibold">{team}</p>
+        <p className="text-base font-semibold">{team}</p>
         <p className="text-sm">{manager}</p>
       </div>
     </Card>
@@ -84,25 +84,25 @@ export function LeagueStatsCards({
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
       <StatCard
-        title="Most Points"
+        title="Most GW Points"
         value={stats.mostPoints.gwPoints}
         team={stats.mostPoints.entry_name}
         manager={stats.mostPoints.player_name}
       />
       <StatCard
-        title="Fewest Points"
+        title="Fewest GW Points"
         value={stats.fewestPoints.gwPoints}
         team={stats.fewestPoints.entry_name}
         manager={stats.fewestPoints.player_name}
       />
       <StatCard
-        title="Most Bench Points"
+        title="Most GW Bench Points"
         value={stats.mostBench.benchPoints}
         team={stats.mostBench.entry_name}
         manager={stats.mostBench.player_name}
       />
       <StatCard
-        title="Most Transfers"
+        title="Most GW Transfers"
         value={stats.mostTransfers.transfers}
         team={stats.mostTransfers.entry_name}
         manager={stats.mostTransfers.player_name}
