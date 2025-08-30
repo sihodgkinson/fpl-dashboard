@@ -42,7 +42,7 @@ export function LeagueTable({
       className="
         w-full overflow-x-auto rounded-md border border-border
         h-auto overflow-y-visible
-        sm:h-[calc(100vh-435px)] sm:overflow-y-auto
+        lg:h-[calc(100vh-435px)] sm:overflow-y-auto
       "
     >
       <table className="w-full table-auto text-sm">
