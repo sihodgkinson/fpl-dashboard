@@ -82,7 +82,7 @@ export function LeagueStatsCards({
   const { stats } = data;
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-4">
       <StatCard
         title="Most GW Points"
         value={stats.mostPoints.gwPoints}
