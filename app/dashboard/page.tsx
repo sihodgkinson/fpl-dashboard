@@ -72,12 +72,34 @@ export default async function DashboardPage({
         {/* Tabs below cards */}
         <Tabs defaultValue="league" className="w-full">
           <TabsList>
-            <TabsTrigger value="league" type="button" className="px-3 sm:px-4 focus:scroll-m-0">League Table</TabsTrigger>
-            <TabsTrigger value="transfers" type="button" className="px-3 sm:px-4 focus:scroll-m-0">Transfers</TabsTrigger>
-            <TabsTrigger value="chips" type="button" className="px-3 sm:px-4 focus:scroll-m-0">Chips</TabsTrigger>
+            <TabsTrigger
+              value="league"
+              type="button"
+              className="px-3 sm:px-4 focus:scroll-m-0"
+            >
+              League Table
+            </TabsTrigger>
+            <TabsTrigger
+              value="transfers"
+              type="button"
+              className="px-3 sm:px-4 focus:scroll-m-0"
+            >
+              Transfers
+            </TabsTrigger>
+            <TabsTrigger
+              value="chips"
+              type="button"
+              className="px-3 sm:px-4 focus:scroll-m-0"
+            >
+              Chips
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="league" className="mt-4">
+          <TabsContent
+            value="league"
+            forceMount
+            className="mt-4 data-[state=inactive]:hidden"
+          >
             <LeagueTable
               leagueId={selectedLeagueId}
               gw={gw}
@@ -85,11 +107,19 @@ export default async function DashboardPage({
             />
           </TabsContent>
 
-          <TabsContent value="transfers" className="mt-4">
+          <TabsContent
+            value="transfers"
+            forceMount
+            className="mt-4 data-[state=inactive]:hidden"
+          >
             <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
 
-          <TabsContent value="chips" className="mt-4">
+          <TabsContent
+            value="chips"
+            forceMount
+            className="mt-4 data-[state=inactive]:hidden"
+          >
             <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
         </Tabs>
