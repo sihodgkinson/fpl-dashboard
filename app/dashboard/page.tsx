@@ -41,21 +41,28 @@ export default async function DashboardPage({
     <>
       {/* Header with selectors */}
       <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
-  <div className="flex flex-wrap items-center gap-2 justify-between">
-    {/* Left side: League + Gameweek selectors */}
-    <div className="flex flex-wrap gap-2">
-      <LeagueSelector
-        leagues={leagues}
-        selectedLeagueId={selectedLeagueId}
-        currentGw={currentGw}
-      />
-      <GameweekSelector currentGw={currentGw} maxGw={maxGw} />
-    </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          {/* Top row: League selector + Dark mode toggle */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <LeagueSelector
+              leagues={leagues}
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              className="flex-1 sm:flex-none !h-12 text-base sm:h-9 sm:text-sm"
+            />
+            <ModeToggle className="h-12 w-12 sm:h-9 sm:w-9" />
+          </div>
 
-    {/* Right side: Mode toggle */}
-    <ModeToggle />
-  </div>
-</header>
+          {/* Bottom row (on mobile): Gameweek selector + nav buttons */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <GameweekSelector
+              currentGw={currentGw}
+              maxGw={maxGw}
+              className="flex-1 sm:flex-none !h-12 text-base sm:h-9 sm:text-sm"
+            />
+          </div>
+        </div>
+      </header>
 
       {/* Main content */}
       <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">

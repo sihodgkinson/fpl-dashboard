@@ -10,13 +10,19 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils"; // shadcn utility for merging class names
 
 interface GameweekSelectorProps {
   currentGw: number;
   maxGw: number;
+  className?: string; // NEW
 }
 
-export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
+export function GameweekSelector({
+  currentGw,
+  maxGw,
+  className,
+}: GameweekSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -45,9 +51,9 @@ export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full sm:w-auto">
       <Select onValueChange={handleChange} value={String(selectedGw)}>
-        <SelectTrigger className="w-40">
+        <SelectTrigger className={cn("w-40", className)}>
           <SelectValue placeholder="Select GW" />
         </SelectTrigger>
         <SelectContent>
@@ -64,6 +70,7 @@ export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
         size="icon"
         onClick={handlePrev}
         disabled={selectedGw <= 1}
+        className="h-12 w-12 sm:h-9 sm:w-9"
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -73,6 +80,7 @@ export function GameweekSelector({ currentGw, maxGw }: GameweekSelectorProps) {
         size="icon"
         onClick={handleNext}
         disabled={selectedGw >= maxGw}
+        className="h-12 w-12 sm:h-9 sm:w-9"
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

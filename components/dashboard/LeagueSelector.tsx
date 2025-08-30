@@ -8,21 +8,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils"; // shadcn utility for merging class names
 
 interface League {
   id: number;
   name: string;
 }
 
+interface LeagueSelectorProps {
+  leagues: League[];
+  selectedLeagueId: number;
+  currentGw: number;
+  className?: string; // NEW
+}
+
 export function LeagueSelector({
   leagues,
   selectedLeagueId,
   currentGw,
-}: {
-  leagues: League[];
-  selectedLeagueId: number;
-  currentGw: number;
-}) {
+  className,
+}: LeagueSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const gw = searchParams.get("gw") || currentGw;
@@ -34,7 +39,7 @@ export function LeagueSelector({
         router.push(`/dashboard?leagueId=${value}&gw=${gw}`);
       }}
     >
-      <SelectTrigger className="w-56">
+      <SelectTrigger className={cn("w-56", className)}>
         <SelectValue placeholder="Select League" />
       </SelectTrigger>
       <SelectContent>
