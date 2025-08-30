@@ -98,7 +98,7 @@ export default async function DashboardPage({
           <TabsContent
             value="league"
             forceMount
-            className="mt-2 lg:mt-4 data-[state=inactive]:hidden"
+            className="mt-2 sm:mt-4 data-[state=inactive]:hidden"
           >
             <LeagueTable
               leagueId={selectedLeagueId}
@@ -110,7 +110,7 @@ export default async function DashboardPage({
           <TabsContent
             value="transfers"
             forceMount
-            className="mt-2 lg:mt-4 data-[state=inactive]:hidden"
+            className="mt-2 sm:mt-4 data-[state=inactive]:hidden"
           >
             <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
@@ -118,7 +118,7 @@ export default async function DashboardPage({
           <TabsContent
             value="chips"
             forceMount
-            className="mt-2 lg:mt-4 data-[state=inactive]:hidden"
+            className="mt-2 sm:mt-4 data-[state=inactive]:hidden"
           >
             <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </TabsContent>
