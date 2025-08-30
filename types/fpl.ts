@@ -73,6 +73,7 @@ export interface EnrichedStanding {
   gwPoints: number;
   totalPoints: number;
   transfers: number;
+  transfersList: { in: string; out: string }[];
   hit: number;
   benchPoints: number;
   rank: number;

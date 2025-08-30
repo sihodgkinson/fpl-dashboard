@@ -3,6 +3,8 @@ import {
   getClassicLeague,
   getTeamEventData,
   getLiveEventData,
+  getTeamTransfers,
+  getPlayers,
   TeamEventData,
 } from "@/lib/fpl";
 import { EnrichedStanding } from "@/types/fpl";
@@ -19,6 +21,9 @@ export async function GET(req: Request) {
     entry_name: string;
     player_name: string;
   }[];
+
+  // fetch all players once (to resolve transfer names)
+  const players = await getPlayers();
 
   const enrichedStandings: EnrichedStanding[] = await Promise.all(
     standings.map(async (entry) => {
@@ -45,13 +50,23 @@ export async function GET(req: Request) {
           gwPoints;
       }
 
+      // --- Fetch transfers for this team ---
+      const transfers = await getTeamTransfers(entry.entry);
+      const gwTransfers = transfers.filter((t) => t.event === gw);
+
+      const transfersList = gwTransfers.map((t) => ({
+        in: players.find((p) => p.id === t.element_in)?.web_name ?? "Unknown",
+        out: players.find((p) => p.id === t.element_out)?.web_name ?? "Unknown",
+      }));
+
       return {
         entry: entry.entry,
         entry_name: entry.entry_name,
         player_name: entry.player_name,
         gwPoints,
         totalPoints,
-        transfers: teamData.entry_history.event_transfers,
+        transfers: gwTransfers.length,
+        transfersList,
         hit: -teamData.entry_history.event_transfers_cost,
         benchPoints: teamData.entry_history.points_on_bench,
         rank: 0, // placeholder, will assign below

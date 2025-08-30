@@ -3,6 +3,11 @@
 import useSWR from "swr";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { EnrichedStanding } from "@/types/fpl";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "@/components/ui/hover-card";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -80,7 +85,28 @@ export function LeagueTable({
                 {entry.gwPoints}
               </td>
               <td className="px-4 py-2 text-right font-mono">
-                {entry.transfers}
+                <HoverCard>
+                  <HoverCardTrigger asChild>
+                    <button className="cursor-pointer underline decoration-dotted">
+                      {entry.transfers}
+                    </button>
+                  </HoverCardTrigger>
+                  <HoverCardContent>
+                    {entry.transfersList && entry.transfersList.length > 0 ? (
+                      <ul className="space-y-1 text-sm">
+                        {entry.transfersList.map((t, i) => (
+                          <li key={i} className="flex justify-between">
+                            <span className="text-muted-foreground">{t.out}</span>
+                            <span className="text-muted-foreground">→</span>
+                            <span className="text-muted-foreground">{t.in}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted-foreground text-sm">No transfers</p>
+                    )}
+                  </HoverCardContent>
+                </HoverCard>
               </td>
               <td className="px-4 py-2 text-right font-mono">{entry.hit}</td>
               <td className="px-4 py-2 text-right font-mono">
