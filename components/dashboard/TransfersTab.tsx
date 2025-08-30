@@ -38,7 +38,7 @@ export function TransfersTab({
       className="
         w-full overflow-x-auto rounded-md border border-border
         h-auto overflow-y-visible
-        sm:h-[calc(100vh-395px)] sm:overflow-y-auto
+        sm:h-[calc(100vh-412px)] sm:overflow-y-auto
       "
     >
       <table className="w-full table-auto text-sm">
