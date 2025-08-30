@@ -58,22 +58,22 @@ export function LeagueTable({
               className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
             >
               <td className="px-4 py-2 font-mono">
-  <div className="flex items-center gap-1">
-    {/* Only rank here */}
-    <span>{entry.rank}</span>
+              <div className="flex items-center gap-1">
+                {/* Only rank here */}
+                <span>{entry.rank}</span>
 
-    {/* Movement indicator only */}
-    {entry.movement > 0 && (
-      <ChevronUp className="h-4 w-4 text-green-600" />
-    )}
-    {entry.movement < 0 && (
-      <ChevronDown className="h-4 w-4 text-red-600" />
-    )}
-    {entry.movement === 0 && (
-      <Minus className="h-4 w-4 text-muted-foreground" />
-    )}
-  </div>
-</td>
+                {/* Movement indicator only */}
+                {entry.movement > 0 && (
+                  <ChevronUp className="h-4 w-4 text-green-600" />
+                )}
+                {entry.movement < 0 && (
+                  <ChevronDown className="h-4 w-4 text-red-600" />
+                )}
+                {entry.movement === 0 && (
+                  <Minus className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
+            </td>
               <td className="px-4 py-2">{entry.entry_name}</td>
               <td className="px-4 py-2">{entry.player_name}</td>
               <td className="px-4 py-2 text-right font-mono">
