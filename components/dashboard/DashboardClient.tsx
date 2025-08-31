@@ -18,12 +18,17 @@ import {
 } from "@/components/ui/select";
 import { EnrichedStanding } from "@/types/fpl";
 
-
 interface DashboardClientProps {
   leagues: {
     id: number;
     name: string;
     standings: EnrichedStanding[] | null;
+    stats: {
+      mostPoints: EnrichedStanding | null;
+      fewestPoints: EnrichedStanding | null;
+      mostBench: EnrichedStanding | null;
+      mostTransfers: EnrichedStanding | null;
+    } | null;
   }[];
   selectedLeagueId: number;
   currentGw: number;
@@ -73,7 +78,12 @@ export default function DashboardClient({
       {/* Main content */}
       <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
         {/* Stats cards (still fetches live data per league) */}
-        <LeagueStatsCards leagueId={selectedLeagueId} currentGw={currentGw} />
+                <LeagueStatsCards
+          stats={selectedLeague?.stats ?? null}
+          leagueId={selectedLeagueId}
+          gw={gw}
+          currentGw={currentGw}
+        />
 
         {/* ✅ Mobile dropdown for tabs */}
         <div className="block sm:hidden w-full">

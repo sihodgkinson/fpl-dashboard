@@ -4,7 +4,6 @@ import useSWR from "swr";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedStanding } from "@/types/fpl";
-import { useSearchParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -53,51 +52,63 @@ function StatCard({
   );
 }
 
-export function LeagueStatsCards({
-  leagueId,
-  currentGw,
-}: {
+interface LeagueStatsCardsProps {
+  stats: {
+    mostPoints: EnrichedStanding | null;
+    fewestPoints: EnrichedStanding | null;
+    mostBench: EnrichedStanding | null;
+    mostTransfers: EnrichedStanding | null;
+  } | null;
   leagueId: number;
+  gw: number;
   currentGw: number;
-}) {
-  const searchParams = useSearchParams();
-  const gw = Number(searchParams.get("gw")) || currentGw;
+}
+
+export function LeagueStatsCards({
+  stats,
+  leagueId,
+  gw,
+  currentGw,
+}: LeagueStatsCardsProps) {
+  const shouldUsePreloaded = stats && gw === currentGw;
 
   const { data, error } = useSWR<StandingsResponse>(
-    `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+    shouldUsePreloaded
+      ? null // ✅ skip SWR if we already have preloaded stats
+      : `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 30000 }
   );
 
   if (error) return <div>Error loading stats</div>;
 
-  const stats = data?.stats;
+  const effectiveStats = shouldUsePreloaded ? stats : data?.stats;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
       <StatCard
         title="Most GW Points"
-        value={stats?.mostPoints?.gwPoints ?? null}
-        team={stats?.mostPoints?.entry_name ?? null}
-        manager={stats?.mostPoints?.player_name ?? null}
+        value={effectiveStats?.mostPoints?.gwPoints ?? null}
+        team={effectiveStats?.mostPoints?.entry_name ?? null}
+        manager={effectiveStats?.mostPoints?.player_name ?? null}
       />
       <StatCard
         title="Fewest GW Points"
-        value={stats?.fewestPoints?.gwPoints ?? null}
-        team={stats?.fewestPoints?.entry_name ?? null}
-        manager={stats?.fewestPoints?.player_name ?? null}
+        value={effectiveStats?.fewestPoints?.gwPoints ?? null}
+        team={effectiveStats?.fewestPoints?.entry_name ?? null}
+        manager={effectiveStats?.fewestPoints?.player_name ?? null}
       />
       <StatCard
         title="Most GW Bench Points"
-        value={stats?.mostBench?.benchPoints ?? null}
-        team={stats?.mostBench?.entry_name ?? null}
-        manager={stats?.mostBench?.player_name ?? null}
+        value={effectiveStats?.mostBench?.benchPoints ?? null}
+        team={effectiveStats?.mostBench?.entry_name ?? null}
+        manager={effectiveStats?.mostBench?.player_name ?? null}
       />
       <StatCard
         title="Most GW Transfers"
-        value={stats?.mostTransfers?.transfers ?? null}
-        team={stats?.mostTransfers?.entry_name ?? null}
-        manager={stats?.mostTransfers?.player_name ?? null}
+        value={effectiveStats?.mostTransfers?.transfers ?? null}
+        team={effectiveStats?.mostTransfers?.entry_name ?? null}
+        manager={effectiveStats?.mostTransfers?.player_name ?? null}
       />
     </div>
   );

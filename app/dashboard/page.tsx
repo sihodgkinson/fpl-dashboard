@@ -28,6 +28,12 @@ export default async function DashboardPage({
     id: number;
     name: string;
     standings: EnrichedStanding[] | null;
+    stats: {
+      mostPoints: EnrichedStanding | null;
+      fewestPoints: EnrichedStanding | null;
+      mostBench: EnrichedStanding | null;
+      mostTransfers: EnrichedStanding | null;
+    } | null;
   }[] = await Promise.all(
     leagueIds.map(async (id) => {
       const data = await getClassicLeague(id);
@@ -37,19 +43,45 @@ export default async function DashboardPage({
           id,
           name: "Unavailable League",
           standings: null,
+          stats: null,
         };
       }
 
-      // ✅ Enrich standings only for the current GW
       let standings: EnrichedStanding[] | null = null;
+      let stats: {
+        mostPoints: EnrichedStanding | null;
+        fewestPoints: EnrichedStanding | null;
+        mostBench: EnrichedStanding | null;
+        mostTransfers: EnrichedStanding | null;
+      } | null = null;
+
+      // ✅ Enrich standings + compute stats only for the current GW
       if (gw === currentGw) {
         standings = await enrichStandings(data.standings.results, gw, currentGw);
+
+        if (standings.length > 0) {
+          stats = {
+            mostPoints: standings.reduce((a, b) =>
+              b.gwPoints > a.gwPoints ? b : a
+            ),
+            fewestPoints: standings.reduce((a, b) =>
+              b.gwPoints < a.gwPoints ? b : a
+            ),
+            mostBench: standings.reduce((a, b) =>
+              b.benchPoints > a.benchPoints ? b : a
+            ),
+            mostTransfers: standings.reduce((a, b) =>
+              b.transfers > a.transfers ? b : a
+            ),
+          };
+        }
       }
 
       return {
         id,
         name: data.league?.name ?? "Unknown League",
         standings,
+        stats,
       };
     })
   );
