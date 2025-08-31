@@ -1,4 +1,5 @@
-// lib/fpl.ts
+// src/lib/fpl.ts
+import { supabase } from "@/lib/db"; // ✅ Supabase client
 import {
   ClassicLeagueResponse,
   FplEvent,
@@ -36,13 +37,138 @@ async function fplFetch<T>(
 /*                                League Data                                 */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Fetch league standings with Supabase caching
+ */
 export async function getClassicLeague(
-  leagueId: number
+  leagueId: number,
+  gw: number,
+  currentGw: number
 ): Promise<ClassicLeagueResponse | null> {
-  return fplFetch<ClassicLeagueResponse>(
-    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/`,
-    { revalidate: 60 }
+  // 1. For past GWs, check Supabase first
+  if (gw < currentGw) {
+    const { data, error } = await supabase
+      .from("standings")
+      .select("*")
+      .eq("league_id", leagueId)
+      .eq("gameweek_id", gw);
+
+    if (error) {
+      console.error("Supabase select error:", error.message);
+    }
+
+    if (data && data.length > 0) {
+      console.log("✅ Returning cached standings from Supabase");
+
+      // ✅ Fetch league name from Supabase
+      const { data: leagueData, error: leagueError } = await supabase
+        .from("leagues")
+        .select("name")
+        .eq("id", leagueId)
+        .single();
+
+      if (leagueError) {
+        console.error("Supabase league fetch error:", leagueError.message);
+      }
+
+      return {
+        league: { id: leagueId, name: leagueData?.name ?? "Unknown League" },
+        standings: { results: data },
+      } as ClassicLeagueResponse;
+    }
+  }
+
+  // 2. Otherwise, fetch from FPL API
+  const json = await fplFetch<ClassicLeagueResponse>(
+    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/?event=${gw}`,
+    { cache: "no-store" }
   );
+
+  if (!json) return null;
+
+  // ✅ 2a. Ensure league exists in Supabase
+  if (json.league) {
+    const { error: leagueError } = await supabase.from("leagues").upsert(
+      {
+        id: json.league.id,
+        name: json.league.name,
+      },
+      { onConflict: "id" }
+    );
+
+    if (leagueError) {
+      console.error("Supabase league insert error:", leagueError.message);
+    } else {
+      console.log(`✅ League ${json.league.name} ensured in Supabase`);
+    }
+  }
+
+  // ✅ 2b. Ensure managers exist in Supabase
+  if (json.standings?.results) {
+    const managerRows = json.standings.results.map((s) => ({
+      id: s.entry,
+      name: s.player_name,
+      team_name: s.entry_name,
+      league_id: leagueId,
+    }));
+
+    const { error: managerError } = await supabase
+      .from("managers")
+      .upsert(managerRows, { onConflict: "id" });
+
+    if (managerError) {
+      console.error("Supabase manager insert error:", managerError.message);
+    } else {
+      console.log("✅ Managers ensured in Supabase");
+    }
+  }
+
+  // ✅ 2c. Ensure gameweek exists in Supabase
+  const bootstrap = await getBootstrapStatic();
+  if (bootstrap) {
+    const gwData = bootstrap.events.find((e) => e.id === gw);
+    if (gwData) {
+      const { error: gwError } = await supabase.from("gameweeks").upsert(
+        {
+          id: gwData.id,
+          deadline: gwData.deadline_time,
+        },
+        { onConflict: "id" }
+      );
+      if (gwError) {
+        console.error("Supabase gameweek insert error:", gwError.message);
+      } else {
+        console.log(`✅ Gameweek ${gwData.id} ensured in Supabase`);
+      }
+    }
+  }
+
+  // 3. Save standings to Supabase if it's a past GW
+  if (gw < currentGw && json.standings?.results) {
+    const rows = json.standings.results.map((s) => ({
+      league_id: leagueId,
+      manager_id: s.entry,
+      gameweek_id: gw,
+      gw_points: s.event_total,
+      total_points: s.total,
+      rank: s.rank,
+      transfers: s.event_transfers ?? 0,
+      bench_points: s.entry_bench_points ?? 0,
+      chip_used: s.active_chip ?? null,
+    }));
+
+    const { error } = await supabase.from("standings").upsert(rows, {
+      onConflict: "league_id,manager_id,gameweek_id",
+    });
+
+    if (error) {
+      console.error("Supabase insert error:", error.message, error.details);
+    } else {
+      console.log("✅ Cached standings in Supabase");
+    }
+  }
+
+  return json;
 }
 
 export async function getEnrichedStandings(

@@ -12,6 +12,11 @@ export interface LeagueStandingsEntry {
   last_rank: number; // previous rank
   event_total: number; // points scored in the current GW
   total: number; // total points overall
+
+  // ✅ Extra fields that appear in the API response
+  event_transfers?: number; // transfers made this GW
+  entry_bench_points?: number; // bench points this GW
+  active_chip?: string | null; // chip used this GW (if any)
 }
 
 /**

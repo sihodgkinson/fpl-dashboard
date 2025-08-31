@@ -36,7 +36,8 @@ export default async function DashboardPage({
     } | null;
   }[] = await Promise.all(
     leagueIds.map(async (id) => {
-      const data = await getClassicLeague(id);
+      // ✅ Pass gw and currentGw into getClassicLeague
+      const data = await getClassicLeague(id, gw, currentGw);
 
       if (!data) {
         return {
