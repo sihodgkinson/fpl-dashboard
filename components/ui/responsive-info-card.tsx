@@ -36,7 +36,14 @@ export function ResponsiveInfoCard({
     return (
       <Popover>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
-        <PopoverContent className={className}>{content}</PopoverContent>
+        <PopoverContent
+          side="top"          // ✅ prefer above trigger
+          sideOffset={4}      // ✅ small gap
+          align="center"
+          className={`z-50 max-h-[80vh] overflow-y-auto ${className ?? ""}`}
+        >
+          {content}
+        </PopoverContent>
       </Popover>
     );
   }
@@ -44,7 +51,14 @@ export function ResponsiveInfoCard({
   return (
     <HoverCard openDelay={50} closeDelay={50}>
       <HoverCardTrigger asChild>{trigger}</HoverCardTrigger>
-      <HoverCardContent className={className}>{content}</HoverCardContent>
+      <HoverCardContent
+        side="top"          // ✅ prefer above trigger
+        sideOffset={4}
+        align="center"
+        className={`z-50 max-h-[80vh] overflow-y-auto ${className ?? ""}`}
+      >
+        {content}
+      </HoverCardContent>
     </HoverCard>
   );
 }
