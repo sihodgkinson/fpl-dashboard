@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { LeagueStatsCards } from "@/components/dashboard/LeagueStatsCards";
-import { LeagueTable } from "@/components/dashboard/LeagueTable";
-import { TransfersTab } from "@/components/dashboard/TransfersTab";
-import { ChipsTab } from "@/components/dashboard/ChipsTab";
-import { GameweekSelector } from "@/components/dashboard/GameweekSelector";
-import { LeagueSelector } from "@/components/dashboard/LeagueSelector";
+import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
+import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
+import { TransfersTab } from "@/app/(dashboard)/[leagueID]/transfers/TransfersTable";
+import { ChipsTab } from "@/app/(dashboard)/[leagueID]/chips/ChipsTable";
+import { GameweekSelector } from "@/components/common/GameweekSelector";
+import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/common/ModeToggle";
 import {
   Select,
   SelectContent,

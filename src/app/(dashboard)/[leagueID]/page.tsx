@@ -3,8 +3,8 @@ import {
   getCurrentGameweek,
   getMaxGameweek,
 } from "@/lib/fpl";
-import { enrichStandings } from "@/lib/enrichStandings";
-import DashboardClient from "@/components/dashboard/DashboardClient";
+import { enrichStandings } from "@/features/league/utils/enrichStandings";
+import DashboardClient from "@/app/(dashboard)/[leagueID]/DashboardClient";
 import { EnrichedStanding } from "@/types/fpl";
 
 const leagueIds = [430552, 4311, 1295109];
