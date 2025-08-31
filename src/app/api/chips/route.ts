@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { getClassicLeague, getTeamChips, Chip } from "@/lib/fpl";
+import {
+  getClassicLeague,
+  getTeamChips,
+  getCurrentGameweek, // ✅ import this
+  Chip,
+} from "@/lib/fpl";
 
 interface LeagueEntry {
   entry: number;
@@ -12,7 +17,11 @@ export async function GET(req: Request) {
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
-  const league = await getClassicLeague(leagueId);
+  // ✅ fetch current gameweek
+  const currentGw = await getCurrentGameweek();
+
+  // ✅ pass all 3 arguments
+  const league = await getClassicLeague(leagueId, gw, currentGw);
 
   if (!league) {
     return NextResponse.json(

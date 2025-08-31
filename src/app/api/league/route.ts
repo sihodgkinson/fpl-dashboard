@@ -9,7 +9,8 @@ export async function GET(req: Request) {
   const gw = Number(searchParams.get("gw"));
   const currentGw = Number(searchParams.get("currentGw"));
 
-  const data = await getClassicLeague(leagueId);
+  // ✅ pass all 3 arguments
+  const data = await getClassicLeague(leagueId, gw, currentGw);
 
   if (!data) {
     return NextResponse.json(
