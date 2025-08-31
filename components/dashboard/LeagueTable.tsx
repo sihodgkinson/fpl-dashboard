@@ -149,40 +149,71 @@ export function LeagueTable({
 
                   {/* GW Points */}
                   <td className="p-2 sm:p-4 text-right font-mono">
-                    <ResponsiveInfoCard
-                      trigger={
-                        <button className="cursor-pointer underline decoration-dotted">
-                          {entry.gwPoints}
-                        </button>
-                      }
-                      content={
-                        entry.gwPlayers && entry.gwPlayers.length > 0 ? (
-                          <ul className="space-y-1 text-sm">
-                            {entry.gwPlayers.map((p, i) => (
-                              <li
-                                key={i}
-                                className="flex justify-between text-muted-foreground"
-                              >
-                                <span>
-                                  {p.name}
-                                  {p.isCaptain && " (C)"}
-                                  {p.isViceCaptain && " (VC)"}
-                                </span>
-                                <span className="font-mono">{p.points}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="text-muted-foreground text-xs">No data</p>
-                        )
-                      }
-                      className="w-48 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
-                    />
+                    {entry.gwPoints > 0 ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {entry.gwPoints}
+                          </button>
+                        }
+                        content={
+                          entry.gwPlayers && entry.gwPlayers.length > 0 ? (
+                            <ul className="space-y-1 text-sm">
+                              {entry.gwPlayers.map((p, i) => (
+                                <li
+                                  key={i}
+                                  className="flex justify-between text-muted-foreground"
+                                >
+                                  <span>
+                                    {p.name}
+                                    {p.isCaptain && " (C)"}
+                                    {p.isViceCaptain && " (VC)"}
+                                  </span>
+                                  <span className="font-mono">{p.points}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground text-xs">No data</p>
+                          )
+                        }
+                        className="w-48 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{entry.gwPoints}</span>
+                    )}
                   </td>
 
                   {/* Transfers */}
+                  {/* Transfers */}
                   <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
-                    {entry.transfers}
+                    {entry.transfers > 0 ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {entry.transfers}
+                          </button>
+                        }
+                        content={
+                          entry.transfersList && entry.transfersList.length > 0 ? (
+                            <ul className="space-y-1 text-sm">
+                              {entry.transfersList.map((t, i) => (
+                                <li key={i}>
+                                  <span className="text-muted-foreground">{t.out}</span>
+                                  <span className="text-muted-foreground mx-2">→</span>
+                                  <span className="text-muted-foreground">{t.in}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground text-sm">No transfers</p>
+                          )
+                        }
+                        className="w-56 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{entry.transfers}</span>
+                    )}
                   </td>
 
                   {/* Hit */}
@@ -192,7 +223,35 @@ export function LeagueTable({
 
                   {/* Bench Points */}
                   <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
-                    {entry.benchPoints}
+                    {entry.benchPoints > 0 ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {entry.benchPoints}
+                          </button>
+                        }
+                        content={
+                          entry.benchPlayers && entry.benchPlayers.length > 0 ? (
+                            <ul className="space-y-1 text-sm">
+                              {entry.benchPlayers.map((p, i) => (
+                                <li
+                                  key={i}
+                                  className="flex justify-between text-muted-foreground"
+                                >
+                                  <span>{p.name}</span>
+                                  <span className="font-mono">{p.points}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="text-muted-foreground text-xs">No bench players</p>
+                          )
+                        }
+                        className="w-40 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{entry.benchPoints}</span>
+                    )}
                   </td>
 
                   {/* Total Points */}
