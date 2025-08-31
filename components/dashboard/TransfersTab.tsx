@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import { useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -12,6 +13,25 @@ interface TransfersResponse {
     in: string;
     out: string;
   }[];
+}
+
+// ✅ Skeleton row
+function TransferRowSkeleton() {
+  return (
+    <tr className="animate-pulse">
+      <td className="p-2 sm:p-4">
+        <Skeleton className="h-4 w-32 mb-1" />
+        <Skeleton className="h-3 w-20" />
+      </td>
+      <td className="p-2 sm:p-4 hidden sm:table-cell">
+        <Skeleton className="h-4 w-28" />
+      </td>
+      <td className="p-2 sm:p-4">
+        <Skeleton className="h-4 w-40 mb-1" />
+        <Skeleton className="h-4 w-36" />
+      </td>
+    </tr>
+  );
 }
 
 export function TransfersTab({
@@ -27,11 +47,10 @@ export function TransfersTab({
   const { data, error } = useSWR<TransfersResponse[]>(
     `/api/transfers?leagueId=${leagueId}&gw=${gw}`,
     fetcher,
-    { refreshInterval: 60000 } // refresh every 60s
+    { refreshInterval: 60000 }
   );
 
   if (error) return <div>Error loading transfers</div>;
-  if (!data) return <div>Loading...</div>;
 
   return (
     <div
@@ -52,40 +71,43 @@ export function TransfersTab({
           </tr>
         </thead>
         <tbody>
-          {data.map((row, idx) => (
-            <tr
-              key={idx}
-              className="border-b hover:bg-muted/30 last:border-b-0"
-            >
-              {/* Team (with Manager underneath on mobile) */}
-              <td className="p-2 sm:p-4">
-                <div className="font-medium">{row.team}</div>
-                <div className="text-muted-foreground text-xs mt-0.5 block sm:hidden">
-                  {row.manager}
-                </div>
-              </td>
+          {/* ✅ If no data yet, show 5 skeleton rows */}
+          {!data
+            ? [...Array(5)].map((_, i) => <TransferRowSkeleton key={i} />)
+            : data.map((row, idx) => (
+                <tr
+                  key={idx}
+                  className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
+                >
+                  {/* Team (with Manager underneath on mobile) */}
+                  <td className="p-2 sm:p-4">
+                    <div className="font-medium">{row.team}</div>
+                    <div className="text-muted-foreground text-xs mt-0.5 block sm:hidden">
+                      {row.manager}
+                    </div>
+                  </td>
 
-              {/* Manager (hidden on mobile) */}
-              <td className="p-2 sm:p-4 hidden sm:table-cell">
-                {row.manager}
-              </td>
+                  {/* Manager (hidden on mobile) */}
+                  <td className="p-2 sm:p-4 hidden sm:table-cell">
+                    {row.manager}
+                  </td>
 
-              {/* Transfers */}
-              <td className="p-2 sm:p-4">
-                {row.transfers.length > 0 ? (
-                  <div className="space-y-1">
-                    {row.transfers.map((t, i) => (
-                      <div key={i}>
-                        {t.out} → {t.in}
+                  {/* Transfers */}
+                  <td className="p-2 sm:p-4">
+                    {row.transfers.length > 0 ? (
+                      <div className="space-y-1">
+                        {row.transfers.map((t, i) => (
+                          <div key={i}>
+                            {t.out} → {t.in}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground">No transfers</span>
-                )}
-              </td>
-            </tr>
-          ))}
+                    ) : (
+                      <span className="text-muted-foreground">No transfers</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
         </tbody>
       </table>
     </div>

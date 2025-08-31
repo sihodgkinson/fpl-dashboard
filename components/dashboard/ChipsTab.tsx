@@ -2,6 +2,7 @@
 
 import useSWR from "swr";
 import { useSearchParams } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton"; // ✅ add skeleton
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -27,6 +28,24 @@ function formatChipName(chip: string | null): string {
   }
 }
 
+// ✅ Skeleton row for chips
+function ChipRowSkeleton() {
+  return (
+    <tr className="animate-pulse">
+      <td className="p-2 sm:p-4">
+        <Skeleton className="h-4 w-32 mb-1" />
+        <Skeleton className="h-3 w-20" />
+      </td>
+      <td className="p-2 sm:p-4 hidden sm:table-cell">
+        <Skeleton className="h-4 w-28" />
+      </td>
+      <td className="p-2 sm:p-4">
+        <Skeleton className="h-4 w-24" />
+      </td>
+    </tr>
+  );
+}
+
 export function ChipsTab({
   leagueId,
   currentGw,
@@ -44,7 +63,6 @@ export function ChipsTab({
   );
 
   if (error) return <div>Error loading chips</div>;
-  if (!data) return <div>Loading...</div>;
 
   return (
     <div
@@ -65,34 +83,37 @@ export function ChipsTab({
           </tr>
         </thead>
         <tbody>
-          {data.map((row, idx) => (
-            <tr
-              key={idx}
-              className="border-b hover:bg-muted/30 last:border-b-0"
-            >
-              {/* Team (with Manager underneath on mobile) */}
-              <td className="p-2 sm:p-4">
-                <div className="font-medium">{row.team}</div>
-                <div className="text-muted-foreground text-xs mt-0.5 block sm:hidden">
-                  {row.manager}
-                </div>
-              </td>
+          {/* ✅ If no data yet, show 5 skeleton rows */}
+          {!data
+            ? [...Array(5)].map((_, i) => <ChipRowSkeleton key={i} />)
+            : data.map((row, idx) => (
+                <tr
+                  key={idx}
+                  className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
+                >
+                  {/* Team (with Manager underneath on mobile) */}
+                  <td className="p-2 sm:p-4">
+                    <div className="font-medium">{row.team}</div>
+                    <div className="text-muted-foreground text-xs mt-0.5 block sm:hidden">
+                      {row.manager}
+                    </div>
+                  </td>
 
-              {/* Manager (hidden on mobile) */}
-              <td className="p-2 sm:p-4 hidden sm:table-cell">
-                {row.manager}
-              </td>
+                  {/* Manager (hidden on mobile) */}
+                  <td className="p-2 sm:p-4 hidden sm:table-cell">
+                    {row.manager}
+                  </td>
 
-              {/* Chip Used */}
-              <td className="p-2 sm:p-4">
-                {row.chip ? (
-                  <span>{formatChipName(row.chip)}</span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
-                )}
-              </td>
-            </tr>
-          ))}
+                  {/* Chip Used */}
+                  <td className="p-2 sm:p-4">
+                    {row.chip ? (
+                      <span>{formatChipName(row.chip)}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
         </tbody>
       </table>
     </div>
