@@ -2,10 +2,9 @@
 
 import useSWR from "swr";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton"; // ✅ shadcn skeleton
+import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedStanding } from "@/types/fpl";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -26,62 +25,29 @@ function StatCard({
   manager,
 }: {
   title: string;
-  value: number;
-  team: string;
-  manager: string;
+  value: number | null;
+  team: string | null;
+  manager: string | null;
 }) {
-  const [displayValue, setDisplayValue] = useState(value);
-  const [animate, setAnimate] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true); // trigger fade-in on mount
-  }, []);
-
-  useEffect(() => {
-    if (value !== displayValue) {
-      setAnimate(true);
-      setDisplayValue(value);
-      const timeout = setTimeout(() => setAnimate(false), 500);
-      return () => clearTimeout(timeout);
-    }
-  }, [value, displayValue]);
+  if (value === null) {
+    // ✅ Skeleton while loading
+    return (
+      <Card className="p-4">
+        <Skeleton className="h-4 w-24 mb-2" />
+        <Skeleton className="h-5 w-16 mb-3" />
+        <Skeleton className="h-4 w-32 mb-1" />
+        <Skeleton className="h-3 w-20" />
+      </Card>
+    );
+  }
 
   return (
-    <Card
-      className={`p-4 transition-opacity duration-500 ${
-        mounted ? "opacity-100" : "opacity-0"
-      }`}
-    >
+    <Card className="p-4">
       <p className="text-sm text-muted-foreground">{title}</p>
-      <h2
-        className={`text-5xl font-mono font-semi-bold transition-colors ${
-          animate ? "text-primary" : "text-foreground"
-        }`}
-      >
-        {displayValue}
-      </h2>
+      <h2 className="text-5xl font-mono font-semibold">{value}</h2>
       <div className="leading-tight">
         <p className="text-base font-semibold">{team}</p>
         <p className="text-sm">{manager}</p>
-      </div>
-    </Card>
-  );
-}
-
-// ✅ Skeleton version of StatCard
-function StatCardSkeleton() {
-  return (
-    <Card className="p-4 animate-pulse"> {/* ✅ shimmer effect */}
-      {/* Title (text-sm) */}
-      <Skeleton className="h-4 w-28 mb-2" />
-      {/* Big number (text-5xl) */}
-      <Skeleton className="h-9 w-20 mb-3" />
-      <div className="leading-tight">
-        {/* Team name (text-base) */}
-        <Skeleton className="h-5 w-32 mb-1" />
-        {/* Manager name (text-sm) */}
-        <Skeleton className="h-4 w-24" />
       </div>
     </Card>
   );
@@ -105,44 +71,33 @@ export function LeagueStatsCards({
 
   if (error) return <div>Error loading stats</div>;
 
-  if (!data) {
-    // ✅ Show skeleton loader while fetching
-    return (
-      <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
-          <StatCardSkeleton key={i} />
-        ))}
-      </div>
-    );
-  }
-
-  const { stats } = data;
+  const stats = data?.stats;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
       <StatCard
         title="Most GW Points"
-        value={stats.mostPoints.gwPoints}
-        team={stats.mostPoints.entry_name}
-        manager={stats.mostPoints.player_name}
+        value={stats?.mostPoints?.gwPoints ?? null}
+        team={stats?.mostPoints?.entry_name ?? null}
+        manager={stats?.mostPoints?.player_name ?? null}
       />
       <StatCard
         title="Fewest GW Points"
-        value={stats.fewestPoints.gwPoints}
-        team={stats.fewestPoints.entry_name}
-        manager={stats.fewestPoints.player_name}
+        value={stats?.fewestPoints?.gwPoints ?? null}
+        team={stats?.fewestPoints?.entry_name ?? null}
+        manager={stats?.fewestPoints?.player_name ?? null}
       />
       <StatCard
         title="Most GW Bench Points"
-        value={stats.mostBench.benchPoints}
-        team={stats.mostBench.entry_name}
-        manager={stats.mostBench.player_name}
+        value={stats?.mostBench?.benchPoints ?? null}
+        team={stats?.mostBench?.entry_name ?? null}
+        manager={stats?.mostBench?.player_name ?? null}
       />
       <StatCard
         title="Most GW Transfers"
-        value={stats.mostTransfers.transfers}
-        team={stats.mostTransfers.entry_name}
-        manager={stats.mostTransfers.player_name}
+        value={stats?.mostTransfers?.transfers ?? null}
+        team={stats?.mostTransfers?.entry_name ?? null}
+        manager={stats?.mostTransfers?.player_name ?? null}
       />
     </div>
   );
