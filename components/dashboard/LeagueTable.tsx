@@ -10,6 +10,12 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface StandingsResponse {
   standings: EnrichedStanding[];
+  stats?: {
+    mostPoints: EnrichedStanding;
+    fewestPoints: EnrichedStanding;
+    mostBench: EnrichedStanding;
+    mostTransfers: EnrichedStanding;
+  };
 }
 
 interface LeagueTableProps {
@@ -58,7 +64,8 @@ export function LeagueTable({
   currentGw,
   preloadedStandings,
 }: LeagueTableProps) {
-  const shouldUsePreloaded = preloadedStandings && gw === currentGw;
+  const shouldUsePreloaded =
+    preloadedStandings && preloadedStandings.length > 0 && gw === currentGw;
 
   const { data, error } = useSWR<StandingsResponse>(
     shouldUsePreloaded
@@ -70,10 +77,12 @@ export function LeagueTable({
 
   if (error) return <div>Error loading standings</div>;
 
-  // ✅ Decide which standings to use
+  // ✅ Use preloaded if available, otherwise SWR data
   const standings = shouldUsePreloaded
     ? preloadedStandings!
-    : data?.standings ?? [];
+    : data?.standings && Array.isArray(data.standings)
+    ? data.standings
+    : [];
 
   const isLoading = !shouldUsePreloaded && !data;
 
@@ -103,10 +112,11 @@ export function LeagueTable({
         <tbody>
           {isLoading
             ? [...Array(5)].map((_, i) => <TableRowSkeleton key={i} />)
-            : standings.map((entry) => (
+            : standings.length > 0
+            ? standings.map((entry) => (
                 <tr
                   key={entry.entry}
-                  className="border-b hover:bg-muted/30 last:border-b-0 transition-colors opacity-0 animate-fadeIn"
+                  className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
                 >
                   {/* Position + movement */}
                   <td className="p-2 sm:p-4 font-mono">
@@ -190,7 +200,17 @@ export function LeagueTable({
                     {entry.totalPoints}
                   </td>
                 </tr>
-              ))}
+              ))
+            : (
+              <tr>
+                <td
+                  colSpan={8}
+                  className="text-center text-muted-foreground p-4"
+                >
+                  No standings available
+                </td>
+              </tr>
+            )}
         </tbody>
       </table>
     </div>
