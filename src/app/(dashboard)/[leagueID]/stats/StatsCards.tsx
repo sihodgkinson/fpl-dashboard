@@ -75,7 +75,7 @@ export function LeagueStatsCards({
   const { data, error } = useSWR<StandingsResponse>(
     shouldUsePreloaded
       ? null // ✅ skip SWR if we already have preloaded stats
-      : `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+      : `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 30000 }
   );

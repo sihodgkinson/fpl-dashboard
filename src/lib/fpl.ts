@@ -51,7 +51,7 @@ export async function getEnrichedStandings(
   currentGw: number
 ): Promise<EnrichedStanding[] | null> {
   return fplFetch<EnrichedStanding[]>(
-    `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+    `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     { cache: "no-store" }
   );
 }
