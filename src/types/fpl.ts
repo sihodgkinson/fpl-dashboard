@@ -12,8 +12,6 @@ export interface LeagueStandingsEntry {
   last_rank: number; // previous rank
   event_total: number; // points scored in the current GW
   total: number; // total points overall
-
-  // ✅ Extra fields that appear in the API response
   event_transfers?: number; // transfers made this GW
   entry_bench_points?: number; // bench points this GW
   active_chip?: string | null; // chip used this GW (if any)
@@ -75,14 +73,20 @@ export interface FplEvent {
  * Enriched version of a league standings entry.
  * Extends the raw FPL API entry with additional computed fields.
  */
-export interface EnrichedStanding extends LeagueStandingsEntry {
+export interface EnrichedStanding {
+  manager_id: number; // FK to managers.id
+  team_name: string;  // from managers.team_name
+  player_name: string; // from managers.name
+
   gwPoints: number;
   totalPoints: number;
   transfers: number;
   transfersList: { in: string; out: string }[];
   hit: number;
   benchPoints: number;
+  rank: number;
   movement: number;
+
   gwPlayers: {
     name: string;
     points: number;

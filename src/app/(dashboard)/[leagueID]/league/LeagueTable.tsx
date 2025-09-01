@@ -92,9 +92,9 @@ export function LeagueTable({
         <thead className="sticky top-0 bg-muted dark:bg-card z-10">
           <tr className="border-b text-foreground font-semibold">
             <th className="p-2 sm:p-4 text-left w-3/100">Pos</th>
-            <th className="p-2 sm:p-4 text-left w-25/100">Team</th>
+            <th className="p-2 sm:p-4 text-left w-25/100">Team Name</th>
             <th className="p-2 sm:p-4 text-left w-22/100 hidden sm:table-cell">
-              Manager
+              Manager Name
             </th>
             <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
             <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
@@ -115,7 +115,7 @@ export function LeagueTable({
             : standings.length > 0
             ? standings.map((entry) => (
                 <tr
-                  key={entry.entry}
+                  key={entry.manager_id}
                   className="border-b hover:bg-muted/30 last:border-b-0 transition-colors"
                 >
                   {/* Position + movement */}
@@ -136,7 +136,7 @@ export function LeagueTable({
 
                   {/* Team */}
                   <td className="p-2 sm:p-4">
-                    <div className="font-medium">{entry.entry_name}</div>
+                    <div className="font-medium">{entry.team_name}</div>
                     <div className="text-muted-foreground text-xs block sm:hidden">
                       {entry.player_name}
                     </div>

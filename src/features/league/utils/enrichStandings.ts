@@ -1,4 +1,3 @@
-// lib/enrichStandings.ts
 import {
   getTeamEventData,
   getLiveEventData,
@@ -7,10 +6,18 @@ import {
   TeamEventData,
   Transfer,
 } from "@/lib/fpl";
-import { EnrichedStanding, LeagueStandingsEntry } from "@/types/fpl";
+import { EnrichedStanding } from "@/types/fpl";
+
+// Define the normalized input type
+interface NormalizedEntry {
+  manager_id: number;
+  team_name: string;
+  player_name: string;
+  total: number;
+}
 
 export async function enrichStandings(
-  entries: LeagueStandingsEntry[],
+  entries: NormalizedEntry[],
   gw: number,
   currentGw: number
 ): Promise<EnrichedStanding[]> {
@@ -23,15 +30,19 @@ export async function enrichStandings(
 
   const enriched: EnrichedStanding[] = await Promise.all(
     entries.map(async (entry) => {
+      const managerId = entry.manager_id;
+
       const teamData: TeamEventData | null = await getTeamEventData(
-        entry.entry,
+        managerId,
         gw
       );
 
       if (!teamData) {
         // fallback if API failed
         return {
-          ...entry,
+          manager_id: managerId,
+          team_name: entry.team_name,
+          player_name: entry.player_name,
           gwPoints: 0,
           totalPoints: entry.total,
           transfers: 0,
@@ -92,7 +103,7 @@ export async function enrichStandings(
       const benchPoints = benchPlayers.reduce((sum, p) => sum + p.points, 0);
 
       // Transfers
-      const transfers: Transfer[] = (await getTeamTransfers(entry.entry)) ?? [];
+      const transfers: Transfer[] = (await getTeamTransfers(managerId)) ?? [];
       const gwTransfers = transfers.filter((t) => t.event === gw);
 
       const transfersList = gwTransfers.map((t) => ({
@@ -101,7 +112,9 @@ export async function enrichStandings(
       }));
 
       return {
-        ...entry,
+        manager_id: managerId,
+        team_name: entry.team_name,
+        player_name: entry.player_name,
         gwPoints,
         totalPoints,
         transfers: gwTransfers.length,
@@ -125,9 +138,9 @@ export async function enrichStandings(
   if (gw > 1) {
     const prevStandings = await Promise.all(
       entries.map(async (entry) => {
-        const teamData = await getTeamEventData(entry.entry, gw - 1);
+        const teamData = await getTeamEventData(entry.manager_id, gw - 1);
         return {
-          entry: entry.entry,
+          manager_id: entry.manager_id,
           totalPoints: teamData?.entry_history.total_points ?? 0,
         };
       })
@@ -136,12 +149,12 @@ export async function enrichStandings(
     const prevRanks = prevStandings
       .sort((a, b) => b.totalPoints - a.totalPoints)
       .map((team, index) => ({
-        entry: team.entry,
+        manager_id: team.manager_id,
         prevRank: index + 1,
       }));
 
     ranked = ranked.map((team) => {
-      const prev = prevRanks.find((p) => p.entry === team.entry);
+      const prev = prevRanks.find((p) => p.manager_id === team.manager_id);
       const movement = prev ? prev.prevRank - team.rank : 0;
       return { ...team, movement };
     });

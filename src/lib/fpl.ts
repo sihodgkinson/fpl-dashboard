@@ -1,4 +1,3 @@
-// src/lib/fpl.ts
 import { supabase } from "@/lib/db"; // ✅ Supabase client
 import {
   ClassicLeagueResponse,
@@ -7,18 +6,16 @@ import {
 } from "@/types/fpl";
 
 /**
- * Generic FPL fetch wrapper with caching + error handling
+ * Generic FPL fetch wrapper with error handling
  */
 async function fplFetch<T>(
   url: string,
-  options?: RequestInit & { revalidate?: number }
+  options?: RequestInit
 ): Promise<T | null> {
   try {
     const res = await fetch(url, {
       ...options,
-      next: options?.revalidate
-        ? { revalidate: options.revalidate }
-        : undefined,
+      cache: "no-store", // always bypass Next.js cache
     });
 
     if (!res.ok) {
@@ -37,9 +34,6 @@ async function fplFetch<T>(
 /*                                League Data                                 */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Fetch league standings with Supabase caching
- */
 export async function getClassicLeague(
   leagueId: number,
   gw: number,
@@ -80,8 +74,7 @@ export async function getClassicLeague(
 
   // 2. Otherwise, fetch from FPL API
   const json = await fplFetch<ClassicLeagueResponse>(
-    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/?event=${gw}`,
-    { cache: "no-store" }
+    `https://fantasy.premierleague.com/api/leagues-classic/${leagueId}/standings/?event=${gw}`
   );
 
   if (!json) return null;
@@ -124,7 +117,7 @@ export async function getClassicLeague(
   }
 
   // ✅ 2c. Ensure gameweek exists in Supabase
-  const bootstrap = await getBootstrapStatic();
+  const bootstrap = await getCachedBootstrapStatic();
   if (bootstrap) {
     const gwData = bootstrap.events.find((e) => e.id === gw);
     if (gwData) {
@@ -177,8 +170,7 @@ export async function getEnrichedStandings(
   currentGw: number
 ): Promise<EnrichedStanding[] | null> {
   return fplFetch<EnrichedStanding[]>(
-    `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
-    { cache: "no-store" }
+    `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`
   );
 }
 
@@ -192,22 +184,68 @@ interface BootstrapStatic {
   // add other fields if needed
 }
 
-export async function getBootstrapStatic(): Promise<BootstrapStatic | null> {
-  return fplFetch<BootstrapStatic>(
+export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null> {
+  // 1. Check Supabase cache
+  const { data: cached, error } = await supabase
+    .from("bootstrap_cache")
+    .select("data, updated_at")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Supabase bootstrap cache error:", error);
+  }
+
+  const now = new Date();
+  if (cached) {
+    const updatedAt = new Date(cached.updated_at);
+    const ageMinutes = (now.getTime() - updatedAt.getTime()) / 1000 / 60;
+
+    if (ageMinutes < 5) {
+      // ✅ Return cached if < 5 minutes old
+      return cached.data as BootstrapStatic;
+    }
+  }
+
+  // 2. Fetch fresh from FPL API
+  const res = await fetch(
     "https://fantasy.premierleague.com/api/bootstrap-static/",
-    { revalidate: 300 } // cache for 5 minutes
+    { cache: "no-store" }
   );
+
+  if (!res.ok) {
+    console.error("Failed to fetch bootstrap-static:", res.statusText);
+    return cached ? (cached.data as BootstrapStatic) : null; // fallback to stale cache
+  }
+
+  const freshData = (await res.json()) as BootstrapStatic;
+
+  // 3. Upsert into Supabase
+  const { error: upsertError } = await supabase.from("bootstrap_cache").upsert(
+    {
+      id: 1,
+      data: freshData,
+      updated_at: now.toISOString(),
+    },
+    { onConflict: "id" }
+  );
+
+  if (upsertError) {
+    console.error("Supabase bootstrap upsert error:", upsertError);
+  }
+
+  return freshData;
 }
 
 export async function getCurrentGameweek(): Promise<number> {
-  const data = await getBootstrapStatic();
+  const data = await getCachedBootstrapStatic();
   if (!data) return 1;
   const current = data.events.find((e) => e.is_current);
   return current?.id ?? 1;
 }
 
 export async function getMaxGameweek(): Promise<number> {
-  const data = await getBootstrapStatic();
+  const data = await getCachedBootstrapStatic();
   if (!data) return 1;
   return data.events.filter((e) => e.finished || e.is_current).length;
 }
@@ -220,7 +258,7 @@ export interface Player {
 }
 
 export async function getPlayers(): Promise<Player[]> {
-  const data = await getBootstrapStatic();
+  const data = await getCachedBootstrapStatic();
   return data?.elements ?? [];
 }
 
@@ -252,8 +290,7 @@ export async function getTeamEventData(
   gw: number
 ): Promise<TeamEventData | null> {
   return fplFetch<TeamEventData>(
-    `https://fantasy.premierleague.com/api/entry/${entryId}/event/${gw}/picks/`,
-    { revalidate: 60 }
+    `https://fantasy.premierleague.com/api/entry/${entryId}/event/${gw}/picks/`
   );
 }
 
@@ -272,8 +309,7 @@ export async function getLiveEventData(
   gw: number
 ): Promise<LivePlayerStats[] | null> {
   const data = await fplFetch<{ elements: LivePlayerStats[] }>(
-    `https://fantasy.premierleague.com/api/event/${gw}/live/`,
-    { cache: "no-store" }
+    `https://fantasy.premierleague.com/api/event/${gw}/live/`
   );
   return data?.elements ?? [];
 }
@@ -294,8 +330,7 @@ export async function getTeamTransfers(
   entryId: number
 ): Promise<Transfer[] | null> {
   return fplFetch<Transfer[]>(
-    `https://fantasy.premierleague.com/api/entry/${entryId}/transfers/`,
-    { revalidate: 60 }
+    `https://fantasy.premierleague.com/api/entry/${entryId}/transfers/`
   );
 }
 
@@ -311,8 +346,7 @@ export interface Chip {
 
 export async function getTeamChips(entryId: number): Promise<Chip[] | null> {
   const data = await fplFetch<{ chips: Chip[] }>(
-    `https://fantasy.premierleague.com/api/entry/${entryId}/history/`,
-    { revalidate: 60 }
+    `https://fantasy.premierleague.com/api/entry/${entryId}/history/`
   );
   return data?.chips ?? [];
 }

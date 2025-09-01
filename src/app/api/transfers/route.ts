@@ -3,26 +3,30 @@ import {
   getClassicLeague,
   getTeamTransfers,
   getPlayers,
-  getCurrentGameweek, // ✅ import this
+  getCurrentGameweek,
   Transfer,
   Player,
 } from "@/lib/fpl";
 
-interface LeagueEntry {
-  entry: number;
-  entry_name: string;
-  player_name: string;
-}
+// A type that covers both API and DB shapes
+type StandingRow =
+  | {
+      entry: number; // raw API
+      entry_name: string;
+      player_name: string;
+    }
+  | {
+      manager_id: number; // DB cached
+      team_name: string;
+      player_name: string;
+    };
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
-  // ✅ fetch current gameweek
   const currentGw = await getCurrentGameweek();
-
-  // ✅ pass all 3 arguments
   const league = await getClassicLeague(leagueId, gw, currentGw);
 
   if (!league) {
@@ -32,13 +36,21 @@ export async function GET(req: Request) {
     );
   }
 
-  const standings = league.standings.results as LeagueEntry[];
+  // Normalize standings into DB-style shape
+  const normalizedStandings = (league.standings.results as StandingRow[]).map(
+    (s) => ({
+      manager_id: "entry" in s ? s.entry : s.manager_id,
+      team_name: "entry_name" in s ? s.entry_name : s.team_name,
+      player_name: s.player_name,
+    })
+  );
 
   const players: Player[] = (await getPlayers()) ?? [];
 
   const data = await Promise.all(
-    standings.map(async (entry) => {
-      const transfers: Transfer[] = (await getTeamTransfers(entry.entry)) ?? [];
+    normalizedStandings.map(async (entry) => {
+      const transfers: Transfer[] =
+        (await getTeamTransfers(entry.manager_id)) ?? [];
 
       const gwTransfers = transfers.filter((t) => t.event === gw);
 
@@ -53,10 +65,9 @@ export async function GET(req: Request) {
 
       return {
         manager: entry.player_name,
-        team: entry.entry_name,
+        team: entry.team_name,
         transfers: mapped,
         count: gwTransfers.length,
-        // cost removed here, since not available in /transfers endpoint
       };
     })
   );

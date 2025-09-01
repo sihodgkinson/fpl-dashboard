@@ -2,25 +2,29 @@ import { NextResponse } from "next/server";
 import {
   getClassicLeague,
   getTeamChips,
-  getCurrentGameweek, // ✅ import this
+  getCurrentGameweek,
   Chip,
 } from "@/lib/fpl";
 
-interface LeagueEntry {
-  entry: number;
-  entry_name: string;
-  player_name: string;
-}
+// A type that covers both API and DB shapes
+type StandingRow =
+  | {
+      entry: number; // raw API
+      entry_name: string;
+      player_name: string;
+    }
+  | {
+      manager_id: number; // DB cached
+      team_name: string;
+      player_name: string;
+    };
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
-  // ✅ fetch current gameweek
   const currentGw = await getCurrentGameweek();
-
-  // ✅ pass all 3 arguments
   const league = await getClassicLeague(leagueId, gw, currentGw);
 
   if (!league) {
@@ -30,15 +34,21 @@ export async function GET(req: Request) {
     );
   }
 
-  const standings = league.standings.results as LeagueEntry[];
+  const normalizedStandings = (league.standings.results as StandingRow[]).map(
+    (s) => ({
+      manager_id: "entry" in s ? s.entry : s.manager_id,
+      team_name: "entry_name" in s ? s.entry_name : s.team_name,
+      player_name: s.player_name,
+    })
+  );
 
   const data = await Promise.all(
-    standings.map(async (entry) => {
-      const chips: Chip[] = (await getTeamChips(entry.entry)) ?? [];
+    normalizedStandings.map(async (entry) => {
+      const chips: Chip[] = (await getTeamChips(entry.manager_id)) ?? [];
       const gwChip = chips.find((c) => c.event === gw);
 
       return {
-        team: entry.entry_name,
+        team: entry.team_name,
         manager: entry.player_name,
         chip: gwChip ? gwChip.name : null,
       };

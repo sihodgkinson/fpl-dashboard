@@ -36,7 +36,6 @@ export default async function DashboardPage({
     } | null;
   }[] = await Promise.all(
     leagueIds.map(async (id) => {
-      // ✅ Pass gw and currentGw into getClassicLeague
       const data = await getClassicLeague(id, gw, currentGw);
 
       if (!data) {
@@ -56,9 +55,16 @@ export default async function DashboardPage({
         mostTransfers: EnrichedStanding | null;
       } | null = null;
 
-      // ✅ Enrich standings + compute stats only for the current GW
-      if (gw === currentGw) {
-        standings = await enrichStandings(data.standings.results, gw, currentGw);
+      if (gw === currentGw && data.standings?.results) {
+        // ✅ Normalize raw API standings into DB-style shape
+        const normalizedEntries = data.standings.results.map((s) => ({
+          manager_id: s.entry, // FPL entry ID
+          team_name: s.entry_name,
+          player_name: s.player_name,
+          total: s.total,
+        }));
+
+        standings = await enrichStandings(normalizedEntries, gw, currentGw);
 
         if (standings.length > 0) {
           stats = {
