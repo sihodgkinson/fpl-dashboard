@@ -26,7 +26,10 @@ export async function GET(req: Request) {
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
+  // ✅ fetch current gameweek
   const currentGw = await getCurrentGameweek();
+
+  // ✅ fetch league standings
   const league = await getClassicLeague(leagueId, gw, currentGw);
 
   if (!league) {
@@ -36,7 +39,7 @@ export async function GET(req: Request) {
     );
   }
 
-  // Normalize standings
+  // ✅ normalize standings into DB-style shape
   const normalizedStandings = (league.standings.results as StandingRow[]).map(
     (s) => ({
       manager_id: "entry" in s ? s.entry : s.manager_id,
@@ -52,7 +55,8 @@ export async function GET(req: Request) {
     normalizedStandings.map(async (entry) => {
       const gwTransfers: CachedTransfer[] = await getCachedTransfers(
         entry.manager_id,
-        gw
+        gw,
+        currentGw // ✅ pass currentGw here
       );
 
       const mapped = gwTransfers.map((t) => {

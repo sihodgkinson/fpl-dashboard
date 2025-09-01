@@ -74,9 +74,9 @@ export interface FplEvent {
  * Extends the raw FPL API entry with additional computed fields.
  */
 export interface EnrichedStanding {
-  manager_id: number; // FK to managers.id
-  team_name: string;  // from managers.team_name
-  player_name: string; // from managers.name
+  manager_id: number;   // FPL entry ID
+  team_name: string;    // Fantasy team name (entry_name)
+  player_name: string;  // Manager's real name
 
   gwPoints: number;
   totalPoints: number;
@@ -97,4 +97,7 @@ export interface EnrichedStanding {
     name: string;
     points: number;
   }[];
+
+  // ✅ New field for chip usage
+  chip: string | null;
 }

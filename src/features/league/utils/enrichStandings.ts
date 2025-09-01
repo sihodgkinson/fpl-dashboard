@@ -1,14 +1,16 @@
 import {
   getTeamEventData,
   getLiveEventData,
-  getTeamTransfers,
   getPlayers,
   TeamEventData,
-  Transfer,
+  Player,
+  CachedTransfer,
+  CachedChip,
+  getCachedTransfers,
+  getCachedChips,
 } from "@/lib/fpl";
 import { EnrichedStanding } from "@/types/fpl";
 
-// Define the normalized input type
 interface NormalizedEntry {
   manager_id: number;
   team_name: string;
@@ -22,7 +24,7 @@ export async function enrichStandings(
   currentGw: number
 ): Promise<EnrichedStanding[]> {
   // fetch shared data once
-  const players = await getPlayers();
+  const players: Player[] = await getPlayers();
   const liveData = await getLiveEventData(gw);
   const livePointsMap = new Map(
     (liveData ?? []).map((p) => [p.id, p.stats.total_points])
@@ -38,7 +40,6 @@ export async function enrichStandings(
       );
 
       if (!teamData) {
-        // fallback if API failed
         return {
           manager_id: managerId,
           team_name: entry.team_name,
@@ -53,6 +54,7 @@ export async function enrichStandings(
           movement: 0,
           gwPlayers: [],
           benchPlayers: [],
+          chip: null,
         };
       }
 
@@ -102,14 +104,25 @@ export async function enrichStandings(
 
       const benchPoints = benchPlayers.reduce((sum, p) => sum + p.points, 0);
 
-      // Transfers
-      const transfers: Transfer[] = (await getTeamTransfers(managerId)) ?? [];
-      const gwTransfers = transfers.filter((t) => t.event === gw);
+      // ✅ Transfers (cached)
+      const gwTransfers: CachedTransfer[] = await getCachedTransfers(
+        managerId,
+        gw,
+        currentGw
+      );
 
       const transfersList = gwTransfers.map((t) => ({
-        in: players.find((p) => p.id === t.element_in)?.web_name ?? "Unknown",
-        out: players.find((p) => p.id === t.element_out)?.web_name ?? "Unknown",
+        in: players.find((p) => p.id === t.player_in)?.web_name ?? "Unknown",
+        out: players.find((p) => p.id === t.player_out)?.web_name ?? "Unknown",
       }));
+
+      // ✅ Chips (cached)
+      const gwChips: CachedChip[] = await getCachedChips(
+        managerId,
+        gw,
+        currentGw
+      );
+      const chip = gwChips.length > 0 ? gwChips[0].chip_name : null;
 
       return {
         manager_id: managerId,
@@ -125,6 +138,7 @@ export async function enrichStandings(
         movement: 0, // placeholder
         gwPlayers,
         benchPlayers,
+        chip,
       };
     })
   );

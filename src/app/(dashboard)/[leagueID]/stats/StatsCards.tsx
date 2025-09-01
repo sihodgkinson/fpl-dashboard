@@ -89,25 +89,25 @@ export function LeagueStatsCards({
       <StatCard
         title="Most GW Points"
         value={effectiveStats?.mostPoints?.gwPoints ?? null}
-        team={effectiveStats?.mostPoints?.entry_name ?? null}
+        team={effectiveStats?.mostPoints?.team_name ?? null}
         manager={effectiveStats?.mostPoints?.player_name ?? null}
       />
       <StatCard
         title="Fewest GW Points"
         value={effectiveStats?.fewestPoints?.gwPoints ?? null}
-        team={effectiveStats?.fewestPoints?.entry_name ?? null}
+        team={effectiveStats?.fewestPoints?.team_name ?? null}
         manager={effectiveStats?.fewestPoints?.player_name ?? null}
       />
       <StatCard
         title="Most GW Bench Points"
         value={effectiveStats?.mostBench?.benchPoints ?? null}
-        team={effectiveStats?.mostBench?.entry_name ?? null}
+        team={effectiveStats?.mostBench?.team_name ?? null}
         manager={effectiveStats?.mostBench?.player_name ?? null}
       />
       <StatCard
         title="Most GW Transfers"
         value={effectiveStats?.mostTransfers?.transfers ?? null}
-        team={effectiveStats?.mostTransfers?.entry_name ?? null}
+        team={effectiveStats?.mostTransfers?.team_name ?? null}
         manager={effectiveStats?.mostTransfers?.player_name ?? null}
       />
     </div>
