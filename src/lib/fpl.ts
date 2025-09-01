@@ -181,7 +181,34 @@ export async function getEnrichedStandings(
 interface BootstrapStatic {
   events: FplEvent[];
   elements: Player[];
-  // add other fields if needed
+  teams: {
+    id: number;
+    name: string;
+    short_name: string;
+    strength: number;
+    strength_attack_home: number;
+    strength_attack_away: number;
+    strength_defence_home: number;
+    strength_defence_away: number;
+  }[];
+  element_types: {
+    id: number;
+    singular_name: string;
+    plural_name: string;
+    squad_select: number;
+    squad_min_play: number;
+    squad_max_play: number;
+  }[];
+  game_settings: {
+    league_join_private_max: number;
+    league_join_public_max: number;
+    squad_squadsize: number;
+    squad_team_limit: number;
+    squad_total_spend: number;
+    transfers_cost: number;
+    ui_currency_multiplier: number;
+    // add more if needed
+  };
 }
 
 export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null> {
@@ -218,13 +245,22 @@ export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null
     return cached ? (cached.data as BootstrapStatic) : null; // fallback to stale cache
   }
 
-  const freshData = (await res.json()) as BootstrapStatic;
+  const fullData = await res.json();
+
+  // ✅ Only keep the fields we need for now + future roadmap
+  const slimData: BootstrapStatic = {
+    events: fullData.events,
+    elements: fullData.elements,
+    teams: fullData.teams,
+    element_types: fullData.element_types,
+    game_settings: fullData.game_settings,
+  };
 
   // 3. Upsert into Supabase
   const { error: upsertError } = await supabase.from("bootstrap_cache").upsert(
     {
       id: 1,
-      data: freshData,
+      data: slimData,
       updated_at: now.toISOString(),
     },
     { onConflict: "id" }
@@ -234,7 +270,7 @@ export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null
     console.error("Supabase bootstrap upsert error:", upsertError);
   }
 
-  return freshData;
+  return slimData;
 }
 
 export async function getCurrentGameweek(): Promise<number> {
