@@ -36,7 +36,7 @@ export async function GET(req: Request) {
     );
   }
 
-  // Normalize standings into DB-style shape
+  // Normalize standings
   const normalizedStandings = (league.standings.results as StandingRow[]).map(
     (s) => ({
       manager_id: "entry" in s ? s.entry : s.manager_id,
@@ -47,6 +47,7 @@ export async function GET(req: Request) {
 
   const players: Player[] = (await getPlayers()) ?? [];
 
+  // ✅ Fetch all transfers in parallel
   const data = await Promise.all(
     normalizedStandings.map(async (entry) => {
       const transfers: Transfer[] =
