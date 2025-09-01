@@ -148,6 +148,8 @@ export async function getClassicLeague(
       transfers: s.event_transfers ?? 0,
       bench_points: s.entry_bench_points ?? 0,
       chip_used: s.active_chip ?? null,
+      team_name: s.entry_name,
+      player_name: s.player_name,
     }));
 
     const { error } = await supabase.from("standings").upsert(rows, {
@@ -207,12 +209,10 @@ interface BootstrapStatic {
     squad_total_spend: number;
     transfers_cost: number;
     ui_currency_multiplier: number;
-    // add more if needed
   };
 }
 
 export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null> {
-  // 1. Check Supabase cache
   const { data: cached, error } = await supabase
     .from("bootstrap_cache")
     .select("data, updated_at")
@@ -229,12 +229,10 @@ export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null
     const ageMinutes = (now.getTime() - updatedAt.getTime()) / 1000 / 60;
 
     if (ageMinutes < 5) {
-      // ✅ Return cached if < 5 minutes old
       return cached.data as BootstrapStatic;
     }
   }
 
-  // 2. Fetch fresh from FPL API
   const res = await fetch(
     "https://fantasy.premierleague.com/api/bootstrap-static/",
     { cache: "no-store" }
@@ -242,12 +240,11 @@ export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null
 
   if (!res.ok) {
     console.error("Failed to fetch bootstrap-static:", res.statusText);
-    return cached ? (cached.data as BootstrapStatic) : null; // fallback to stale cache
+    return cached ? (cached.data as BootstrapStatic) : null;
   }
 
   const fullData = await res.json();
 
-  // ✅ Only keep the fields we need for now + future roadmap
   const slimData: BootstrapStatic = {
     events: fullData.events,
     elements: fullData.elements,
@@ -256,7 +253,6 @@ export async function getCachedBootstrapStatic(): Promise<BootstrapStatic | null
     game_settings: fullData.game_settings,
   };
 
-  // 3. Upsert into Supabase
   const { error: upsertError } = await supabase.from("bootstrap_cache").upsert(
     {
       id: 1,
@@ -354,12 +350,22 @@ export async function getLiveEventData(
 /*                                Transfers                                   */
 /* -------------------------------------------------------------------------- */
 
+// FPL API transfer
 export interface Transfer {
   element_in: number;
   element_in_cost: number;
   element_out: number;
   element_out_cost: number;
   event: number;
+}
+
+// Supabase cached transfer
+export interface CachedTransfer {
+  manager_id: number;
+  gameweek_id: number;
+  player_in: number;
+  player_out: number;
+  cost: number;
 }
 
 export async function getTeamTransfers(
@@ -370,14 +376,88 @@ export async function getTeamTransfers(
   );
 }
 
+// ✅ Cached version
+export async function getCachedTransfers(
+  managerId: number,
+  gw: number,
+  currentGw: number
+): Promise<CachedTransfer[]> {
+  // ✅ Cache both past and current GWs
+  if (gw <= currentGw) {
+    const { data: cached, error } = await supabase
+      .from("transfers")
+      .select("*")
+      .eq("manager_id", managerId)
+      .eq("gameweek_id", gw);
+
+    if (error) {
+      console.error("Supabase transfers cache error:", error);
+    }
+
+    if (cached && cached.length > 0) {
+      return cached as CachedTransfer[];
+    }
+
+    // Not cached yet → fetch from API
+    const transfers = (await getTeamTransfers(managerId)) ?? [];
+    const gwTransfers = transfers.filter((t) => t.event === gw);
+
+    if (gwTransfers.length > 0) {
+      // Deduplicate
+      const seen = new Set<string>();
+      const rows: CachedTransfer[] = [];
+
+      for (const t of gwTransfers) {
+        const key = `${managerId}-${gw}-${t.element_in}-${t.element_out}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          rows.push({
+            manager_id: managerId,
+            gameweek_id: gw,
+            player_in: t.element_in,
+            player_out: t.element_out,
+            cost: t.element_in_cost - t.element_out_cost,
+          });
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from("transfers")
+        .upsert(rows, {
+          onConflict: "manager_id,gameweek_id,player_in,player_out",
+        });
+
+      if (insertError) {
+        console.error("Supabase transfers insert error:", insertError);
+      }
+
+      return rows;
+    }
+
+    return [];
+  }
+
+  // Future GWs → nothing to return
+  return [];
+}
+
 /* -------------------------------------------------------------------------- */
 /*                                  Chips                                     */
 /* -------------------------------------------------------------------------- */
 
+// FPL API chip
 export interface Chip {
   name: string;
   time: string;
   event: number;
+}
+
+// Supabase cached chip
+export interface CachedChip {
+  manager_id: number;
+  gameweek_id: number;
+  chip_name: string;
+  played_at: string;
 }
 
 export async function getTeamChips(entryId: number): Promise<Chip[] | null> {
@@ -385,4 +465,64 @@ export async function getTeamChips(entryId: number): Promise<Chip[] | null> {
     `https://fantasy.premierleague.com/api/entry/${entryId}/history/`
   );
   return data?.chips ?? [];
+}
+
+// ✅ Cached version
+export async function getCachedChips(
+  managerId: number,
+  gw: number,
+  currentGw: number
+): Promise<CachedChip[]> {
+  if (gw <= currentGw) {
+    const { data: cached, error } = await supabase
+      .from("chips")
+      .select("*")
+      .eq("manager_id", managerId)
+      .eq("gameweek_id", gw);
+
+    if (error) {
+      console.error("Supabase chips cache error:", error);
+    }
+
+    if (cached && cached.length > 0) {
+      return cached as CachedChip[];
+    }
+
+    const chips = (await getTeamChips(managerId)) ?? [];
+    const gwChips = chips.filter((c) => c.event === gw);
+
+    if (gwChips.length > 0) {
+      // Deduplicate
+      const seen = new Set<string>();
+      const rows: CachedChip[] = [];
+
+      for (const c of gwChips) {
+        const key = `${managerId}-${gw}-${c.name}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          rows.push({
+            manager_id: managerId,
+            gameweek_id: gw,
+            chip_name: c.name,
+            played_at: c.time,
+          });
+        }
+      }
+
+      const { error: insertError } = await supabase
+        .from("chips")
+        .upsert(rows, { onConflict: "manager_id,gameweek_id,chip_name" });
+
+      if (insertError) {
+        console.error("Supabase chips insert error:", insertError);
+      }
+
+      return rows;
+    }
+
+    return [];
+  }
+
+  // Future GWs → nothing to return
+  return [];
 }

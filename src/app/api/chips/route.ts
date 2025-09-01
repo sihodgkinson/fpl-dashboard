@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import {
   getClassicLeague,
-  getTeamChips,
+  getCachedChips,
   getCurrentGameweek,
-  Chip,
+  CachedChip,
 } from "@/lib/fpl";
 
 // A type that covers both API and DB shapes
@@ -43,16 +43,16 @@ export async function GET(req: Request) {
     })
   );
 
-  // ✅ Fetch all chips in parallel
+  // ✅ Fetch all chips in parallel, using cached function
   const data = await Promise.all(
     normalizedStandings.map(async (entry) => {
-      const chips: Chip[] = (await getTeamChips(entry.manager_id)) ?? [];
-      const gwChip = chips.find((c) => c.event === gw);
+      const gwChips: CachedChip[] = await getCachedChips(entry.manager_id, gw);
+      const chip = gwChips.length > 0 ? gwChips[0].chip_name : null;
 
       return {
         team: entry.team_name,
         manager: entry.player_name,
-        chip: gwChip ? gwChip.name : null,
+        chip,
       };
     })
   );

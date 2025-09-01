@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import {
   getClassicLeague,
-  getTeamTransfers,
+  getCachedTransfers,
   getPlayers,
   getCurrentGameweek,
-  Transfer,
   Player,
+  CachedTransfer,
 } from "@/lib/fpl";
 
 // A type that covers both API and DB shapes
@@ -47,17 +47,17 @@ export async function GET(req: Request) {
 
   const players: Player[] = (await getPlayers()) ?? [];
 
-  // ✅ Fetch all transfers in parallel
+  // ✅ Fetch all transfers in parallel, using cached function
   const data = await Promise.all(
     normalizedStandings.map(async (entry) => {
-      const transfers: Transfer[] =
-        (await getTeamTransfers(entry.manager_id)) ?? [];
-
-      const gwTransfers = transfers.filter((t) => t.event === gw);
+      const gwTransfers: CachedTransfer[] = await getCachedTransfers(
+        entry.manager_id,
+        gw
+      );
 
       const mapped = gwTransfers.map((t) => {
-        const playerIn = players.find((p) => p.id === t.element_in);
-        const playerOut = players.find((p) => p.id === t.element_out);
+        const playerIn = players.find((p) => p.id === t.player_in);
+        const playerOut = players.find((p) => p.id === t.player_out);
         return {
           in: playerIn?.web_name ?? "Unknown",
           out: playerOut?.web_name ?? "Unknown",
