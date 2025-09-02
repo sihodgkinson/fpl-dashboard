@@ -103,7 +103,7 @@ export function TransfersTab({
                         ))}
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">No transfers</span>
+                      <span className="text-muted-foreground">—</span>
                     )}
                   </td>
                 </tr>

@@ -206,7 +206,7 @@ export function LeagueTable({
                               ))}
                             </ul>
                           ) : (
-                            <p className="text-muted-foreground text-sm">No transfers</p>
+                            <p className="text-muted-foreground text-sm">—</p>
                           )
                         }
                         className="w-56 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
