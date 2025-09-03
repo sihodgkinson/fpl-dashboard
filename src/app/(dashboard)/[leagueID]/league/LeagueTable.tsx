@@ -70,7 +70,7 @@ export function LeagueTable({
   const { data, error } = useSWR<StandingsResponse>(
     shouldUsePreloaded
       ? null
-      : `/api/standings?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+      : `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 30000 }
   );
