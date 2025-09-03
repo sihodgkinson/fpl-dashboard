@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getClassicLeague } from "@/lib/fpl";
-import { enrichStandings } from "@/lib/enrichStandings";
+import { enrichStandings } from "@/features/league/utils/enrichStandings";
 import { EnrichedStanding } from "@/types/fpl";
 
 export async function GET(req: Request) {
