@@ -57,7 +57,7 @@ export function ChipsTab({
   const gw = Number(searchParams.get("gw")) || currentGw;
 
   const { data, error } = useSWR<ChipsResponse[]>(
-    `/api/chips?leagueId=${leagueId}&gw=${gw}`,
+    `/api/chips?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 60000 }
   );

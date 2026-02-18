@@ -45,7 +45,7 @@ export function TransfersTab({
   const gw = Number(searchParams.get("gw")) || currentGw;
 
   const { data, error } = useSWR<TransfersResponse[]>(
-    `/api/transfers?leagueId=${leagueId}&gw=${gw}`,
+    `/api/transfers?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     { refreshInterval: 60000 }
   );

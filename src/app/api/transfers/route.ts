@@ -6,7 +6,12 @@ import {
   Transfer,
   Player,
 } from "@/lib/fpl";
-import { withTiming } from "@/lib/metrics";
+import { incrementCounter, withTiming } from "@/lib/metrics";
+import {
+  getCachedTransfersPayload,
+  isSupabaseCacheConfigured,
+  upsertTransfersPayload,
+} from "@/lib/supabaseCache";
 
 interface LeagueEntry {
   entry: number;
@@ -18,10 +23,19 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
+  const currentGwParam = Number(searchParams.get("currentGw"));
+  const currentGw =
+    Number.isInteger(currentGwParam) && currentGwParam > 0
+      ? currentGwParam
+      : null;
+  const isHistoricalGw = currentGw !== null && gw < currentGw;
+  const liveCacheTtlSeconds = Number(
+    process.env.FPL_LIVE_CACHE_TTL_SECONDS ?? "60"
+  );
 
   return withTiming(
     "api.transfers.GET",
-    { leagueId, gw },
+    { leagueId, gw, currentGw },
     async () => {
       if (
         !Number.isInteger(leagueId) ||
@@ -38,6 +52,23 @@ export async function GET(req: Request) {
         );
       }
 
+      const supabaseCacheEnabled = isSupabaseCacheConfigured();
+      if (supabaseCacheEnabled) {
+        const cached = await getCachedTransfersPayload(leagueId, gw);
+        if (cached) {
+          const cacheAgeSeconds = Math.floor(
+            (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
+          );
+          const isFreshLiveCache = cacheAgeSeconds < liveCacheTtlSeconds;
+
+          if (cached.isFinal || isHistoricalGw || isFreshLiveCache) {
+            incrementCounter("cache.transfers.hit");
+            return NextResponse.json(cached.payload);
+          }
+        }
+      }
+
+      incrementCounter("cache.transfers.miss");
       const league = await getClassicLeague(leagueId);
 
       if (!league) {
@@ -76,6 +107,10 @@ export async function GET(req: Request) {
           };
         })
       );
+
+      if (supabaseCacheEnabled) {
+        await upsertTransfersPayload(leagueId, gw, data, isHistoricalGw);
+      }
 
       return NextResponse.json(data);
     }

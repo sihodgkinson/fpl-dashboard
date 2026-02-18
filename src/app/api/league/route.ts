@@ -2,7 +2,49 @@ import { NextResponse } from "next/server";
 import { getClassicLeague } from "@/lib/fpl";
 import { enrichStandings } from "@/features/league/utils/enrichStandings";
 import { EnrichedStanding } from "@/types/fpl";
-import { withTiming } from "@/lib/metrics";
+import { incrementCounter, withTiming } from "@/lib/metrics";
+import {
+  getCachedLeaguePayload,
+  isSupabaseCacheConfigured,
+  LeagueCachePayload,
+  upsertLeaguePayload,
+} from "@/lib/supabaseCache";
+
+const LIVE_CACHE_TTL_SECONDS = Number(
+  process.env.FPL_LIVE_CACHE_TTL_SECONDS ?? "60"
+);
+
+function computeLeaguePayload(ranked: EnrichedStanding[]): LeagueCachePayload {
+  if (ranked.length === 0) {
+    return {
+      standings: [],
+      stats: null,
+    };
+  }
+
+  const mostPoints = ranked.reduce((max, team) =>
+    team.gwPoints > max.gwPoints ? team : max
+  );
+  const fewestPoints = ranked.reduce((min, team) =>
+    team.gwPoints < min.gwPoints ? team : min
+  );
+  const mostBench = ranked.reduce((max, team) =>
+    team.benchPoints > max.benchPoints ? team : max
+  );
+  const mostTransfers = ranked.reduce((max, team) =>
+    team.transfers > max.transfers ? team : max
+  );
+
+  return {
+    standings: ranked,
+    stats: {
+      mostPoints,
+      fewestPoints,
+      mostBench,
+      mostTransfers,
+    },
+  };
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -11,26 +53,45 @@ export async function GET(req: Request) {
   const currentGw = Number(searchParams.get("currentGw"));
 
   return withTiming("api.league.GET", { leagueId, gw, currentGw }, async () => {
-    if (
+      if (
       !Number.isInteger(leagueId) ||
       leagueId <= 0 ||
       !Number.isInteger(gw) ||
       gw <= 0 ||
       !Number.isInteger(currentGw) ||
       currentGw <= 0
-    ) {
-      return NextResponse.json(
+      ) {
+        return NextResponse.json(
         {
           error:
             "Invalid query params. Expected positive integers for leagueId, gw, and currentGw.",
         },
         { status: 400 }
       );
-    }
+      }
 
-    const data = await getClassicLeague(leagueId);
+      const supabaseCacheEnabled = isSupabaseCacheConfigured();
+      const isHistoricalGw = gw < currentGw;
 
-    if (!data) {
+      if (supabaseCacheEnabled) {
+        const cached = await getCachedLeaguePayload(leagueId, gw);
+        if (cached) {
+          const cacheAgeSeconds = Math.floor(
+            (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
+          );
+          const isFreshLiveCache = cacheAgeSeconds < LIVE_CACHE_TTL_SECONDS;
+
+          if (cached.isFinal || isHistoricalGw || isFreshLiveCache) {
+            incrementCounter("cache.league.hit");
+            return NextResponse.json(cached.payload);
+          }
+        }
+      }
+
+      incrementCounter("cache.league.miss");
+      const data = await getClassicLeague(leagueId);
+
+      if (!data) {
       return NextResponse.json(
         { error: `Failed to fetch league ${leagueId}` },
         { status: 500 }
@@ -38,41 +99,18 @@ export async function GET(req: Request) {
     }
 
     const standings = data.standings.results;
-    const ranked: EnrichedStanding[] = await enrichStandings(
-      standings,
-      gw,
-      currentGw
-    );
+      const ranked: EnrichedStanding[] = await enrichStandings(
+        standings,
+        gw,
+        currentGw
+      );
 
-    if (ranked.length === 0) {
-      return NextResponse.json({
-        standings: [],
-        stats: null,
-      });
-    }
+      const payload = computeLeaguePayload(ranked);
 
-    const mostPoints = ranked.reduce((max, team) =>
-      team.gwPoints > max.gwPoints ? team : max
-    );
-    const fewestPoints = ranked.reduce((min, team) =>
-      team.gwPoints < min.gwPoints ? team : min
-    );
-    const mostBench = ranked.reduce((max, team) =>
-      team.benchPoints > max.benchPoints ? team : max
-    );
-    const mostTransfers = ranked.reduce((max, team) =>
-      team.transfers > max.transfers ? team : max
-    );
+      if (supabaseCacheEnabled) {
+        await upsertLeaguePayload(leagueId, gw, payload, isHistoricalGw);
+      }
 
-    return NextResponse.json({
-      standings: ranked,
-      stats: {
-        mostPoints,
-        fewestPoints,
-        mostBench,
-        mostTransfers,
-      },
+      return NextResponse.json(payload);
     });
-  });
 }
-
