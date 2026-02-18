@@ -6,8 +6,7 @@ import {
 import { enrichStandings } from "@/features/league/utils/enrichStandings";
 import DashboardClient from "@/app/(dashboard)/[leagueID]/DashboardClient";
 import { EnrichedStanding } from "@/types/fpl";
-
-const leagueIds = [430552, 4311, 1295109];
+import { LEAGUE_IDS } from "@/lib/leagues";
 
 export default async function DashboardPage({
   searchParams,
@@ -15,7 +14,7 @@ export default async function DashboardPage({
   searchParams: Promise<{ leagueId?: string; gw?: string }>;
 }) {
   const params = await searchParams;
-  const selectedLeagueId = Number(params.leagueId) || leagueIds[0];
+  const selectedLeagueId = Number(params.leagueId) || LEAGUE_IDS[0];
 
   const [currentGw, maxGw] = await Promise.all([
     getCurrentGameweek(),
@@ -35,7 +34,7 @@ export default async function DashboardPage({
       mostTransfers: EnrichedStanding | null;
     } | null;
   }[] = await Promise.all(
-    leagueIds.map(async (id) => {
+    LEAGUE_IDS.map(async (id) => {
       const data = await getClassicLeague(id);
 
       if (!data) {
