@@ -81,8 +81,8 @@ export default function DashboardClient({
             stats: selectedLeague.stats ?? null,
           }
         : undefined,
-      refreshInterval: gw === currentGw ? 60000 : 0,
-      revalidateOnFocus: gw === currentGw,
+      refreshInterval: 0,
+      revalidateOnFocus: false,
     }
   );
 

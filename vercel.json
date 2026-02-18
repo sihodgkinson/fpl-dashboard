@@ -1,9 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/internal/warm-league-cache",
-      "schedule": "*/1 * * * *"
-    }
-  ]
-}
-
