@@ -1,28 +1,14 @@
 "use client";
 
-import useSWR from "swr";
 import { ChevronUp, ChevronDown, Minus } from "lucide-react";
 import { EnrichedStanding } from "@/types/fpl";
 import { ResponsiveInfoCard } from "@/components/ui/responsive-info-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-interface StandingsResponse {
-  standings: EnrichedStanding[];
-  stats?: {
-    mostPoints: EnrichedStanding;
-    fewestPoints: EnrichedStanding;
-    mostBench: EnrichedStanding;
-    mostTransfers: EnrichedStanding;
-  };
-}
-
 interface LeagueTableProps {
-  leagueId: number;
-  gw: number;
-  currentGw: number;
-  preloadedStandings?: EnrichedStanding[] | null;
+  standings: EnrichedStanding[];
+  isLoading: boolean;
+  hasError: boolean;
 }
 
 // ✅ Skeleton row
@@ -59,32 +45,11 @@ function TableRowSkeleton() {
 }
 
 export function LeagueTable({
-  leagueId,
-  gw,
-  currentGw,
-  preloadedStandings,
+  standings,
+  isLoading,
+  hasError,
 }: LeagueTableProps) {
-  const shouldUsePreloaded =
-    preloadedStandings && preloadedStandings.length > 0 && gw === currentGw;
-
-  const { data, error } = useSWR<StandingsResponse>(
-    shouldUsePreloaded
-      ? null
-      : `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
-    fetcher,
-    { refreshInterval: 30000 }
-  );
-
-  if (error) return <div>Error loading standings</div>;
-
-  // ✅ Use preloaded if available, otherwise SWR data
-  const standings = shouldUsePreloaded
-    ? preloadedStandings!
-    : data?.standings && Array.isArray(data.standings)
-    ? data.standings
-    : [];
-
-  const isLoading = !shouldUsePreloaded && !data;
+  if (hasError) return <div>Error loading standings</div>;
 
   return (
     <div className="w-full overflow-x-auto rounded-md border border-border h-auto lg:h-[calc(100vh-435px)] sm:overflow-y-auto">

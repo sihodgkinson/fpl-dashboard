@@ -6,6 +6,7 @@ import {
   Transfer,
   Player,
 } from "@/lib/fpl";
+import { withTiming } from "@/lib/metrics";
 
 interface LeagueEntry {
   entry: number;
@@ -18,58 +19,65 @@ export async function GET(req: Request) {
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
-  if (
-    !Number.isInteger(leagueId) ||
-    leagueId <= 0 ||
-    !Number.isInteger(gw) ||
-    gw <= 0
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Invalid query params. Expected positive integers for leagueId and gw.",
-      },
-      { status: 400 }
-    );
-  }
+  return withTiming(
+    "api.transfers.GET",
+    { leagueId, gw },
+    async () => {
+      if (
+        !Number.isInteger(leagueId) ||
+        leagueId <= 0 ||
+        !Number.isInteger(gw) ||
+        gw <= 0
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Invalid query params. Expected positive integers for leagueId and gw.",
+          },
+          { status: 400 }
+        );
+      }
 
-  const league = await getClassicLeague(leagueId);
+      const league = await getClassicLeague(leagueId);
 
-  if (!league) {
-    return NextResponse.json(
-      { error: `Failed to fetch league ${leagueId}` },
-      { status: 500 }
-    );
-  }
+      if (!league) {
+        return NextResponse.json(
+          { error: `Failed to fetch league ${leagueId}` },
+          { status: 500 }
+        );
+      }
 
-  const standings = league.standings.results as LeagueEntry[];
+      const standings = league.standings.results as LeagueEntry[];
 
-  const players: Player[] = (await getPlayers()) ?? [];
+      const players: Player[] = (await getPlayers()) ?? [];
+      const playersById = new Map(players.map((player) => [player.id, player]));
 
-  const data = await Promise.all(
-    standings.map(async (entry) => {
-      const transfers: Transfer[] = (await getTeamTransfers(entry.entry)) ?? [];
+      const data = await Promise.all(
+        standings.map(async (entry) => {
+          const transfers: Transfer[] = (await getTeamTransfers(entry.entry)) ?? [];
 
-      const gwTransfers = transfers.filter((t) => t.event === gw);
+          const gwTransfers = transfers.filter((t) => t.event === gw);
 
-      const mapped = gwTransfers.map((t) => {
-        const playerIn = players.find((p) => p.id === t.element_in);
-        const playerOut = players.find((p) => p.id === t.element_out);
-        return {
-          in: playerIn?.web_name ?? "Unknown",
-          out: playerOut?.web_name ?? "Unknown",
-        };
-      });
+          const mapped = gwTransfers.map((t) => {
+            const playerIn = playersById.get(t.element_in);
+            const playerOut = playersById.get(t.element_out);
+            return {
+              in: playerIn?.web_name ?? "Unknown",
+              out: playerOut?.web_name ?? "Unknown",
+            };
+          });
 
-      return {
-        manager: entry.player_name,
-        team: entry.entry_name,
-        transfers: mapped,
-        count: gwTransfers.length,
-        // cost removed here, since not available in /transfers endpoint
-      };
-    })
+          return {
+            manager: entry.player_name,
+            team: entry.entry_name,
+            transfers: mapped,
+            count: gwTransfers.length,
+            // cost removed here, since not available in /transfers endpoint
+          };
+        })
+      );
+
+      return NextResponse.json(data);
+    }
   );
-
-  return NextResponse.json(data);
 }

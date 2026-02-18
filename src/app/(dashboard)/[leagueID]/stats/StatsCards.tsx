@@ -1,21 +1,8 @@
 "use client";
 
-import useSWR from "swr";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedStanding } from "@/types/fpl";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
-
-interface StandingsResponse {
-  standings: EnrichedStanding[];
-  stats: {
-    mostPoints: EnrichedStanding;
-    fewestPoints: EnrichedStanding;
-    mostBench: EnrichedStanding;
-    mostTransfers: EnrichedStanding;
-  };
-}
 
 function StatCard({
   title,
@@ -59,30 +46,17 @@ interface LeagueStatsCardsProps {
     mostBench: EnrichedStanding | null;
     mostTransfers: EnrichedStanding | null;
   } | null;
-  leagueId: number;
-  gw: number;
-  currentGw: number;
+  isLoading: boolean;
+  hasError: boolean;
 }
 
 export function LeagueStatsCards({
   stats,
-  leagueId,
-  gw,
-  currentGw,
+  isLoading,
+  hasError,
 }: LeagueStatsCardsProps) {
-  const shouldUsePreloaded = stats && gw === currentGw;
-
-  const { data, error } = useSWR<StandingsResponse>(
-    shouldUsePreloaded
-      ? null // ✅ skip SWR if we already have preloaded stats
-      : `/api/league?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
-    fetcher,
-    { refreshInterval: 30000 }
-  );
-
-  if (error) return <div>Error loading stats</div>;
-
-  const effectiveStats = shouldUsePreloaded ? stats : data?.stats;
+  if (hasError) return <div>Error loading stats</div>;
+  const effectiveStats = isLoading ? null : stats;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">

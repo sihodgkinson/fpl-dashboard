@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import useSWR from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { TransfersTab } from "@/app/(dashboard)/[leagueID]/transfers/TransfersTable";
@@ -17,6 +18,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { EnrichedStanding } from "@/types/fpl";
+
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return res.json();
+};
+
+interface StandingsResponse {
+  standings: EnrichedStanding[];
+  stats: {
+    mostPoints: EnrichedStanding;
+    fewestPoints: EnrichedStanding;
+    mostBench: EnrichedStanding;
+    mostTransfers: EnrichedStanding;
+  } | null;
+}
 
 interface DashboardClientProps {
   leagues: {
@@ -47,6 +66,29 @@ export default function DashboardClient({
 
   // Find the selected league's preloaded data
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
+  const shouldUsePreloaded =
+    gw === currentGw &&
+    !!selectedLeague?.standings &&
+    selectedLeague.standings.length > 0;
+
+  const { data, error } = useSWR<StandingsResponse>(
+    shouldUsePreloaded
+      ? null
+      : `/api/league?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
+    fetcher,
+    { refreshInterval: 30000 }
+  );
+
+  const standings = shouldUsePreloaded
+    ? selectedLeague?.standings ?? []
+    : Array.isArray(data?.standings)
+    ? data.standings
+    : [];
+
+  const stats = shouldUsePreloaded
+    ? selectedLeague?.stats ?? null
+    : data?.stats ?? null;
+  const isLeagueDataLoading = !shouldUsePreloaded && !data && !error;
 
   return (
     <>
@@ -77,12 +119,11 @@ export default function DashboardClient({
 
       {/* Main content */}
       <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
-        {/* Stats cards (still fetches live data per league) */}
-                <LeagueStatsCards
-          stats={selectedLeague?.stats ?? null}
-          leagueId={selectedLeagueId}
-          gw={gw}
-          currentGw={currentGw}
+        {/* Stats cards */}
+        <LeagueStatsCards
+          stats={stats}
+          isLoading={isLeagueDataLoading}
+          hasError={Boolean(error)}
         />
 
         {/* ✅ Mobile dropdown for tabs */}
@@ -118,10 +159,9 @@ export default function DashboardClient({
         <div className="w-full">
           <div className={tab === "league" ? "block mt-2 sm:mt-4" : "hidden"}>
             <LeagueTable
-              leagueId={selectedLeagueId}
-              gw={gw}
-              currentGw={currentGw}
-              preloadedStandings={selectedLeague?.standings ?? null}
+              standings={standings}
+              isLoading={isLeagueDataLoading}
+              hasError={Boolean(error)}
             />
           </div>
 

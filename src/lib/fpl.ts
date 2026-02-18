@@ -4,6 +4,7 @@ import {
   FplEvent,
   EnrichedStanding,
 } from "@/types/fpl";
+import { incrementCounter, logMetric } from "@/lib/metrics";
 
 /**
  * Generic FPL fetch wrapper with caching + error handling
@@ -12,6 +13,9 @@ async function fplFetch<T>(
   url: string,
   options?: RequestInit & { revalidate?: number }
 ): Promise<T | null> {
+  const startMs = Date.now();
+  const requestCount = incrementCounter("fplFetch.requests");
+
   try {
     const res = await fetch(url, {
       ...options,
@@ -21,12 +25,35 @@ async function fplFetch<T>(
     });
 
     if (!res.ok) {
+      incrementCounter("fplFetch.errors");
+      logMetric("fplFetch", {
+        url,
+        status: res.status,
+        ok: false,
+        durationMs: Date.now() - startMs,
+        requests: requestCount,
+      });
       console.error(`FPL API error: ${res.status} ${res.statusText} (${url})`);
       return null;
     }
 
+    logMetric("fplFetch", {
+      url,
+      status: res.status,
+      ok: true,
+      durationMs: Date.now() - startMs,
+      requests: requestCount,
+    });
     return res.json();
   } catch (err) {
+    incrementCounter("fplFetch.errors");
+    logMetric("fplFetch", {
+      url,
+      ok: false,
+      durationMs: Date.now() - startMs,
+      requests: requestCount,
+      error: err instanceof Error ? err.message : "Unknown error",
+    });
     console.error(`FPL API fetch failed (${url}):`, err);
     return null;
   }
@@ -69,7 +96,7 @@ interface BootstrapStatic {
 export async function getBootstrapStatic(): Promise<BootstrapStatic | null> {
   return fplFetch<BootstrapStatic>(
     "https://fantasy.premierleague.com/api/bootstrap-static/",
-    { revalidate: 300 } // cache for 5 minutes
+    { cache: "no-store" }
   );
 }
 
