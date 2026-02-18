@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "FPL Dashboard",
-  description: "Fantasy Premier League Insights Dashboard",
+  description: "Fantasy Premier League insights dashboard.",
 };
 
 export default function RootLayout({
