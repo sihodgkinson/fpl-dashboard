@@ -12,6 +12,21 @@ export async function GET(req: Request) {
   const leagueId = Number(searchParams.get("leagueId"));
   const gw = Number(searchParams.get("gw"));
 
+  if (
+    !Number.isInteger(leagueId) ||
+    leagueId <= 0 ||
+    !Number.isInteger(gw) ||
+    gw <= 0
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Invalid query params. Expected positive integers for leagueId and gw.",
+      },
+      { status: 400 }
+    );
+  }
+
   const league = await getClassicLeague(leagueId);
 
   if (!league) {

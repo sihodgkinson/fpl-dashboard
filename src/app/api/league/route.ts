@@ -9,6 +9,23 @@ export async function GET(req: Request) {
   const gw = Number(searchParams.get("gw"));
   const currentGw = Number(searchParams.get("currentGw"));
 
+  if (
+    !Number.isInteger(leagueId) ||
+    leagueId <= 0 ||
+    !Number.isInteger(gw) ||
+    gw <= 0 ||
+    !Number.isInteger(currentGw) ||
+    currentGw <= 0
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Invalid query params. Expected positive integers for leagueId, gw, and currentGw.",
+      },
+      { status: 400 }
+    );
+  }
+
   const data = await getClassicLeague(leagueId);
 
   if (!data) {
@@ -25,6 +42,13 @@ export async function GET(req: Request) {
     gw,
     currentGw
   );
+
+  if (ranked.length === 0) {
+    return NextResponse.json({
+      standings: [],
+      stats: null,
+    });
+  }
 
   // --- Calculate card stats ---
   const mostPoints = ranked.reduce((max, team) =>
