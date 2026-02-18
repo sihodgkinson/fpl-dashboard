@@ -30,10 +30,10 @@ const fetcher = async (url: string) => {
 interface StandingsResponse {
   standings: EnrichedStanding[];
   stats: {
-    mostPoints: EnrichedStanding;
-    fewestPoints: EnrichedStanding;
-    mostBench: EnrichedStanding;
-    mostTransfers: EnrichedStanding;
+    mostPoints: EnrichedStanding | null;
+    fewestPoints: EnrichedStanding | null;
+    mostBench: EnrichedStanding | null;
+    mostTransfers: EnrichedStanding | null;
   } | null;
 }
 
