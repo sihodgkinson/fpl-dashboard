@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     Number.isInteger(currentGwParam) && currentGwParam > 0
       ? currentGwParam
       : null;
-  const isHistoricalGw = currentGw !== null && gw < currentGw;
+  const isLockedGw = currentGw !== null && gw <= currentGw;
   const liveCacheTtlSeconds = Number(
     process.env.FPL_LIVE_CACHE_TTL_SECONDS ?? "60"
   );
@@ -53,9 +53,21 @@ export async function GET(req: Request) {
           const cacheAgeSeconds = Math.floor(
             (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
           );
-          const isFreshLiveCache = cacheAgeSeconds < liveCacheTtlSeconds;
+          const isFreshCacheWithoutCurrentGw =
+            currentGw === null && cacheAgeSeconds < liveCacheTtlSeconds;
 
-          if (cached.isFinal || isHistoricalGw || isFreshLiveCache) {
+          if (cached.isFinal) {
+            incrementCounter("cache.chips.hit");
+            return NextResponse.json(cached.payload);
+          }
+
+          if (isLockedGw) {
+            await upsertChipsPayload(leagueId, gw, cached.payload, true);
+            incrementCounter("cache.chips.hit");
+            return NextResponse.json(cached.payload);
+          }
+
+          if (isFreshCacheWithoutCurrentGw) {
             incrementCounter("cache.chips.hit");
             return NextResponse.json(cached.payload);
           }
@@ -88,7 +100,7 @@ export async function GET(req: Request) {
       );
 
       if (supabaseCacheEnabled) {
-        await upsertChipsPayload(leagueId, gw, data, isHistoricalGw);
+        await upsertChipsPayload(leagueId, gw, data, isLockedGw);
       }
 
       return NextResponse.json(data);

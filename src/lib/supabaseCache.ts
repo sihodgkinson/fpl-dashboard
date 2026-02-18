@@ -123,7 +123,7 @@ async function upsertCachedPayload<TPayload>(
   const config = getSupabaseConfig();
   if (!config) return;
 
-  const url = `${config.url}/rest/v1/fpl_cache`;
+  const url = `${config.url}/rest/v1/fpl_cache?on_conflict=league_id,gw,view`;
   const body = [
     {
       league_id: leagueId,

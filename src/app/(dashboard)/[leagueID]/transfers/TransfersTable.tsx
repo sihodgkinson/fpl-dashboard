@@ -47,7 +47,7 @@ export function TransfersTab({
   const { data, error } = useSWR<TransfersResponse[]>(
     `/api/transfers?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
-    { refreshInterval: 60000 }
+    { refreshInterval: 0, revalidateOnFocus: false }
   );
 
   if (error) return <div>Error loading transfers</div>;

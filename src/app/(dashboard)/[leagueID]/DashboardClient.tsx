@@ -66,29 +66,32 @@ export default function DashboardClient({
 
   // Find the selected league's preloaded data
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
-  const shouldUsePreloaded =
+  const hasPreloadedCurrentGwData =
     gw === currentGw &&
     !!selectedLeague?.standings &&
     selectedLeague.standings.length > 0;
 
   const { data, error } = useSWR<StandingsResponse>(
-    shouldUsePreloaded
-      ? null
-      : `/api/league?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
+    `/api/league?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
-    { refreshInterval: 30000 }
+    {
+      fallbackData: hasPreloadedCurrentGwData
+        ? {
+            standings: selectedLeague.standings ?? [],
+            stats: selectedLeague.stats ?? null,
+          }
+        : undefined,
+      refreshInterval: gw === currentGw ? 60000 : 0,
+      revalidateOnFocus: gw === currentGw,
+    }
   );
 
-  const standings = shouldUsePreloaded
-    ? selectedLeague?.standings ?? []
-    : Array.isArray(data?.standings)
+  const standings = Array.isArray(data?.standings)
     ? data.standings
     : [];
 
-  const stats = shouldUsePreloaded
-    ? selectedLeague?.stats ?? null
-    : data?.stats ?? null;
-  const isLeagueDataLoading = !shouldUsePreloaded && !data && !error;
+  const stats = data?.stats ?? null;
+  const isLeagueDataLoading = !data && !error;
 
   return (
     <>

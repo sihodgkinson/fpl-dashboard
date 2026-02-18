@@ -59,7 +59,7 @@ export function ChipsTab({
   const { data, error } = useSWR<ChipsResponse[]>(
     `/api/chips?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
-    { refreshInterval: 60000 }
+    { refreshInterval: 0, revalidateOnFocus: false }
   );
 
   if (error) return <div>Error loading chips</div>;
