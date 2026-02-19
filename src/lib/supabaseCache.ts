@@ -37,6 +37,11 @@ interface CacheRow<TPayload> {
   is_final: boolean;
 }
 
+interface LatestLeagueGwRow {
+  gw: number;
+  is_final: boolean;
+}
+
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -217,4 +222,56 @@ export async function upsertChipsPayload(
   isFinal: boolean
 ): Promise<void> {
   return upsertCachedPayload(leagueId, gw, "chips", payload, isFinal);
+}
+
+export async function getLatestCachedLeagueGw(): Promise<{
+  gw: number;
+  isFinal: boolean;
+} | null> {
+  const config = getSupabaseConfig();
+  if (!config) return null;
+
+  const url =
+    `${config.url}/rest/v1/fpl_cache` +
+    `?view=eq.league&select=gw,is_final&order=gw.desc,fetched_at.desc&limit=1`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      logMetric("cache.supabase.latest_gw.read", {
+        success: false,
+        status: res.status,
+      });
+      return null;
+    }
+
+    const rows = (await res.json()) as LatestLeagueGwRow[];
+    const row = rows[0];
+    if (!row || !Number.isInteger(row.gw) || row.gw <= 0) return null;
+
+    logMetric("cache.supabase.latest_gw.read", {
+      success: true,
+      gw: row.gw,
+      isFinal: row.is_final,
+    });
+
+    return {
+      gw: row.gw,
+      isFinal: row.is_final,
+    };
+  } catch (error) {
+    logMetric("cache.supabase.latest_gw.read", {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return null;
+  }
 }

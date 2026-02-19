@@ -5,6 +5,7 @@ import {
   EnrichedStanding,
 } from "@/types/fpl";
 import { incrementCounter, logMetric } from "@/lib/metrics";
+import { getLatestCachedLeagueGw } from "@/lib/supabaseCache";
 
 /**
  * Generic FPL fetch wrapper with caching + error handling
@@ -102,15 +103,27 @@ export async function getBootstrapStatic(): Promise<BootstrapStatic | null> {
 
 export async function getCurrentGameweek(): Promise<number> {
   const data = await getBootstrapStatic();
-  if (!data) return 1;
-  const current = data.events.find((e) => e.is_current);
-  return current?.id ?? 1;
+  if (data) {
+    const current = data.events.find((e) => e.is_current);
+    if (current?.id) return current.id;
+  }
+
+  const latestCached = await getLatestCachedLeagueGw();
+  if (latestCached?.gw) return latestCached.gw;
+
+  return 1;
 }
 
 export async function getMaxGameweek(): Promise<number> {
   const data = await getBootstrapStatic();
-  if (!data) return 1;
-  return data.events.filter((e) => e.finished || e.is_current).length;
+  if (data) {
+    return data.events.filter((e) => e.finished || e.is_current).length;
+  }
+
+  const latestCached = await getLatestCachedLeagueGw();
+  if (latestCached?.gw) return latestCached.gw;
+
+  return 1;
 }
 
 export interface Player {
