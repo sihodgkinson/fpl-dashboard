@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSWRConfig } from "swr";
 import {
   Select,
   SelectContent,
@@ -13,22 +14,54 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils"; // shadcn utility for merging class names
 
 interface GameweekSelectorProps {
+  selectedLeagueId: number;
   currentGw: number;
   maxGw: number;
   className?: string; // NEW
 }
 
 export function GameweekSelector({
+  selectedLeagueId,
   currentGw,
   maxGw,
   className,
 }: GameweekSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { mutate } = useSWRConfig();
 
   const selectedGw = Number(searchParams.get("gw")) || currentGw;
 
+  const prefetchForGw = async (targetGw: number) => {
+    if (!Number.isInteger(selectedLeagueId) || selectedLeagueId <= 0) return;
+
+    const keys = [
+      `/api/league?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
+      `/api/transfers?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
+      `/api/chips?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
+    ];
+
+    await Promise.all(
+      keys.map((key) =>
+        mutate(
+          key,
+          fetch(key).then((res) => {
+            if (!res.ok) {
+              throw new Error(`Prefetch failed: ${res.status}`);
+            }
+            return res.json();
+          }),
+          {
+            populateCache: true,
+            revalidate: false,
+          }
+        ).catch(() => undefined)
+      )
+    );
+  };
+
   const updateGw = (gw: number) => {
+    void prefetchForGw(gw);
     const params = new URLSearchParams(searchParams.toString());
     params.set("gw", String(gw));
     router.push(`/dashboard?${params.toString()}`);

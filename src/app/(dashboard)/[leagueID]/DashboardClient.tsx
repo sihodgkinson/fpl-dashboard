@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { TransfersTab } from "@/app/(dashboard)/[leagueID]/transfers/TransfersTable";
@@ -63,6 +63,8 @@ export default function DashboardClient({
   gw,
 }: DashboardClientProps) {
   const [tab, setTab] = React.useState("league");
+  const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
+  const { mutate } = useSWRConfig();
 
   // Find the selected league's preloaded data
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
@@ -93,6 +95,78 @@ export default function DashboardClient({
   const stats = data?.stats ?? null;
   const isLeagueDataLoading = !data && !error;
 
+  const prefetchKey = React.useCallback(
+    async (key: string) => {
+      if (prefetchedKeysRef.current.has(key)) return;
+      prefetchedKeysRef.current.add(key);
+
+      try {
+        await mutate(key, fetcher(key), {
+          populateCache: true,
+          revalidate: false,
+        });
+      } catch {
+        // Allow retries if a background prefetch fails.
+        prefetchedKeysRef.current.delete(key);
+      }
+    },
+    [mutate]
+  );
+
+  React.useEffect(() => {
+    const keysToPrefetch = new Set<string>();
+    const immutableGwLookback = 2;
+
+    // Current GW chips/transfers are effectively immutable after lock.
+    keysToPrefetch.add(
+      `/api/transfers?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
+    );
+    keysToPrefetch.add(
+      `/api/chips?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
+    );
+
+    // Prefetch inactive tab payload for the currently selected GW.
+    if (tab !== "transfers") {
+      keysToPrefetch.add(
+        `/api/transfers?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
+      );
+    }
+    if (tab !== "chips") {
+      keysToPrefetch.add(
+        `/api/chips?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
+      );
+    }
+
+    // Warm nearby immutable GWs so backward navigation feels instant.
+    if (gw > 1) {
+      const fromGw = Math.max(1, gw - immutableGwLookback);
+      for (let candidateGw = fromGw; candidateGw < gw; candidateGw += 1) {
+        keysToPrefetch.add(
+          `/api/league?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
+        );
+        keysToPrefetch.add(
+          `/api/transfers?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
+        );
+        keysToPrefetch.add(
+          `/api/chips?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
+        );
+      }
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      for (const key of keysToPrefetch) {
+        if (cancelled) return;
+        await prefetchKey(key);
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [currentGw, gw, prefetchKey, selectedLeagueId, tab]);
+
   return (
     <>
       {/* Header with selectors */}
@@ -111,6 +185,7 @@ export default function DashboardClient({
           {/* Bottom row (on mobile): Gameweek selector + dark mode toggle */}
           <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
             <GameweekSelector
+              selectedLeagueId={selectedLeagueId}
               currentGw={currentGw}
               maxGw={maxGw}
               className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
