@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import useSWR from "swr";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +46,32 @@ interface TrendResponse {
   };
 }
 
+function useDisableChartTooltipOnTouch(): boolean {
+  const [disableTooltip, setDisableTooltip] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const media =
+      typeof window.matchMedia === "function"
+        ? window.matchMedia("(pointer: coarse)")
+        : null;
+
+    const update = () => {
+      const hasTouch =
+        typeof navigator !== "undefined" && navigator.maxTouchPoints > 0;
+      const coarsePointer = media?.matches ?? false;
+      setDisableTooltip(hasTouch || coarsePointer);
+    };
+
+    update();
+    media?.addEventListener("change", update);
+    return () => media?.removeEventListener("change", update);
+  }, []);
+
+  return disableTooltip;
+}
+
 function TrendTooltip({
   active,
   payload,
@@ -75,11 +102,13 @@ function MiniTrendChart({
   isLoading,
   unit,
   chartId,
+  enableTooltip,
 }: {
   trend: TrendSeries | null | undefined;
   isLoading: boolean;
   unit?: string;
   chartId: string;
+  enableTooltip: boolean;
 }) {
   if (isLoading) {
     return <Skeleton className="h-16 w-full" />;
@@ -112,7 +141,7 @@ function MiniTrendChart({
           </defs>
           <XAxis dataKey="gw" hide />
           <YAxis hide domain={["auto", "auto"]} />
-          <Tooltip content={<TrendTooltip unit={unit} />} />
+          {enableTooltip && <Tooltip content={<TrendTooltip unit={unit} />} />}
           <Area
             type="monotone"
             dataKey="value"
@@ -138,6 +167,7 @@ function StatCard({
   isTrendLoading,
   unit,
   chartId,
+  enableTooltip,
 }: {
   title: string;
   value: number | null;
@@ -147,6 +177,7 @@ function StatCard({
   isTrendLoading: boolean;
   unit?: string;
   chartId: string;
+  enableTooltip: boolean;
 }) {
   if (value === null) {
     // ✅ Skeleton while loading
@@ -176,6 +207,7 @@ function StatCard({
             isLoading={isTrendLoading}
             unit={unit}
             chartId={chartId}
+            enableTooltip={enableTooltip}
           />
         </div>
       </div>
@@ -207,6 +239,7 @@ export function LeagueStatsCards({
   isLoading,
   hasError,
 }: LeagueStatsCardsProps) {
+  const disableTooltipOnTouch = useDisableChartTooltipOnTouch();
   const { data: trendData, error: trendError } = useSWR<TrendResponse>(
     `/api/stats-trend?leagueId=${leagueId}&gw=${gw}&window=8`,
     fetcher,
@@ -228,6 +261,7 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId="most-points"
+        enableTooltip={!disableTooltipOnTouch}
       />
       <StatCard
         title="Fewest GW Points"
@@ -238,6 +272,7 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId="fewest-points"
+        enableTooltip={!disableTooltipOnTouch}
       />
       <StatCard
         title="Most GW Bench Points"
@@ -248,6 +283,7 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId="most-bench"
+        enableTooltip={!disableTooltipOnTouch}
       />
       <StatCard
         title="Most GW Transfers"
@@ -258,6 +294,7 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit=""
         chartId="most-transfers"
+        enableTooltip={!disableTooltipOnTouch}
       />
     </div>
   );
