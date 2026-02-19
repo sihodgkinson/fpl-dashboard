@@ -52,7 +52,7 @@ export function LeagueTable({
   if (hasError) return <div>Error loading standings</div>;
 
   return (
-    <div className="w-full overflow-x-auto rounded-md border border-border h-auto lg:h-[calc(100vh-435px)] sm:overflow-y-auto">
+    <div className="w-full overflow-x-auto rounded-md border border-border sm:h-full sm:overflow-auto mobile-landscape-table">
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 bg-muted dark:bg-card z-10">
           <tr className="border-b text-foreground font-semibold">

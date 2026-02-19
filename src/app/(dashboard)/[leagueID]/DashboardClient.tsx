@@ -174,7 +174,7 @@ export default function DashboardClient({
   }, [currentGw, gw, prefetchKey, selectedLeagueId, tab]);
 
   return (
-    <>
+    <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
       <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -202,7 +202,7 @@ export default function DashboardClient({
       </header>
 
       {/* Main content */}
-      <main className="p-4 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
+      <main className="mobile-landscape-scroll-main flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-6">
         {/* Stats cards */}
         <LeagueStatsCards
           stats={stats}
@@ -242,8 +242,8 @@ export default function DashboardClient({
         </Tabs>
 
         {/* ✅ Tab content (all pre-mounted, hidden with CSS) */}
-        <div className="w-full">
-          <div className={tab === "league" ? "block mt-2 sm:mt-4" : "hidden"}>
+        <div className="flex w-full min-h-0 flex-1 flex-col">
+          <div className={tab === "league" ? "min-h-0 flex-1" : "hidden"}>
             <LeagueTable
               standings={standings}
               isLoading={isLeagueDataLoading}
@@ -251,15 +251,15 @@ export default function DashboardClient({
             />
           </div>
 
-          <div className={tab === "transfers" ? "block mt-2 sm:mt-4" : "hidden"}>
+          <div className={tab === "transfers" ? "min-h-0 flex-1" : "hidden"}>
             <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </div>
 
-          <div className={tab === "chips" ? "block mt-2 sm:mt-4" : "hidden"}>
+          <div className={tab === "chips" ? "min-h-0 flex-1" : "hidden"}>
             <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </div>
         </div>
       </main>
-    </>
+    </div>
   );
 }

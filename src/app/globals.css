@@ -138,3 +138,21 @@
     justify-content: stretch;
   }
 }
+
+@media (orientation: landscape) and (pointer: coarse) and (max-height: 540px) {
+  .mobile-landscape-scroll-shell {
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .mobile-landscape-scroll-main {
+    overflow: visible !important;
+  }
+
+  .mobile-landscape-table {
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+}
