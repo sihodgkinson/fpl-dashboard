@@ -54,8 +54,8 @@ export default async function DashboardPage({
         mostTransfers: EnrichedStanding | null;
       } | null = null;
 
-      // ✅ Enrich standings + compute stats only for the current GW
-      if (gw === currentGw) {
+      // Precompute heavy standings only for the selected league.
+      if (id === selectedLeagueId && gw === currentGw) {
         standings = await enrichStandings(data.standings.results, gw, currentGw);
 
         if (standings.length > 0) {
