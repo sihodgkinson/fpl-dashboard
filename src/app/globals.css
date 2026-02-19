@@ -120,3 +120,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .stat-card-metric-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+
+  .stat-card-metric-value {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .stat-card-metric-trend {
+    width: 100%;
+    justify-content: stretch;
+  }
+}

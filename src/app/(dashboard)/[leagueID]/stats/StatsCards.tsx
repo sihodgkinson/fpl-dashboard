@@ -184,9 +184,9 @@ function StatCard({
     return (
       <Card className="p-4">
         <Skeleton className="h-4 w-24 mb-2" />
-        <div className="mt-1 mb-3 flex items-start gap-3">
-          <Skeleton className="h-12 w-16" />
-          <Skeleton className="h-16 flex-1" />
+        <div className="stat-card-metric-row mt-1 mb-3 flex items-start gap-3">
+          <Skeleton className="stat-card-metric-value h-12 w-16" />
+          <Skeleton className="stat-card-metric-trend h-16 flex-1" />
         </div>
         <Skeleton className="h-4 w-32 mb-1" />
         <Skeleton className="h-3 w-20" />
@@ -197,11 +197,11 @@ function StatCard({
   return (
     <Card className="p-4">
       <p className="text-sm text-muted-foreground">{title}</p>
-      <div className="flex items-center">
-        <div className="w-1/2 flex items-center justify-start">
+      <div className="stat-card-metric-row flex items-center">
+        <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
           <h2 className="text-5xl font-mono font-semibold">{value}</h2>
         </div>
-        <div className="w-1/2 flex items-center justify-center">
+        <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
           <MiniTrendChart
             trend={trend}
             isLoading={isTrendLoading}
