@@ -53,7 +53,7 @@ async function authFetch(
   const config = getAuthConfig();
   if (!config) return null;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     apikey: config.key,
     "Content-Type": "application/json",
     ...(init.headers || {}),
