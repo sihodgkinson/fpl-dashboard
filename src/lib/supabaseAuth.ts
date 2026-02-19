@@ -53,14 +53,12 @@ async function authFetch(
   const config = getAuthConfig();
   if (!config) return null;
 
-  const headers: Record<string, string> = {
-    apikey: config.key,
-    "Content-Type": "application/json",
-    ...(init.headers || {}),
-  };
+  const headers = new Headers(init.headers);
+  headers.set("apikey", config.key);
+  headers.set("Content-Type", "application/json");
 
   if (init.bearerToken) {
-    headers.Authorization = `Bearer ${init.bearerToken}`;
+    headers.set("Authorization", `Bearer ${init.bearerToken}`);
   }
 
   const res = await fetch(`${config.url}${path}`, {
