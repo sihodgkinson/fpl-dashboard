@@ -90,7 +90,7 @@ export function GameweekSelector({
           <SelectValue placeholder="Select GW" />
         </SelectTrigger>
         <SelectContent>
-          {Array.from({ length: maxGw }, (_, i) => i + 1).map((gw) => (
+          {Array.from({ length: maxGw }, (_, i) => maxGw - i).map((gw) => (
             <SelectItem key={gw} value={String(gw)}>
               Gameweek {gw}
             </SelectItem>
