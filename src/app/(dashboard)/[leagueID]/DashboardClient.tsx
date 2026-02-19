@@ -124,6 +124,9 @@ export default function DashboardClient({
     keysToPrefetch.add(
       `/api/chips?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
     );
+    keysToPrefetch.add(
+      `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${gw}&window=8`
+    );
 
     // Prefetch inactive tab payload for the currently selected GW.
     if (tab !== "transfers") {
@@ -149,6 +152,9 @@ export default function DashboardClient({
         );
         keysToPrefetch.add(
           `/api/chips?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
+        );
+        keysToPrefetch.add(
+          `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${candidateGw}&window=8`
         );
       }
     }
@@ -200,6 +206,8 @@ export default function DashboardClient({
         {/* Stats cards */}
         <LeagueStatsCards
           stats={stats}
+          leagueId={selectedLeagueId}
+          gw={gw}
           isLoading={isLeagueDataLoading}
           hasError={Boolean(error)}
         />

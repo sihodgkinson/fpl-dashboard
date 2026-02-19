@@ -32,6 +32,7 @@ export interface ChipsCachePayloadItem {
 type CacheView = "league" | "transfers" | "chips";
 
 interface CacheRow<TPayload> {
+  gw?: number;
   payload_json: TPayload;
   fetched_at: string;
   is_final: boolean;
@@ -179,6 +180,85 @@ export async function getCachedLeaguePayload(
   gw: number
 ): Promise<{ payload: LeagueCachePayload; fetchedAt: string; isFinal: boolean } | null> {
   return getCachedPayload<LeagueCachePayload>(leagueId, gw, "league");
+}
+
+export async function getCachedLeaguePayloadRange(
+  leagueId: number,
+  fromGw: number,
+  toGw: number
+): Promise<
+  {
+    gw: number;
+    payload: LeagueCachePayload;
+    fetchedAt: string;
+    isFinal: boolean;
+  }[]
+> {
+  const config = getSupabaseConfig();
+  if (!config) return [];
+
+  const url =
+    `${config.url}/rest/v1/fpl_cache` +
+    `?league_id=eq.${leagueId}&view=eq.league` +
+    `&gw=gte.${fromGw}&gw=lte.${toGw}` +
+    `&select=gw,payload_json,fetched_at,is_final&order=gw.asc`;
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      logMetric("cache.supabase.read_range", {
+        leagueId,
+        fromGw,
+        toGw,
+        success: false,
+        status: res.status,
+      });
+      return [];
+    }
+
+    const rows = (await res.json()) as CacheRow<LeagueCachePayload>[];
+    const filtered = rows
+      .filter(
+        (row) =>
+          Number.isInteger(row.gw) &&
+          (row.gw as number) >= fromGw &&
+          (row.gw as number) <= toGw &&
+          row.payload_json
+      )
+      .map((row) => ({
+        gw: row.gw as number,
+        payload: row.payload_json,
+        fetchedAt: row.fetched_at,
+        isFinal: row.is_final,
+      }));
+
+    logMetric("cache.supabase.read_range", {
+      leagueId,
+      fromGw,
+      toGw,
+      success: true,
+      count: filtered.length,
+    });
+
+    return filtered;
+  } catch (error) {
+    logMetric("cache.supabase.read_range", {
+      leagueId,
+      fromGw,
+      toGw,
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return [];
+  }
 }
 
 export async function upsertLeaguePayload(

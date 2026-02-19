@@ -39,6 +39,7 @@ export function GameweekSelector({
       `/api/league?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
       `/api/transfers?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
       `/api/chips?leagueId=${selectedLeagueId}&gw=${targetGw}&currentGw=${currentGw}`,
+      `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${targetGw}&window=8`,
     ];
 
     await Promise.all(
