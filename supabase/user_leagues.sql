@@ -1,27 +1,14 @@
 create table if not exists public.user_leagues (
   id bigserial primary key,
-  user_key text,
-  user_id uuid,
+  user_id uuid not null,
   league_id bigint not null,
   league_name text not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  check (user_key is not null or user_id is not null)
+  unique (user_id, league_id)
 );
-
-alter table public.user_leagues
-  drop column if exists nickname;
-
-create index if not exists user_leagues_user_key_idx
-  on public.user_leagues (user_key, created_at);
 create index if not exists user_leagues_user_id_idx
   on public.user_leagues (user_id, created_at);
-create unique index if not exists user_leagues_user_key_league_id_unique_idx
-  on public.user_leagues (user_key, league_id)
-  where user_key is not null;
-create unique index if not exists user_leagues_user_id_league_id_unique_idx
-  on public.user_leagues (user_id, league_id)
-  where user_id is not null;
 
 create or replace function public.set_user_leagues_updated_at()
 returns trigger as $$

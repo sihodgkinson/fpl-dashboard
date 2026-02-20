@@ -8,6 +8,12 @@ const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 interface SupabaseAuthUser {
   id: string;
   email?: string;
+  user_metadata?: {
+    name?: string;
+    full_name?: string;
+    avatar_url?: string;
+    picture?: string;
+  };
 }
 
 interface SupabaseAuthSession {

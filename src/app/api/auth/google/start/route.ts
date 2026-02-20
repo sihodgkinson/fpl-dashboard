@@ -20,7 +20,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const origin = new URL(request.url).origin;
+  const explicitAppUrl =
+    process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || null;
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  const forwardedHost =
+    request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const forwardedOrigin =
+    forwardedProto && forwardedHost ? `${forwardedProto}://${forwardedHost}` : null;
+  const origin = explicitAppUrl || forwardedOrigin || request.nextUrl.origin;
   const redirectTo = `${origin}/auth/callback`;
   const url =
     `${config.url}/auth/v1/authorize` +

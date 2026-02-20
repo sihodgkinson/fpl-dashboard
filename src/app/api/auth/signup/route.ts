@@ -3,11 +3,6 @@ import {
   attachAuthCookies,
   signUpWithPassword,
 } from "@/lib/supabaseAuth";
-import {
-  USER_LEAGUES_COOKIE,
-  migrateUserKeyLeaguesToUserId,
-  seedDefaultUserLeagues,
-} from "@/lib/userLeagues";
 
 export async function POST(request: NextRequest) {
   let body: { email?: unknown; password?: unknown };
@@ -29,13 +24,6 @@ export async function POST(request: NextRequest) {
   const result = await signUpWithPassword(email, password);
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
-  }
-
-  const userKey = request.cookies.get(USER_LEAGUES_COOKIE)?.value;
-  if (userKey) {
-    await migrateUserKeyLeaguesToUserId({ userId: result.user.id, userKey });
-  } else {
-    await seedDefaultUserLeagues({ userId: result.user.id });
   }
 
   const response = NextResponse.json({

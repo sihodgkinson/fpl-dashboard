@@ -12,7 +12,6 @@ interface LeagueManagerProps {
   selectedLeagueId: number;
   selectedLeagueName: string;
   currentGw: number;
-  leagueCount: number;
 }
 
 interface AddLeagueResponse {
@@ -45,7 +44,6 @@ export function LeagueManager({
   selectedLeagueId,
   selectedLeagueName,
   currentGw,
-  leagueCount,
 }: LeagueManagerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -57,6 +55,7 @@ export function LeagueManager({
     name: string;
   } | null>(null);
   const [addError, setAddError] = React.useState<string | null>(null);
+  const [removeError, setRemoveError] = React.useState<string | null>(null);
   const [isAdding, setIsAdding] = React.useState(false);
   const [isChecking, setIsChecking] = React.useState(false);
   const [isRemoving, setIsRemoving] = React.useState(false);
@@ -143,6 +142,7 @@ export function LeagueManager({
   }
 
   async function handleRemoveLeague() {
+    setRemoveError(null);
     setIsRemoving(true);
     try {
       const res = await fetch(`/api/user/leagues?leagueId=${selectedLeagueId}`, {
@@ -150,6 +150,8 @@ export function LeagueManager({
       });
 
       if (!res.ok) {
+        const payload = (await res.json()) as { error?: string };
+        setRemoveError(payload.error || "Failed to remove league.");
         return;
       }
 
@@ -244,7 +246,7 @@ export function LeagueManager({
       <Popover
         open={removeOpen}
         onOpenChange={(isOpen) => {
-          if (leagueCount <= 1 || isRemoving) return;
+          if (isRemoving) return;
           setRemoveOpen(isOpen);
         }}
       >
@@ -255,7 +257,7 @@ export function LeagueManager({
             size="icon"
             className="h-12 w-12"
             aria-label="Remove selected league"
-            disabled={isRemoving || leagueCount <= 1}
+            disabled={isRemoving}
           >
             <Trash2 />
           </Button>
@@ -282,6 +284,7 @@ export function LeagueManager({
                 {isRemoving ? "Removing..." : "Confirm Remove"}
               </Button>
             </div>
+            {removeError ? <p className="text-xs text-destructive">{removeError}</p> : null}
           </div>
         </PopoverContent>
       </Popover>

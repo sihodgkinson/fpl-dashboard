@@ -9,9 +9,8 @@ import { ChipsTab } from "@/app/(dashboard)/[leagueID]/chips/ChipsTable";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { LeagueManager } from "@/components/common/LeagueManager";
-import { AuthPanel } from "@/components/common/AuthPanel";
+import { AccountMenu } from "@/components/common/AccountMenu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ModeToggle } from "@/components/common/ModeToggle";
 import {
   Select,
   SelectContent,
@@ -192,11 +191,10 @@ export default function DashboardClient({
               selectedLeagueId={selectedLeagueId}
               selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
               currentGw={currentGw}
-              leagueCount={leagues.length}
             />
           </div>
 
-          {/* Bottom row (on mobile): Gameweek selector + dark mode toggle */}
+          {/* Bottom row (on mobile): Gameweek selector + account menu */}
           <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
             <GameweekSelector
               selectedLeagueId={selectedLeagueId}
@@ -204,8 +202,7 @@ export default function DashboardClient({
               maxGw={maxGw}
               className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
             />
-            <AuthPanel />
-            <ModeToggle className="h-12 w-12 sm:h-12 sm:w-12" />
+            <AccountMenu className="h-12 w-12 sm:h-12 sm:w-12" />
           </div>
         </div>
       </header>

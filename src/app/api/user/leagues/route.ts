@@ -6,147 +6,82 @@ import {
   removePendingLeagueBackfillJobs,
 } from "@/lib/backfillJobs";
 import {
-  USER_LEAGUES_COOKIE,
-  USER_LEAGUES_COOKIE_MAX_AGE,
   addUserLeague,
-  createUserLeaguesKey,
   listUserLeagues,
-  migrateUserKeyLeaguesToUserId,
   purgeLeagueCacheIfUnreferenced,
   removeUserLeague,
-  seedDefaultUserLeagues,
 } from "@/lib/userLeagues";
 import {
   attachAuthCookies,
   getRequestSessionUser,
 } from "@/lib/supabaseAuth";
 
-function getUserKey(request: NextRequest): { userKey: string; isNew: boolean } {
-  const existing = request.cookies.get(USER_LEAGUES_COOKIE)?.value;
-  if (existing) return { userKey: existing, isNew: false };
-  return { userKey: createUserLeaguesKey(), isNew: true };
-}
-
-function withUserCookie(
-  response: NextResponse,
-  userKey: string,
-  shouldSetCookie: boolean
-): NextResponse {
-  if (!shouldSetCookie) return response;
-
-  response.cookies.set({
-    name: USER_LEAGUES_COOKIE,
-    value: userKey,
-    maxAge: USER_LEAGUES_COOKIE_MAX_AGE,
-    path: "/",
-    sameSite: "lax",
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-  });
-
-  return response;
-}
-
 export async function GET(request: NextRequest) {
   const { user, refreshedSession } = await getRequestSessionUser(request);
-  const { userKey, isNew } = getUserKey(request);
-
-  if (user?.id && userKey) {
-    await migrateUserKeyLeaguesToUserId({ userId: user.id, userKey });
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
-
-  const identity = user?.id ? { userId: user.id } : { userKey };
-  if (isNew && !user?.id) {
-    await seedDefaultUserLeagues(identity);
-  }
-  let leagues = await listUserLeagues(identity);
-  if (user?.id && leagues.length === 0) {
-    await seedDefaultUserLeagues(identity);
-    leagues = await listUserLeagues(identity);
-  }
+  const leagues = await listUserLeagues(user.id);
 
   return attachAuthCookies(
-    withUserCookie(
     NextResponse.json({
       leagues,
     }),
-    userKey,
-      isNew && !user?.id
-    ),
     refreshedSession
   );
 }
 
 export async function POST(request: NextRequest) {
   const { user, refreshedSession } = await getRequestSessionUser(request);
-  const { userKey, isNew } = getUserKey(request);
-  const identity = user?.id ? { userId: user.id } : { userKey };
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
 
   let body: { leagueId?: unknown; preview?: unknown };
   try {
     body = (await request.json()) as { leagueId?: unknown; preview?: unknown };
   } catch {
-    return withUserCookie(
-      NextResponse.json({ error: "Invalid JSON body." }, { status: 400 }),
-      userKey,
-      isNew && !user?.id
-    );
+    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
   const leagueId = Number(body.leagueId);
   const previewOnly = body.preview === true;
 
   if (!Number.isInteger(leagueId) || leagueId <= 0) {
-    return withUserCookie(
-      NextResponse.json(
-        { error: "Invalid leagueId. Expected a positive integer." },
-        { status: 400 }
-      ),
-      userKey,
-      isNew && !user?.id
+    return NextResponse.json(
+      { error: "Invalid leagueId. Expected a positive integer." },
+      { status: 400 }
     );
   }
 
   const league = await getClassicLeague(leagueId);
   if (!league?.league?.name) {
-    return withUserCookie(
-      NextResponse.json(
-        { error: `Could not find FPL classic league ${leagueId}.` },
-        { status: 404 }
-      ),
-      userKey,
-      isNew && !user?.id
+    return NextResponse.json(
+      { error: `Could not find FPL classic league ${leagueId}.` },
+      { status: 404 }
     );
   }
 
   if (previewOnly) {
-    return withUserCookie(
-      NextResponse.json({
-        league: {
-          id: leagueId,
-          name: league.league.name,
-        },
-        preview: true,
-      }),
-      userKey,
-      isNew && !user?.id
-    );
+    return NextResponse.json({
+      league: {
+        id: leagueId,
+        name: league.league.name,
+      },
+      preview: true,
+    });
   }
 
   const createdResult = await addUserLeague({
-    identity,
+    userId: user.id,
     leagueId,
     leagueName: league.league.name,
   });
   if (!createdResult.ok) {
     return attachAuthCookies(
-      withUserCookie(
       NextResponse.json(
         { error: "Failed to persist your league configuration." },
         { status: 500 }
-      ),
-      userKey,
-        isNew && !user?.id
       ),
       refreshedSession
     );
@@ -177,71 +112,63 @@ export async function POST(request: NextRequest) {
   }
 
   return attachAuthCookies(
-    withUserCookie(
-      NextResponse.json({
-        league: {
-          id: leagueId,
-          name: league.league.name,
-        },
-        created: createdResult.created,
-        cacheWarmup: warmup,
-        fullBackfillQueued: backfillJob.queued,
-      }),
-      userKey,
-      isNew && !user?.id
-    ),
+    NextResponse.json({
+      league: {
+        id: leagueId,
+        name: league.league.name,
+      },
+      created: createdResult.created,
+      cacheWarmup: warmup,
+      fullBackfillQueued: backfillJob.queued,
+    }),
     refreshedSession
   );
 }
 
 export async function DELETE(request: NextRequest) {
   const { user, refreshedSession } = await getRequestSessionUser(request);
-  const { userKey, isNew } = getUserKey(request);
-  const identity = user?.id ? { userId: user.id } : { userKey };
-  if (isNew && !user?.id) {
-    await seedDefaultUserLeagues(identity);
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   const leagueId = Number(new URL(request.url).searchParams.get("leagueId"));
 
   if (!Number.isInteger(leagueId) || leagueId <= 0) {
-    return withUserCookie(
-      NextResponse.json(
-        { error: "Invalid leagueId. Expected a positive integer." },
-        { status: 400 }
-      ),
-      userKey,
-      isNew && !user?.id
+    return NextResponse.json(
+      { error: "Invalid leagueId. Expected a positive integer." },
+      { status: 400 }
     );
   }
 
-  const existingLeagues = await listUserLeagues(identity);
-  if (existingLeagues.length <= 1) {
-    return withUserCookie(
+  const removeResult = await removeUserLeague({ userId: user.id, leagueId });
+  if (!removeResult.ok) {
+    return attachAuthCookies(
       NextResponse.json(
-        { error: "At least one league must remain in your dashboard." },
-        { status: 400 }
+        { error: "Failed to remove league." },
+        { status: 500 }
       ),
-      userKey,
-      isNew && !user?.id
+      refreshedSession
     );
   }
-
-  const removed = await removeUserLeague({ identity, leagueId });
-  if (removed) {
+  if (!removeResult.removed) {
+    return attachAuthCookies(
+      NextResponse.json(
+        { error: "League was not found for this user." },
+        { status: 404 }
+      ),
+      refreshedSession
+    );
+  }
+  if (removeResult.removed) {
     await removePendingLeagueBackfillJobs(leagueId);
     await purgeLeagueCacheIfUnreferenced(leagueId);
   }
-  const leagues = await listUserLeagues(identity);
+  const leagues = await listUserLeagues(user.id);
 
   return attachAuthCookies(
-    withUserCookie(
-      NextResponse.json({
-        removed,
-        leagues,
-      }),
-      userKey,
-      isNew && !user?.id
-    ),
+    NextResponse.json({
+      removed: removeResult.removed,
+      leagues,
+    }),
     refreshedSession
   );
 }

@@ -5,15 +5,9 @@ import {
 } from "@/lib/fpl";
 import { enrichStandings } from "@/features/league/utils/enrichStandings";
 import DashboardClient from "@/app/(dashboard)/[leagueID]/DashboardClient";
+import { OnboardingGate } from "@/components/common/OnboardingGate";
 import { EnrichedStanding } from "@/types/fpl";
-import { LEAGUE_IDS } from "@/lib/leagues";
-import { cookies } from "next/headers";
-import {
-  listUserLeagues,
-  migrateUserKeyLeaguesToUserId,
-  seedDefaultUserLeagues,
-  USER_LEAGUES_COOKIE,
-} from "@/lib/userLeagues";
+import { listUserLeagues } from "@/lib/userLeagues";
 import { getServerSessionUser } from "@/lib/supabaseAuth";
 
 export default async function DashboardPage({
@@ -22,26 +16,21 @@ export default async function DashboardPage({
   searchParams: Promise<{ leagueId?: string; gw?: string }>;
 }) {
   const params = await searchParams;
-  const cookieStore = await cookies();
+  const [currentGw, maxGw] = await Promise.all([
+    getCurrentGameweek(),
+    getMaxGameweek(),
+  ]);
+
   const sessionUser = await getServerSessionUser();
-  const userKey = cookieStore.get(USER_LEAGUES_COOKIE)?.value;
-  if (sessionUser?.id && userKey) {
-    await migrateUserKeyLeaguesToUserId({ userId: sessionUser.id, userKey });
+  if (!sessionUser?.id) {
+    return <OnboardingGate isAuthenticated={false} currentGw={currentGw} />;
   }
-  let fetchedUserLeagues = await listUserLeagues(
-    sessionUser?.id ? { userId: sessionUser.id } : { userKey }
-  );
-  if (sessionUser?.id && fetchedUserLeagues.length === 0) {
-    await seedDefaultUserLeagues({ userId: sessionUser.id });
-    fetchedUserLeagues = await listUserLeagues({ userId: sessionUser.id });
+
+  const configuredLeagues = await listUserLeagues(sessionUser.id);
+
+  if (configuredLeagues.length === 0) {
+    return <OnboardingGate isAuthenticated currentGw={currentGw} />;
   }
-  const configuredLeagues =
-    fetchedUserLeagues.length > 0
-      ? fetchedUserLeagues
-      : LEAGUE_IDS.map((id) => ({
-          id,
-          name: `League ${id}`,
-        }));
   const leagueIds = configuredLeagues.map((league) => league.id);
 
   const selectedLeagueIdParam = Number(params.leagueId);
@@ -50,11 +39,6 @@ export default async function DashboardPage({
     leagueIds.includes(selectedLeagueIdParam)
       ? selectedLeagueIdParam
       : leagueIds[0];
-
-  const [currentGw, maxGw] = await Promise.all([
-    getCurrentGameweek(),
-    getMaxGameweek(),
-  ]);
 
   const gw = Number(params.gw) || currentGw;
 

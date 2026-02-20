@@ -3,11 +3,6 @@ import {
   attachAuthCookies,
   getUserForAccessToken,
 } from "@/lib/supabaseAuth";
-import {
-  USER_LEAGUES_COOKIE,
-  migrateUserKeyLeaguesToUserId,
-  seedDefaultUserLeagues,
-} from "@/lib/userLeagues";
 
 export async function POST(request: NextRequest) {
   let body: { accessToken?: unknown; refreshToken?: unknown };
@@ -31,19 +26,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid access token." }, { status: 401 });
   }
 
-  const userKey = request.cookies.get(USER_LEAGUES_COOKIE)?.value;
-  if (userKey) {
-    await migrateUserKeyLeaguesToUserId({ userId: user.id, userKey });
-  } else {
-    await seedDefaultUserLeagues({ userId: user.id });
-  }
-
   return attachAuthCookies(
     NextResponse.json({
       ok: true,
       user: {
         id: user.id,
         email: user.email || null,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+        avatarUrl: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
       },
     }),
     {
