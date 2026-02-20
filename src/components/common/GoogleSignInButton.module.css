@@ -1,0 +1,117 @@
+.gsiMaterialButton {
+  user-select: none;
+  -webkit-appearance: none;
+  appearance: none;
+  background-color: #ffffff;
+  border: 1px solid #dadce0;
+  border-radius: 20px;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: "Roboto", arial, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  height: 38px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-align: center;
+  transition: background-color .218s, border-color .218s, box-shadow .218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 195px;
+  max-width: 195px;
+}
+
+.gsiMaterialButtonIcon {
+  height: 18px;
+  margin-right: 10px;
+  min-width: 18px;
+  width: 18px;
+}
+
+.gsiMaterialButtonContentWrapper {
+  align-items: center;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.gsiMaterialButtonContents {
+  font-family: "Roboto", arial, sans-serif;
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsiMaterialButtonState {
+  transition: opacity .218s;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.gsiMaterialButton:disabled {
+  cursor: default;
+  background-color: #ffffff66;
+  border-color: #dadce04d;
+}
+
+.gsiMaterialButton:disabled .gsiMaterialButtonState {
+  background-color: #1f1f1f1a;
+}
+
+.gsiMaterialButton:disabled .gsiMaterialButtonContents,
+.gsiMaterialButton:disabled .gsiMaterialButtonIcon {
+  opacity: 38%;
+}
+
+.gsiMaterialButton:not(:disabled):active .gsiMaterialButtonState,
+.gsiMaterialButton:not(:disabled):focus-visible .gsiMaterialButtonState {
+  background-color: #1f1f1f;
+  opacity: 12%;
+}
+
+.gsiMaterialButton:not(:disabled):hover {
+  border-color: #c7cacf;
+}
+
+.gsiMaterialButton:not(:disabled):hover .gsiMaterialButtonState {
+  background-color: #1f1f1f;
+  opacity: 4%;
+}
+
+:global(.dark) .gsiMaterialButton {
+  background-color: #131314;
+  border-color: #8e918f;
+  color: #e3e3e3;
+}
+
+:global(.dark) .gsiMaterialButton:not(:disabled):hover {
+  border-color: #979a98;
+}
+
+:global(.dark) .gsiMaterialButton:disabled {
+  background-color: #13131461;
+  border-color: #8e918f1f;
+}
+
+:global(.dark) .gsiMaterialButton:disabled .gsiMaterialButtonState {
+  background-color: #e3e3e31f;
+}
+
+:global(.dark) .gsiMaterialButton:not(:disabled):active .gsiMaterialButtonState,
+:global(.dark) .gsiMaterialButton:not(:disabled):focus-visible .gsiMaterialButtonState,
+:global(.dark) .gsiMaterialButton:not(:disabled):hover .gsiMaterialButtonState {
+  background-color: #ffffff;
+}

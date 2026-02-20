@@ -7,6 +7,7 @@ import { LogIn, LogOut, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
 
 interface SessionResponse {
   isAuthenticated: boolean;
@@ -150,14 +151,7 @@ export function AuthPanel() {
             onChange={(event) => setPassword(event.target.value)}
             disabled={isSubmitting}
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogleSignIn}
-            disabled={isSubmitting}
-          >
-            Continue with Google
-          </Button>
+          <GoogleSignInButton onClick={handleGoogleSignIn} disabled={isSubmitting} />
           {error ? <p className="text-xs text-destructive">{error}</p> : null}
           {message ? <p className="text-xs text-muted-foreground">{message}</p> : null}
           <Button type="button" onClick={handleSubmit} disabled={isSubmitting}>
