@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
@@ -30,12 +31,21 @@ export function LeagueSelector({
 }: LeagueSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [optimisticLeagueId, setOptimisticLeagueId] = React.useState(selectedLeagueId);
   const gw = searchParams.get("gw") || currentGw;
+
+  React.useEffect(() => {
+    setOptimisticLeagueId(selectedLeagueId);
+  }, [selectedLeagueId]);
 
   return (
     <Select
-      defaultValue={String(selectedLeagueId)}
+      value={String(optimisticLeagueId)}
       onValueChange={(value) => {
+        const parsedValue = Number(value);
+        if (Number.isInteger(parsedValue) && parsedValue > 0) {
+          setOptimisticLeagueId(parsedValue);
+        }
         router.push(`/dashboard?leagueId=${value}&gw=${gw}`);
       }}
     >
