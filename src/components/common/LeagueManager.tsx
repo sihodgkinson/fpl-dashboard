@@ -63,11 +63,18 @@ export function LeagueManager({
     null
   );
 
+  const shouldPollBackfillStatus = Boolean(pendingLeagueSelectionId);
+
   const { data: backfillStatus } = useSWR<BackfillStatusResponse>(
     "/api/user/backfill-status",
     fetcher,
     {
-      refreshInterval: 5000,
+      refreshInterval: (latestData) => {
+        const queuedJobs = latestData?.summary.queued ?? 0;
+        const runningJobs = latestData?.summary.running ?? 0;
+        const hasActiveJobs = queuedJobs + runningJobs > 0;
+        return shouldPollBackfillStatus || hasActiveJobs ? 2500 : 0;
+      },
       revalidateOnFocus: true,
     }
   );
