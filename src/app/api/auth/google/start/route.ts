@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
     request.headers.get("x-forwarded-host") || request.headers.get("host");
   const forwardedOrigin =
     forwardedProto && forwardedHost ? `${forwardedProto}://${forwardedHost}` : null;
-  const origin = explicitAppUrl || forwardedOrigin || request.nextUrl.origin;
+  // Prefer the incoming request origin to avoid stale APP_URL values
+  // causing production OAuth callbacks to redirect to localhost.
+  const origin = forwardedOrigin || request.nextUrl.origin || explicitAppUrl;
   const redirectTo = `${origin}/auth/callback`;
   const url =
     `${config.url}/auth/v1/authorize` +
