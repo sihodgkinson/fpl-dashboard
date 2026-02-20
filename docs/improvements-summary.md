@@ -1,4 +1,4 @@
-# FPL Dashboard Improvements Summary
+# FPL Dashboard Improvements summary
 
 ## Routing and API Hardening
 
