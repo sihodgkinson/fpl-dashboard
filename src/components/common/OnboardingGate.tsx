@@ -4,7 +4,6 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
 
 interface OnboardingGateProps {
@@ -109,60 +108,57 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   }
 
   return (
-    <main className="min-h-svh flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Add your first league</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            inputMode="numeric"
-            placeholder="FPL Classic League ID"
-            value={leagueIdInput}
-            onChange={(event) => {
-              setLeagueIdInput(event.target.value);
-              setPreviewLeague(null);
-            }}
-            disabled={isChecking || isAdding}
-          />
-          {previewLeague ? (
-            <p className="text-sm">
-              League found: <span className="font-medium">{previewLeague.name}</span>
-            </p>
-          ) : null}
-          {error ? <p className="text-sm text-destructive">{error}</p> : null}
-          {!previewLeague ? (
-            <Button
-              type="button"
-              className="w-full"
-              onClick={handleCheckLeague}
-              disabled={isChecking || isAdding}
-            >
-              {isChecking ? "Checking..." : "Check league"}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              className="w-full"
-              onClick={handleAddLeague}
-              disabled={isAdding}
-            >
-              {isAdding ? "Adding..." : "Add league"}
-            </Button>
-          )}
+    <main className="min-h-svh grid place-items-center p-6">
+      <div className="w-full max-w-md flex flex-col items-center gap-3">
+        <h1 className="text-center text-base font-semibold">Add your first league</h1>
+        <Input
+          inputMode="numeric"
+          placeholder="FPL Classic League ID"
+          value={leagueIdInput}
+          onChange={(event) => {
+            setLeagueIdInput(event.target.value);
+            setPreviewLeague(null);
+          }}
+          disabled={isChecking || isAdding}
+          className="h-[38px] w-[240px]"
+        />
+        {previewLeague ? (
+          <p className="w-[240px] text-center text-sm">
+            League found: <span className="font-medium">{previewLeague.name}</span>
+          </p>
+        ) : null}
+        {error ? <p className="w-[240px] text-center text-sm text-destructive">{error}</p> : null}
+        {!previewLeague ? (
           <Button
             type="button"
-            variant="ghost"
-            className="w-full"
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              router.refresh();
-            }}
+            className="h-[38px] w-[240px]"
+            onClick={handleCheckLeague}
+            disabled={isChecking || isAdding}
           >
-            Sign out
+            {isChecking ? "Checking..." : "Check league"}
           </Button>
-        </CardContent>
-      </Card>
+        ) : (
+          <Button
+            type="button"
+            className="h-[38px] w-[240px]"
+            onClick={handleAddLeague}
+            disabled={isAdding}
+          >
+            {isAdding ? "Adding..." : "Add league"}
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-[38px] w-[240px]"
+          onClick={async () => {
+            await fetch("/api/auth/logout", { method: "POST" });
+            router.refresh();
+          }}
+        >
+          Sign out
+        </Button>
+      </div>
     </main>
   );
 }
