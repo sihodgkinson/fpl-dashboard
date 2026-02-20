@@ -110,6 +110,12 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   return (
     <main className="min-h-svh grid place-items-center p-6">
       <div className="w-full max-w-md flex flex-col items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/favicon.ico"
+          alt="FPL Dashboard"
+          className="h-18 w-18 rounded-2xl border border-[#dadce0] object-cover dark:border-[#8e918f]"
+        />
         <h1 className="text-center text-base font-semibold">Add your first league</h1>
         <Input
           inputMode="numeric"
