@@ -92,19 +92,20 @@ function TrendTooltip({
 }) {
   if (!active || !payload?.[0]) return null;
   const point = payload[0].payload;
-  const hasNumericValue = typeof point.value === "number";
+  const numericValue = typeof point.value === "number" ? point.value : null;
+  const hasNumericValue = numericValue !== null;
   const formattedValue = hasNumericValue
     ? signedValue
-      ? point.value > 0
-        ? `+${point.value}`
-        : String(point.value)
-      : String(point.value)
+      ? numericValue > 0
+        ? `+${numericValue}`
+        : String(numericValue)
+      : String(numericValue)
     : "—";
   const valueClassName =
     signedValue && hasNumericValue
-      ? point.value > 0
+      ? numericValue > 0
         ? "text-green-600 dark:text-green-400"
-        : point.value < 0
+        : numericValue < 0
           ? "text-red-600 dark:text-red-400"
           : "text-muted-foreground"
       : "text-muted-foreground";
