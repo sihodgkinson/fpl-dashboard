@@ -607,6 +607,7 @@ export default function DashboardClient({
         {/* Stats cards */}
         <LeagueStatsCards
           stats={stats}
+          standings={standings}
           leagueId={selectedLeagueId}
           gw={gw}
           currentGw={currentGw}
