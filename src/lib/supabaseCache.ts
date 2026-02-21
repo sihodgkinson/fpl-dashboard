@@ -34,6 +34,7 @@ export interface ActivityImpactCachePayloadItem {
   team: string;
   manager: string;
   chip: string | null;
+  chipCaptainName: string | null;
   transfers: Array<{ in: string; out: string; impact: number }>;
   transferImpactNet: number;
   chipImpact: number;

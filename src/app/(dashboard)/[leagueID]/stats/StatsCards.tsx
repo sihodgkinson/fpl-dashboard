@@ -83,20 +83,38 @@ function TrendTooltip({
   active,
   payload,
   unit,
+  signedValue,
 }: {
   active?: boolean;
   payload?: Array<{ payload: TrendPoint }>;
   unit?: string;
+  signedValue?: boolean;
 }) {
   if (!active || !payload?.[0]) return null;
   const point = payload[0].payload;
+  const hasNumericValue = typeof point.value === "number";
+  const formattedValue = hasNumericValue
+    ? signedValue
+      ? point.value > 0
+        ? `+${point.value}`
+        : String(point.value)
+      : String(point.value)
+    : "—";
+  const valueClassName =
+    signedValue && hasNumericValue
+      ? point.value > 0
+        ? "text-green-600 dark:text-green-400"
+        : point.value < 0
+          ? "text-red-600 dark:text-red-400"
+          : "text-muted-foreground"
+      : "text-muted-foreground";
 
   return (
     <div className="rounded-sm border border-border bg-popover px-2 py-1 text-xs shadow-sm">
       <p className="font-medium">GW {point.gw}</p>
-      <p className="text-muted-foreground">
-        {point.value ?? "—"}
-        {unit ? ` ${unit}` : ""}
+      <p className={valueClassName}>
+        {formattedValue}
+        {!signedValue && unit ? ` ${unit}` : ""}
       </p>
       <p className="font-semibold">{point.team ?? "Unknown"}</p>
       <p className="text-muted-foreground">{point.manager ?? "Unknown manager"}</p>
@@ -110,12 +128,14 @@ function MiniTrendChart({
   unit,
   chartId,
   enableTooltip,
+  signedTooltipValue,
 }: {
   trend: TrendSeries | null | undefined;
   isLoading: boolean;
   unit?: string;
   chartId: string;
   enableTooltip: boolean;
+  signedTooltipValue?: boolean;
 }) {
   if (isLoading) {
     return <Skeleton className="h-16 w-full" />;
@@ -148,7 +168,9 @@ function MiniTrendChart({
           </defs>
           <XAxis dataKey="gw" hide />
           <YAxis hide domain={["auto", "auto"]} />
-          {enableTooltip && <Tooltip content={<TrendTooltip unit={unit} />} />}
+          {enableTooltip && (
+            <Tooltip content={<TrendTooltip unit={unit} signedValue={signedTooltipValue} />} />
+          )}
           <Area
             type="monotone"
             dataKey="value"
@@ -177,6 +199,7 @@ function StatCard({
   unit,
   chartId,
   enableTooltip,
+  signedTooltipValue,
 }: {
   title: string;
   value: number | null;
@@ -189,6 +212,7 @@ function StatCard({
   unit?: string;
   chartId: string;
   enableTooltip: boolean;
+  signedTooltipValue?: boolean;
 }) {
   if (value === null) {
     // ✅ Skeleton while loading
@@ -221,6 +245,7 @@ function StatCard({
             unit={unit}
             chartId={chartId}
             enableTooltip={enableTooltip}
+            signedTooltipValue={signedTooltipValue}
           />
         </div>
       </div>
@@ -311,9 +336,10 @@ export function LeagueStatsCards({
         manager={mostInfluenceRow?.manager ?? null}
         trend={trendData?.series.mostInfluence}
         isTrendLoading={isTrendLoading}
-        unit="pts"
+        unit=""
         chartId="most-influence"
         enableTooltip={!disableTooltipOnTouch}
+        signedTooltipValue
       />
       <StatCard
         title="Fewest GW Points"
