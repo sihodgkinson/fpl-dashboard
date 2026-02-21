@@ -118,11 +118,15 @@ export function ActivityTab({
                     </button>
                   }
                   content={
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Sum of transfer gains/losses this GW: points of players bought minus
-                      points of players sold, then minus transfer hit cost. For Free Hit,
-                      hit cost is treated as 0.
-                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                      <p className="font-medium text-foreground">How Transfer Net is calculated</p>
+                      <p>
+                        <span className="text-foreground">Transfer Net</span> = points from
+                        players bought
+                        {" \u2212 "}points from players sold{" \u2212 "}transfer hit cost.
+                      </p>
+                      <p>For Free Hit, transfer hit cost is always treated as 0.</p>
+                    </div>
                   }
                   className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
@@ -141,11 +145,16 @@ export function ActivityTab({
                     </button>
                   }
                   content={
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Extra points from chip effects this GW. Bench Boost equals bench
-                      points. Triple Captain equals the extra captain points from the
-                      third multiplier. Other chips currently show 0 impact.
-                    </p>
+                    <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                      <p className="font-medium text-foreground">How Chip Impact is calculated</p>
+                      <p>
+                        <span className="text-foreground">Chip Impact</span> = extra points
+                        gained from chip effects in this GW.
+                      </p>
+                      <p>Bench Boost: bench points.</p>
+                      <p>Triple Captain: extra captain points from the third multiplier.</p>
+                      <p>Wildcard and Free Hit: currently 0 impact.</p>
+                    </div>
                   }
                   className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
