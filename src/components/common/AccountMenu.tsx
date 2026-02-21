@@ -18,7 +18,6 @@ import {
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,6 +135,15 @@ export function AccountMenu({
   const failedJobs = backfillStatus?.summary.failed ?? 0;
   const hasActiveBackfillJobs = queuedJobs + runningJobs > 0;
 
+  const resetLeagueSectionState = React.useCallback(() => {
+    setAddOpen(false);
+    setRemoveOpen(false);
+    setLeagueIdInput("");
+    setPreviewLeague(null);
+    setAddError(null);
+    setRemoveError(null);
+  }, []);
+
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     await mutate();
@@ -146,7 +154,7 @@ export function AccountMenu({
   async function handleCheckLeague() {
     const leagueId = Number(leagueIdInput.trim());
     if (!Number.isInteger(leagueId) || leagueId <= 0) {
-      setAddError("Enter a valid positive league ID.");
+      setAddError("Enter a valid league ID.");
       return;
     }
 
@@ -254,7 +262,15 @@ export function AccountMenu({
   }, [currentGw, hasActiveBackfillJobs, pendingLeagueSelectionId]);
 
   return (
-    <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+    <DropdownMenu
+      open={menuOpen}
+      onOpenChange={(isOpen) => {
+        setMenuOpen(isOpen);
+        if (!isOpen) {
+          resetLeagueSectionState();
+        }
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
@@ -286,100 +302,105 @@ export function AccountMenu({
           </div>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <div className="space-y-3 px-4 py-3">
-          <Popover open={addOpen} onOpenChange={setAddOpen}>
-            <PopoverTrigger asChild>
-              <Button type="button" variant="outline" className="w-full justify-start gap-2">
-                <Plus className="h-4 w-4" />
-                Add league
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80">
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Add league</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Enter an FPL classic league ID to add it to your dashboard.
-                  </p>
-                </div>
-                <Input
-                  inputMode="numeric"
-                  placeholder="League ID"
-                  value={leagueIdInput}
-                  onChange={(event) => {
-                    setLeagueIdInput(event.target.value);
-                    setPreviewLeague(null);
-                  }}
-                  disabled={isAdding || isChecking}
-                />
-                {previewLeague ? (
-                  <p className="text-xs">
-                    League found: <span className="font-medium">{previewLeague.name}</span>
-                  </p>
-                ) : null}
-                {addError ? <p className="text-xs text-destructive">{addError}</p> : null}
-                {!previewLeague ? (
-                  <Button
-                    type="button"
-                    onClick={handleCheckLeague}
-                    disabled={isChecking || isAdding}
-                  >
-                    {isChecking ? "Checking..." : "Check League"}
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={handleAddLeague} disabled={isAdding}>
-                    {isAdding ? "Adding..." : "Confirm Add"}
-                  </Button>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <Popover
-            open={removeOpen}
-            onOpenChange={(isOpen) => {
-              if (isRemoving) return;
-              setRemoveOpen(isOpen);
+        <div className="px-4 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-start gap-2 px-0"
+            onClick={() => {
+              setAddOpen((prev) => {
+                const nextOpen = !prev;
+                if (!nextOpen) {
+                  setLeagueIdInput("");
+                  setPreviewLeague(null);
+                  setAddError(null);
+                }
+                return nextOpen;
+              });
+              setRemoveOpen(false);
             }}
           >
-            <PopoverTrigger asChild>
+            <Plus className="h-4 w-4" />
+            Add league
+          </Button>
+          {addOpen ? (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Enter an FPL classic league ID to add it to your dashboard.
+              </p>
+              <Input
+                inputMode="numeric"
+                placeholder="League ID"
+                value={leagueIdInput}
+                onChange={(event) => {
+                  setLeagueIdInput(event.target.value);
+                  setPreviewLeague(null);
+                }}
+                disabled={isAdding || isChecking}
+              />
+              {previewLeague ? (
+                <p className="text-xs">
+                  League found: <span className="font-medium">{previewLeague.name}</span>
+                </p>
+              ) : null}
+              {addError ? <p className="text-xs text-destructive">{addError}</p> : null}
+              {!previewLeague ? (
+                <Button
+                  type="button"
+                  onClick={handleCheckLeague}
+                  disabled={isChecking || isAdding}
+                  className="h-8 px-3 text-xs"
+                >
+                  {isChecking ? "Checking..." : "Check League"}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleAddLeague}
+                  disabled={isAdding}
+                  className="h-8 px-3 text-xs"
+                >
+                  {isAdding ? "Adding..." : "Confirm Add"}
+                </Button>
+              )}
+            </div>
+          ) : null}
+        </div>
+        <DropdownMenuSeparator className="my-0" />
+        <div className="px-4 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-start gap-2 px-0"
+            disabled={isRemoving}
+            onClick={() => {
+              setRemoveOpen((prev) => !prev);
+              setAddOpen(false);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+            Remove current league
+          </Button>
+          {removeOpen ? (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Remove <span className="font-medium">{selectedLeagueName}</span> from your
+                dashboard?
+              </p>
               <Button
                 type="button"
-                variant="outline"
-                className="w-full justify-start gap-2"
+                onClick={handleRemoveLeague}
                 disabled={isRemoving}
+                className="h-8 px-3 text-xs"
               >
-                <Trash2 className="h-4 w-4" />
-                Remove current league
+                {isRemoving ? "Removing..." : "Confirm Remove"}
               </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-80">
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-sm font-semibold">Remove league</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Remove <span className="font-medium">{selectedLeagueName}</span> from your
-                    dashboard?
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setRemoveOpen(false)}
-                    disabled={isRemoving}
-                  >
-                    Cancel
-                  </Button>
-                  <Button type="button" onClick={handleRemoveLeague} disabled={isRemoving}>
-                    {isRemoving ? "Removing..." : "Confirm Remove"}
-                  </Button>
-                </div>
-                {removeError ? <p className="text-xs text-destructive">{removeError}</p> : null}
-              </div>
-            </PopoverContent>
-          </Popover>
-
+              {removeError ? <p className="text-xs text-destructive">{removeError}</p> : null}
+            </div>
+          ) : null}
+        </div>
+        <DropdownMenuSeparator className="my-0" />
+        <div className="px-4 py-3">
           {hasActiveBackfillJobs ? (
             <div className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
