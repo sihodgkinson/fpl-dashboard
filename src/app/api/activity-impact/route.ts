@@ -39,6 +39,7 @@ interface ActivityImpactRow extends ActivityImpactCachePayloadItem {
 }
 
 const ENTRY_CONCURRENCY = 4;
+const CAPTAIN_IMPACT_VERSION = 2;
 
 function hasIncompleteTripleCaptainData(rows: ActivityImpactCachePayloadItem[]): boolean {
   return rows.some(
@@ -46,6 +47,32 @@ function hasIncompleteTripleCaptainData(rows: ActivityImpactCachePayloadItem[]):
       row.chip === "3xc" &&
       (!row.chipCaptainName || row.chipCaptainName.trim().length === 0)
   );
+}
+
+function hasMissingCaptainImpactData(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some((row) => typeof row.captainImpact !== "number");
+}
+
+function hasMissingCaptainSwapDetailData(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some((row) => {
+    const candidate = row as ActivityImpactCachePayloadItem & {
+      previousCaptainName?: string | null;
+      previousCaptainPoints?: number | null;
+      currentCaptainName?: string | null;
+      currentCaptainPoints?: number | null;
+    };
+
+    return (
+      typeof candidate.previousCaptainName === "undefined" ||
+      typeof candidate.previousCaptainPoints === "undefined" ||
+      typeof candidate.currentCaptainName === "undefined" ||
+      typeof candidate.currentCaptainPoints === "undefined"
+    );
+  });
+}
+
+function hasOutdatedCaptainImpactVersion(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some((row) => row.captainImpactVersion !== CAPTAIN_IMPACT_VERSION);
 }
 
 async function mapWithConcurrency<T, R>(
@@ -113,7 +140,11 @@ export async function GET(req: Request) {
     if (supabaseCacheEnabled) {
       const cached = await getCachedActivityImpactPayload(leagueId, clampedGw);
       if (cached) {
-        const cacheNeedsRepair = hasIncompleteTripleCaptainData(cached.payload);
+        const cacheNeedsRepair =
+          hasIncompleteTripleCaptainData(cached.payload) ||
+          hasMissingCaptainImpactData(cached.payload) ||
+          hasMissingCaptainSwapDetailData(cached.payload) ||
+          hasOutdatedCaptainImpactVersion(cached.payload);
         const cacheAgeSeconds = Math.floor(
           (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
         );
@@ -193,7 +224,13 @@ export async function GET(req: Request) {
         let selectedTransfers: Array<{ in: string; out: string; impact: number }> = [];
         let selectedTransferImpactNet = 0;
         let selectedChipImpact = 0;
+        let selectedCaptainImpact = 0;
+        let selectedPreviousCaptainName: string | null = null;
+        let selectedPreviousCaptainPoints: number | null = null;
+        let selectedCurrentCaptainName: string | null = null;
+        let selectedCurrentCaptainPoints: number | null = null;
         let selectedGwDecisionScore = 0;
+        let previousCaptainElement: number | null = null;
 
         for (let candidateGw = 1; candidateGw <= clampedGw; candidateGw += 1) {
           const [teamEventData, pointsMap] = await Promise.all([
@@ -230,7 +267,26 @@ export async function GET(req: Request) {
               : null;
           }
 
-          const gwDecisionScore = transferImpactNet + chipImpact;
+          let captainImpact = 0;
+          const currentCaptain = teamEventData.picks.find((pick) => pick.is_captain);
+          if (
+            candidateGw > 1 &&
+            previousCaptainElement &&
+            currentCaptain &&
+            currentCaptain.element !== previousCaptainElement
+          ) {
+            // Only score captain swaps when the old captain is still in this GW squad.
+            const previousCaptainStillInSquad = teamEventData.picks.some(
+              (pick) => pick.element === previousCaptainElement
+            );
+            if (previousCaptainStillInSquad) {
+              const newCaptainPoints = pointsMap.get(currentCaptain.element) ?? 0;
+              const oldCaptainPoints = pointsMap.get(previousCaptainElement) ?? 0;
+              captainImpact = 2 * (newCaptainPoints - oldCaptainPoints);
+            }
+          }
+
+          const gwDecisionScore = transferImpactNet + chipImpact + captainImpact;
           runningInfluenceTotal += gwDecisionScore;
 
           if (candidateGw < clampedGw) {
@@ -238,6 +294,15 @@ export async function GET(req: Request) {
           }
 
           if (candidateGw === clampedGw) {
+            const previousCaptainPoints =
+              previousCaptainElement !== null
+                ? (pointsMap.get(previousCaptainElement) ?? 0)
+                : null;
+            const currentCaptainPoints =
+              currentCaptain !== undefined
+                ? (pointsMap.get(currentCaptain.element) ?? 0)
+                : null;
+
             selectedChip = chipName;
             if (chipName !== "3xc") {
               selectedChipCaptainName = null;
@@ -251,8 +316,21 @@ export async function GET(req: Request) {
             }));
             selectedTransferImpactNet = transferImpactNet;
             selectedChipImpact = chipImpact;
+            selectedCaptainImpact = captainImpact;
+            selectedPreviousCaptainName =
+              previousCaptainElement !== null
+                ? (playersById.get(previousCaptainElement) ?? "Unknown")
+                : null;
+            selectedPreviousCaptainPoints = previousCaptainPoints;
+            selectedCurrentCaptainName =
+              currentCaptain !== undefined
+                ? (playersById.get(currentCaptain.element) ?? "Unknown")
+                : null;
+            selectedCurrentCaptainPoints = currentCaptainPoints;
             selectedGwDecisionScore = gwDecisionScore;
           }
+
+          previousCaptainElement = currentCaptain?.element ?? null;
         }
 
         return {
@@ -264,6 +342,12 @@ export async function GET(req: Request) {
           transfers: selectedTransfers,
           transferImpactNet: selectedTransferImpactNet,
           chipImpact: selectedChipImpact,
+          captainImpact: selectedCaptainImpact,
+          previousCaptainName: selectedPreviousCaptainName,
+          previousCaptainPoints: selectedPreviousCaptainPoints,
+          currentCaptainName: selectedCurrentCaptainName,
+          currentCaptainPoints: selectedCurrentCaptainPoints,
+          captainImpactVersion: CAPTAIN_IMPACT_VERSION,
           gwDecisionScore: selectedGwDecisionScore,
           runningInfluenceTotal,
           previousRunningInfluenceTotal,

@@ -38,6 +38,12 @@ export interface ActivityImpactCachePayloadItem {
   transfers: Array<{ in: string; out: string; impact: number }>;
   transferImpactNet: number;
   chipImpact: number;
+  captainImpact: number;
+  previousCaptainName: string | null;
+  previousCaptainPoints: number | null;
+  currentCaptainName: string | null;
+  currentCaptainPoints: number | null;
+  captainImpactVersion: number;
   gwDecisionScore: number;
   runningInfluenceTotal: number;
   previousRunningInfluenceTotal: number;

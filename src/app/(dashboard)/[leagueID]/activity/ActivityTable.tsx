@@ -19,6 +19,11 @@ interface ActivityImpactRow {
   transfers: Array<{ in: string; out: string; impact: number }>;
   transferImpactNet: number;
   chipImpact: number;
+  captainImpact: number;
+  previousCaptainName: string | null;
+  previousCaptainPoints: number | null;
+  currentCaptainName: string | null;
+  currentCaptainPoints: number | null;
   gwDecisionScore: number;
   runningInfluenceTotal: number;
 }
@@ -72,6 +77,9 @@ function ActivityRowSkeleton() {
       <td className="p-2 text-right sm:p-4">
         <Skeleton className="ml-auto h-4 w-12" />
       </td>
+      <td className="hidden p-2 text-right sm:table-cell sm:p-4">
+        <Skeleton className="ml-auto h-4 w-10" />
+      </td>
       <td className="p-2 text-right sm:p-4">
         <Skeleton className="ml-auto h-4 w-14" />
       </td>
@@ -114,7 +122,7 @@ export function ActivityTab({
                       className="cursor-pointer underline decoration-dotted"
                       aria-label="How Transfer Net is calculated"
                     >
-                      Transfer Net
+                      Transfers
                     </button>
                   }
                   content={
@@ -141,7 +149,7 @@ export function ActivityTab({
                       className="cursor-pointer underline decoration-dotted"
                       aria-label="How Chip Impact is calculated"
                     >
-                      Chip Impact
+                      Chips
                     </button>
                   }
                   content={
@@ -157,6 +165,39 @@ export function ActivityTab({
                     </div>
                   }
                   className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                />
+              </div>
+            </th>
+            <th className="hidden p-2 text-right sm:table-cell sm:p-4 w-10/100">
+              <div className="inline-flex items-center justify-end">
+                <ResponsiveInfoCard
+                  trigger={
+                    <button
+                      type="button"
+                      className="cursor-pointer underline decoration-dotted"
+                      aria-label="How Captain Impact is calculated"
+                    >
+                      Captain
+                    </button>
+                  }
+                  content={
+                    <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
+                      <p className="font-medium text-foreground">
+                        How Captain Impact is calculated
+                      </p>
+                      <p>
+                        If captain changed from last GW:
+                        {" "}
+                        <span className="text-foreground">
+                          2 × (new captain points − previous captain points)
+                        </span>
+                        .
+                      </p>
+                      <p>If captain did not change, impact is 0.</p>
+                      <p>If the old captain left the squad, impact is 0 (covered by transfers).</p>
+                    </div>
+                  }
+                  className="w-80 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
               </div>
             </th>
@@ -256,6 +297,34 @@ export function ActivityTab({
                       />
                     ) : (
                       <span>{formatSignedNumber(row.chipImpact)}</span>
+                    )}
+                  </td>
+
+                  <td className={`hidden p-2 text-right font-mono sm:table-cell sm:p-4 ${scoreClass(row.captainImpact)}`}>
+                    {row.previousCaptainName && row.currentCaptainName ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {formatSignedNumber(row.captainImpact)}
+                          </button>
+                        }
+                        content={
+                          <div className="text-sm text-muted-foreground">
+                            <span>{row.previousCaptainName}</span>
+                            <span className="ml-1">
+                              ({row.previousCaptainPoints ?? 0})
+                            </span>
+                            <span className="mx-2">→</span>
+                            <span>{row.currentCaptainName}</span>
+                            <span className="ml-1">
+                              ({row.currentCaptainPoints ?? 0})
+                            </span>
+                          </div>
+                        }
+                        className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{formatSignedNumber(row.captainImpact)}</span>
                     )}
                   </td>
 
