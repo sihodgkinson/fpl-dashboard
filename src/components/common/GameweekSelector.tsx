@@ -89,13 +89,13 @@ export function GameweekSelector({
   return (
     <div className={cn("flex items-center gap-2", showArrows ? "w-fit sm:w-auto" : "w-full")}>
       <Select onValueChange={handleChange} value={String(selectedGw)}>
-        <SelectTrigger className={cn(showArrows ? "w-40" : "w-full", className)}>
-          <SelectValue placeholder="Select GW" />
+        <SelectTrigger className={cn(showArrows ? "w-[112px]" : "w-full", className)}>
+          <SelectValue placeholder="GW" />
         </SelectTrigger>
         <SelectContent>
           {Array.from({ length: maxGw }, (_, i) => maxGw - i).map((gw) => (
             <SelectItem key={gw} value={String(gw)}>
-              Gameweek {gw}
+              GW {gw}
             </SelectItem>
           ))}
         </SelectContent>

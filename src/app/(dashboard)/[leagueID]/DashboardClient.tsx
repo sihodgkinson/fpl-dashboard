@@ -507,7 +507,7 @@ export default function DashboardClient({
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
-      <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
+      <header className="px-4 pt-4 pb-0 sm:border-b sm:px-4 sm:py-4 md:px-6 md:py-6">
         <div className="flex flex-col gap-4">
           {/* Top row: Brand + controls */}
           <div className="flex w-full items-center justify-between gap-3">
@@ -548,26 +548,28 @@ export default function DashboardClient({
             </div>
           </div>
 
-          {/* Mobile row: League selector + menu */}
-          <div className="w-full sm:hidden">
-            <LeagueSelector
-              leagues={leagues}
-              selectedLeagueId={selectedLeagueId}
-              currentGw={currentGw}
-              className="w-full !h-12 text-base"
-            />
-          </div>
+          <div className="-mx-4 border-b sm:hidden md:-mx-6" />
 
-          {/* Bottom row (mobile): Gameweek selector */}
+          {/* Mobile row: League selector + GW selector */}
           <div className="w-full sm:hidden">
-            <div className="w-full">
-              <GameweekSelector
+            <div className="flex w-full items-center gap-2">
+              <LeagueSelector
+                leagues={leagues}
                 selectedLeagueId={selectedLeagueId}
                 currentGw={currentGw}
-                maxGw={maxGw}
-                showArrows={false}
-                className="w-full !h-12 text-base"
+                className="min-w-0 flex-1 !h-12 text-base"
               />
+              <div className="ml-auto w-[112px] shrink-0">
+                <GameweekSelector
+                  selectedLeagueId={selectedLeagueId}
+                  currentGw={currentGw}
+                  maxGw={maxGw}
+                  showArrows={false}
+                  className="!h-12 w-full text-base"
+                />
+              </div>
+            </div>
+            <div className="w-full">
               {showSwipeHint ? (
                 <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
                   <span>Swipe left/right to change GW.</span>
@@ -621,7 +623,7 @@ export default function DashboardClient({
             <SelectContent>
               <SelectItem value="league">League Table</SelectItem>
               <SelectItem value="activity">Manager Influence</SelectItem>
-              <SelectItem value="gw1">GW1 Table</SelectItem>
+              <SelectItem value="gw1">GW 1 Table</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -637,7 +639,7 @@ export default function DashboardClient({
                 Manager Influence
               </TabsTrigger>
               <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
-                GW1 Table
+                GW 1 Table
               </TabsTrigger>
             </TabsList>
           </Tabs>
