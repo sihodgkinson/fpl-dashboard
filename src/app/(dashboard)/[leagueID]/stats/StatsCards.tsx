@@ -277,6 +277,15 @@ function StatCard({
     onToggleMode();
   };
 
+  const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!onToggleMode) return;
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    // Keep desktop sparkline interactions focused on tooltip/hover, not mode toggling.
+    if (target.closest("[data-widget-chart]")) return;
+    onToggleMode();
+  };
+
   if (value === null) {
     // ✅ Skeleton while loading
     return (
@@ -300,10 +309,8 @@ function StatCard({
 
   return (
     <Card
-      className={cn(
-        "p-4 min-h-[220px] flex flex-col",
-        onToggleMode ? "cursor-pointer sm:cursor-default" : ""
-      )}
+      className={cn("p-4 min-h-[220px] flex flex-col", onToggleMode ? "cursor-pointer" : "")}
+      onClick={handleCardClick}
       onTouchStart={handleCardTouchStart}
       onTouchMove={handleCardTouchMove}
       onTouchEnd={handleCardTouchEnd}
@@ -316,9 +323,12 @@ function StatCard({
         {onToggleMode ? (
           <button
             type="button"
-            onClick={onToggleMode}
+            onClick={(event) => {
+              event.stopPropagation();
+              onToggleMode();
+            }}
             className={cn(
-              "rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted pointer-events-none sm:pointer-events-auto",
+              "rounded-md border px-2 py-1 text-[11px] font-medium transition-colors pointer-events-none sm:pointer-events-auto",
               mode === "good"
                 ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
                 : "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
@@ -341,7 +351,10 @@ function StatCard({
               {displayValue ?? value}
             </h2>
           </div>
-          <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
+          <div
+            data-widget-chart
+            className="stat-card-metric-trend w-1/2 flex items-center justify-center"
+          >
             <MiniTrendChart
               trend={trend}
               isLoading={isTrendLoading}
