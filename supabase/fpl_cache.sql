@@ -5,7 +5,7 @@ create table if not exists public.fpl_cache (
   id bigserial primary key,
   league_id bigint not null,
   gw integer not null check (gw > 0),
-  view text not null check (view in ('league', 'transfers', 'chips')),
+  view text not null check (view in ('league', 'transfers', 'chips', 'activity_impact')),
   payload_json jsonb not null,
   is_final boolean not null default false,
   source_updated_at timestamptz not null default now(),
@@ -39,7 +39,14 @@ execute function public.set_fpl_cache_updated_at();
 
 alter table public.fpl_cache enable row level security;
 
+-- Ensure existing tables also allow the new activity cache view.
+alter table public.fpl_cache
+  drop constraint if exists fpl_cache_view_check;
+
+alter table public.fpl_cache
+  add constraint fpl_cache_view_check
+  check (view in ('league', 'transfers', 'chips', 'activity_impact'));
+
 -- Service role bypasses RLS. Optional read policy for authenticated users:
 -- create policy "allow read cache" on public.fpl_cache
 -- for select to authenticated using (true);
-

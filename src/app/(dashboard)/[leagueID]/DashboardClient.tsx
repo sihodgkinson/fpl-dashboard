@@ -117,12 +117,9 @@ export default function DashboardClient({
     const keysToPrefetch = new Set<string>();
     const immutableGwLookback = 2;
 
-    // Current GW chips/transfers are effectively immutable after lock.
+    // Current GW activity is effectively immutable after lock.
     keysToPrefetch.add(
-      `/api/transfers?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
-    );
-    keysToPrefetch.add(
-      `/api/chips?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
+      `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
     );
     keysToPrefetch.add(
       `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${gw}&window=8`
@@ -131,10 +128,7 @@ export default function DashboardClient({
     // Prefetch inactive tab payload for the currently selected GW.
     if (tab !== "activity") {
       keysToPrefetch.add(
-        `/api/transfers?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
-      );
-      keysToPrefetch.add(
-        `/api/chips?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
+        `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
     }
 
@@ -146,10 +140,7 @@ export default function DashboardClient({
           `/api/league?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
         );
         keysToPrefetch.add(
-          `/api/transfers?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
-        );
-        keysToPrefetch.add(
-          `/api/chips?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
+          `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
         );
         keysToPrefetch.add(
           `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${candidateGw}&window=8`

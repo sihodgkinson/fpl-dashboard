@@ -2,6 +2,7 @@ const DEFAULT_LEAGUE_IDS = [430552, 4311, 1295109];
 const DEFAULT_BASE_URL = "http://localhost:3000";
 const DEFAULT_CONCURRENCY = 3;
 const DEFAULT_VIEWS = ["league", "transfers", "chips"];
+const SUPPORTED_VIEWS = ["league", "transfers", "chips", "activity_impact"];
 
 function parseLeagueIds(value) {
   if (!value) return DEFAULT_LEAGUE_IDS;
@@ -21,9 +22,18 @@ function parseViews(value) {
   if (!value) return DEFAULT_VIEWS;
   const views = value
     .split(",")
-    .map((v) => v.trim())
-    .filter((v) => ["league", "transfers", "chips"].includes(v));
+    .map((v) => v.trim().toLowerCase().replace("-", "_"))
+    .filter((v) => SUPPORTED_VIEWS.includes(v));
   return views.length > 0 ? views : DEFAULT_VIEWS;
+}
+
+function viewToApiPath(view) {
+  switch (view) {
+    case "activity_impact":
+      return "activity-impact";
+    default:
+      return view;
+  }
 }
 
 async function getCurrentGw() {
@@ -101,7 +111,8 @@ async function main() {
   let completed = 0;
 
   await mapWithConcurrency(tasks, concurrency, async ({ leagueId, gw, view }) => {
-    const url = `${baseUrl}/api/${view}?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`;
+    const endpoint = viewToApiPath(view);
+    const url = `${baseUrl}/api/${endpoint}?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`;
     const res = await fetch(url, { cache: "no-store" });
 
     completed += 1;
