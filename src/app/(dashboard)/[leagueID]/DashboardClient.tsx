@@ -66,10 +66,13 @@ const LIVE_POLL_LOCK_TTL_MS = 45_000;
 const LIVE_REFRESH_INTERVAL_MS = 30_000;
 const ORIENTATION_HINT_DISMISSED_KEY = "fpl-orientation-hint-dismissed-v2";
 const SWIPE_HINT_DISMISSED_KEY = "fpl-swipe-hint-dismissed-v1";
-const MOBILE_SWIPE_MIN_X = 60;
+const MOBILE_SWIPE_MIN_X_LEFT = 48;
+const MOBILE_SWIPE_MIN_X_RIGHT = 54;
+const MOBILE_SWIPE_MIN_X_FAST = 28;
 const MOBILE_SWIPE_MAX_Y = 80;
-const MOBILE_SWIPE_LOCK_X = 12;
-const MOBILE_SWIPE_MAX_DURATION_MS = 700;
+const MOBILE_SWIPE_LOCK_X = 8;
+const MOBILE_SWIPE_MIN_VELOCITY = 0.5; // px/ms
+const MOBILE_SWIPE_COOLDOWN_MS = 280;
 
 function useLivePollingLeader() {
   const [isLeader, setIsLeader] = React.useState(false);
@@ -144,6 +147,10 @@ export default function DashboardClient({
   const [tab, setTab] = React.useState("league");
   const [showOrientationHint, setShowOrientationHint] = React.useState(false);
   const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+  const [swipeGwFeedback, setSwipeGwFeedback] = React.useState<{
+    fromGw: number;
+    toGw: number;
+  } | null>(null);
   const swipeRef = React.useRef<{
     startX: number;
     startY: number;
@@ -152,6 +159,7 @@ export default function DashboardClient({
     valid: boolean;
   } | null>(null);
   const isSwipeNavigatingRef = React.useRef(false);
+  const lastSwipeNavigateAtRef = React.useRef(0);
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
   const isPollingLeader = useLivePollingLeader();
@@ -352,12 +360,31 @@ export default function DashboardClient({
     setShowSwipeHint(false);
   }, []);
 
+  React.useEffect(() => {
+    if (!swipeGwFeedback) return;
+    const timer = window.setTimeout(() => {
+      setSwipeGwFeedback(null);
+    }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [swipeGwFeedback]);
+
   const navigateToGw = React.useCallback(
-    (targetGw: number) => {
+    (targetGw: number, source: "swipe" | "other" = "other") => {
       const clampedTargetGw = Math.max(1, Math.min(maxGw, targetGw));
       if (clampedTargetGw === gw) return;
+      const now = Date.now();
+      if (source === "swipe" && now - lastSwipeNavigateAtRef.current < MOBILE_SWIPE_COOLDOWN_MS) {
+        return;
+      }
       if (isSwipeNavigatingRef.current) return;
       isSwipeNavigatingRef.current = true;
+      if (source === "swipe") {
+        lastSwipeNavigateAtRef.current = now;
+        setSwipeGwFeedback({ fromGw: gw, toGw: clampedTargetGw });
+        if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+          navigator.vibrate(10);
+        }
+      }
 
       const currentParams =
         typeof window !== "undefined"
@@ -429,6 +456,11 @@ export default function DashboardClient({
       state.horizontalLocked = true;
     }
 
+    if (state.horizontalLocked && absX > absY) {
+      // Keep vertical scroll from stealing the gesture once horizontal intent is clear.
+      event.preventDefault();
+    }
+
     if (absY > MOBILE_SWIPE_MAX_Y && absY > absX) {
       state.valid = false;
     }
@@ -447,16 +479,22 @@ export default function DashboardClient({
       const duration = Date.now() - state.startTs;
       const absX = Math.abs(deltaX);
       const absY = Math.abs(deltaY);
+      const velocityX = duration > 0 ? absX / duration : 0;
 
       if (!state.horizontalLocked) return;
-      if (duration > MOBILE_SWIPE_MAX_DURATION_MS) return;
       if (absY > MOBILE_SWIPE_MAX_Y) return;
-      if (absX < MOBILE_SWIPE_MIN_X) return;
+      if (absX <= absY * 1.1) return;
+
+      const minimumDistance = deltaX < 0 ? MOBILE_SWIPE_MIN_X_LEFT : MOBILE_SWIPE_MIN_X_RIGHT;
+      const hasDistanceSwipe = absX >= minimumDistance;
+      const hasFastSwipe =
+        absX >= MOBILE_SWIPE_MIN_X_FAST && velocityX >= MOBILE_SWIPE_MIN_VELOCITY;
+      if (!hasDistanceSwipe && !hasFastSwipe) return;
 
       if (deltaX < 0 && gw < maxGw) {
-        navigateToGw(gw + 1);
+        navigateToGw(gw + 1, "swipe");
       } else if (deltaX > 0 && gw > 1) {
-        navigateToGw(gw - 1);
+        navigateToGw(gw - 1, "swipe");
       }
     },
     [gw, maxGw, navigateToGw]
@@ -514,6 +552,14 @@ export default function DashboardClient({
           </div>
         </div>
       </header>
+
+      {swipeGwFeedback ? (
+        <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 sm:hidden">
+          <div className="rounded-md border border-border bg-background/95 px-3 py-2 text-xs font-medium shadow-lg backdrop-blur">
+            GW {swipeGwFeedback.fromGw} → GW {swipeGwFeedback.toGw}
+          </div>
+        </div>
+      ) : null}
 
       {/* Main content */}
       <main
