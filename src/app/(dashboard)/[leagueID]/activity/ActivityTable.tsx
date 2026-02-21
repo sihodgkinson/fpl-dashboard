@@ -127,9 +127,11 @@ export function ActivityTab({
                   }
                   content={
                     <div className="space-y-2 text-sm text-muted-foreground leading-relaxed">
-                      <p className="font-medium text-foreground">How Transfer Net is calculated</p>
+                      <p className="font-medium text-foreground">
+                        How Transfer Impact is calculated
+                      </p>
                       <p>
-                        <span className="text-foreground">Transfer Net</span> = points from
+                        <span className="text-foreground">Transfer Impact</span> = points from
                         players bought
                         {" \u2212 "}points from players sold{" \u2212 "}transfer hit cost.
                       </p>
@@ -329,7 +331,36 @@ export function ActivityTab({
                   </td>
 
                   <td className={`p-2 text-right font-mono sm:p-4 ${scoreClass(row.gwDecisionScore)}`}>
-                    {formatSignedNumber(row.gwDecisionScore)}
+                    <ResponsiveInfoCard
+                      trigger={
+                        <button className="cursor-pointer underline decoration-dotted">
+                          {formatSignedNumber(row.gwDecisionScore)}
+                        </button>
+                      }
+                      content={
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Transfer Impact</span>
+                            <span className={scoreClass(row.transferImpactNet)}>
+                              {formatSignedNumber(row.transferImpactNet)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Chip Impact</span>
+                            <span className={scoreClass(row.chipImpact)}>
+                              {formatSignedNumber(row.chipImpact)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Captain Impact</span>
+                            <span className={scoreClass(row.captainImpact)}>
+                              {formatSignedNumber(row.captainImpact)}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                      className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                    />
                   </td>
 
                   <td className={`p-2 text-right font-mono sm:p-4 ${scoreClass(row.runningInfluenceTotal)}`}>
