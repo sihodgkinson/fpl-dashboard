@@ -509,19 +509,52 @@ export default function DashboardClient({
       {/* Header with selectors */}
       <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
         <div className="flex flex-col gap-4">
-          {/* Top row: League selector + menu */}
-          <div className="flex w-full items-center gap-2 sm:justify-end">
+          {/* Top row: Brand + controls */}
+          <div className="flex w-full items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/favicon.ico"
+                alt="FPL Dashboard logo"
+                className="h-12 w-12 rounded-lg border border-border/70"
+              />
+              <span className="text-sm font-semibold tracking-tight sm:text-base">
+                FPL Dashboard
+              </span>
+            </div>
+
+            <div className="sm:hidden">
+              <AccountMenu
+                className="h-12 w-12 shrink-0"
+                selectedLeagueId={selectedLeagueId}
+                selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
+                currentGw={currentGw}
+              />
+            </div>
+
+            <div className="hidden items-center gap-2 sm:flex">
+              <LeagueSelector
+                leagues={leagues}
+                selectedLeagueId={selectedLeagueId}
+                currentGw={currentGw}
+                className="w-[240px] !h-12 text-sm"
+              />
+              <AccountMenu
+                className="h-12 w-12 shrink-0 sm:h-12 sm:w-12"
+                selectedLeagueId={selectedLeagueId}
+                selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
+                currentGw={currentGw}
+              />
+            </div>
+          </div>
+
+          {/* Mobile row: League selector + menu */}
+          <div className="w-full sm:hidden">
             <LeagueSelector
               leagues={leagues}
               selectedLeagueId={selectedLeagueId}
               currentGw={currentGw}
-              className="flex-1 sm:w-[240px] sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
-            />
-            <AccountMenu
-              className="h-12 w-12 shrink-0 sm:h-12 sm:w-12"
-              selectedLeagueId={selectedLeagueId}
-              selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
-              currentGw={currentGw}
+              className="w-full !h-12 text-base"
             />
           </div>
 
