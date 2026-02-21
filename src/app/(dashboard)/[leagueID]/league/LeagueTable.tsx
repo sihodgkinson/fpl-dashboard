@@ -127,9 +127,9 @@ export function LeagueTable({
                               {entry.gwPlayers.map((p, i) => (
                                 <li
                                   key={i}
-                                  className="flex justify-between text-muted-foreground"
+                                  className="flex items-center justify-between gap-4 text-muted-foreground"
                                 >
-                                  <span>
+                                  <span className="pr-2">
                                     {p.name}
                                     {p.isCaptain && " (C)"}
                                     {p.isViceCaptain && " (VC)"}
@@ -142,7 +142,7 @@ export function LeagueTable({
                             <p className="text-muted-foreground text-xs">No data</p>
                           )
                         }
-                        className="w-48 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{entry.gwPoints}</span>
@@ -174,7 +174,7 @@ export function LeagueTable({
                             <p className="text-muted-foreground text-sm">No transfers</p>
                           )
                         }
-                        className="w-56 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{entry.transfers}</span>
@@ -201,9 +201,9 @@ export function LeagueTable({
                               {entry.benchPlayers.map((p, i) => (
                                 <li
                                   key={i}
-                                  className="flex justify-between text-muted-foreground"
+                                  className="flex items-center justify-between gap-4 text-muted-foreground"
                                 >
-                                  <span>{p.name}</span>
+                                  <span className="pr-2">{p.name}</span>
                                   <span className="font-mono">{p.points}</span>
                                 </li>
                               ))}
@@ -212,7 +212,7 @@ export function LeagueTable({
                             <p className="text-muted-foreground text-xs">No bench players</p>
                           )
                         }
-                        className="w-40 p-3 rounded-sm border bg-popover text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{entry.benchPoints}</span>

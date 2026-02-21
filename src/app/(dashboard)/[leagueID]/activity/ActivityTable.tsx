@@ -138,7 +138,7 @@ export function ActivityTab({
                       <p>For Free Hit, transfer hit cost is always treated as 0.</p>
                     </div>
                   }
-                  className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
               </div>
             </th>
@@ -166,7 +166,7 @@ export function ActivityTab({
                       <p>Wildcard and Free Hit: currently 0 impact.</p>
                     </div>
                   }
-                  className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
               </div>
             </th>
@@ -199,7 +199,7 @@ export function ActivityTab({
                       <p>If the old captain left the squad, impact is 0 (covered by transfers).</p>
                     </div>
                   }
-                  className="w-80 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                 />
               </div>
             </th>
@@ -252,18 +252,20 @@ export function ActivityTab({
                         content={
                           <ul className="space-y-1 text-sm">
                             {row.transfers.map((transfer, index) => (
-                              <li key={index}>
-                                <span className="text-muted-foreground">{transfer.out}</span>
-                                <span className="mx-2 text-muted-foreground">→</span>
-                                <span className="text-muted-foreground">{transfer.in}</span>{" "}
-                                <span className={scoreClass(transfer.impact)}>
-                                  ({formatSignedNumber(transfer.impact)})
+                              <li key={index} className="flex items-center justify-between gap-4">
+                                <span className="text-muted-foreground">
+                                  {transfer.out}
+                                  <span className="mx-2">→</span>
+                                  {transfer.in}
+                                </span>
+                                <span className={`font-mono text-right ${scoreClass(transfer.impact)}`}>
+                                  {formatSignedNumber(transfer.impact)}
                                 </span>
                               </li>
                             ))}
                           </ul>
                         }
-                        className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{formatSignedNumber(row.transferImpactNet)}</span>
@@ -295,7 +297,7 @@ export function ActivityTab({
                             )}
                           </div>
                         }
-                        className="w-56 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{formatSignedNumber(row.chipImpact)}</span>
@@ -313,17 +315,11 @@ export function ActivityTab({
                         content={
                           <div className="text-sm text-muted-foreground">
                             <span>{row.previousCaptainName}</span>
-                            <span className="ml-1">
-                              ({row.previousCaptainPoints ?? 0})
-                            </span>
                             <span className="mx-2">→</span>
                             <span>{row.currentCaptainName}</span>
-                            <span className="ml-1">
-                              ({row.currentCaptainPoints ?? 0})
-                            </span>
                           </div>
                         }
-                        className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
                       <span>{formatSignedNumber(row.captainImpact)}</span>
@@ -341,25 +337,25 @@ export function ActivityTab({
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-muted-foreground">Transfer Impact</span>
-                            <span className={scoreClass(row.transferImpactNet)}>
+                            <span className={`font-mono text-right ${scoreClass(row.transferImpactNet)}`}>
                               {formatSignedNumber(row.transferImpactNet)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-muted-foreground">Chip Impact</span>
-                            <span className={scoreClass(row.chipImpact)}>
+                            <span className={`font-mono text-right ${scoreClass(row.chipImpact)}`}>
                               {formatSignedNumber(row.chipImpact)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
                             <span className="text-muted-foreground">Captain Impact</span>
-                            <span className={scoreClass(row.captainImpact)}>
+                            <span className={`font-mono text-right ${scoreClass(row.captainImpact)}`}>
                               {formatSignedNumber(row.captainImpact)}
                             </span>
                           </div>
                         </div>
                       }
-                      className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                      className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                     />
                   </td>
 

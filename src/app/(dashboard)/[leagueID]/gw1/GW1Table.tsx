@@ -122,9 +122,9 @@ export function GW1Table({ standings, isLoading, hasError }: GW1TableProps) {
                                 {entry.gwPlayers.map((p, i) => (
                                   <li
                                     key={i}
-                                    className="flex justify-between text-muted-foreground"
+                                    className="flex items-center justify-between gap-4 text-muted-foreground"
                                   >
-                                    <span>
+                                    <span className="pr-2">
                                       {p.name}
                                       {p.isCaptain && " (C)"}
                                       {p.isViceCaptain && " (VC)"}
@@ -137,7 +137,7 @@ export function GW1Table({ standings, isLoading, hasError }: GW1TableProps) {
                               <p className="text-xs text-muted-foreground">No data</p>
                             )
                           }
-                          className="w-48 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                          className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                         />
                       ) : (
                         <span>{entry.gwPoints}</span>
@@ -158,9 +158,9 @@ export function GW1Table({ standings, isLoading, hasError }: GW1TableProps) {
                                 {entry.benchPlayers.map((p, i) => (
                                   <li
                                     key={i}
-                                    className="flex justify-between text-muted-foreground"
+                                    className="flex items-center justify-between gap-4 text-muted-foreground"
                                   >
-                                    <span>{p.name}</span>
+                                    <span className="pr-2">{p.name}</span>
                                     <span className="font-mono">{p.points}</span>
                                   </li>
                                 ))}
@@ -169,7 +169,7 @@ export function GW1Table({ standings, isLoading, hasError }: GW1TableProps) {
                               <p className="text-xs text-muted-foreground">No bench players</p>
                             )
                           }
-                          className="w-40 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                          className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                         />
                       ) : (
                         <span>{entry.benchPoints}</span>

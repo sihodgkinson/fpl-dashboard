@@ -11,6 +11,7 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface ResponsiveInfoCardProps {
   trigger: React.ReactNode;
@@ -50,7 +51,7 @@ export function ResponsiveInfoCard({
           side="top"          // ✅ prefer above trigger
           sideOffset={4}      // ✅ small gap
           align="center"
-          className={`z-50 max-h-[80vh] overflow-y-auto ${className ?? ""}`}
+          className={cn("z-50 !w-fit max-h-[80vh] max-w-[90vw] overflow-y-auto", className)}
         >
           {content}
         </PopoverContent>
@@ -65,7 +66,7 @@ export function ResponsiveInfoCard({
         side="top"          // ✅ prefer above trigger
         sideOffset={4}
         align="center"
-        className={`z-50 max-h-[80vh] overflow-y-auto ${className ?? ""}`}
+        className={cn("z-50 !w-fit max-h-[80vh] max-w-[90vw] overflow-y-auto", className)}
       >
         {content}
       </HoverCardContent>
