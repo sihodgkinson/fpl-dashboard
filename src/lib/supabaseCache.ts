@@ -45,7 +45,33 @@ export interface ActivityImpactCachePayloadItem {
   movement: number;
 }
 
-type CacheView = "league" | "transfers" | "chips" | "activity_impact";
+export interface GW1TableCachePayloadItem {
+  entry: number;
+  entry_name: string;
+  player_name: string;
+  rank: number;
+  movement: number;
+  gwPoints: number;
+  totalPoints: number;
+  benchPoints: number;
+  gwPlayers: {
+    name: string;
+    points: number;
+    isCaptain: boolean;
+    isViceCaptain: boolean;
+  }[];
+  benchPlayers: {
+    name: string;
+    points: number;
+  }[];
+}
+
+type CacheView =
+  | "league"
+  | "transfers"
+  | "chips"
+  | "activity_impact"
+  | "gw1_table";
 
 interface CacheRow<TPayload> {
   gw?: number;
@@ -422,6 +448,24 @@ export async function upsertActivityImpactPayload(
   isFinal: boolean
 ): Promise<void> {
   return upsertCachedPayload(leagueId, gw, "activity_impact", payload, isFinal);
+}
+
+export async function getCachedGW1TablePayload(
+  leagueId: number,
+  gw: number
+): Promise<
+  { payload: GW1TableCachePayloadItem[]; fetchedAt: string; isFinal: boolean } | null
+> {
+  return getCachedPayload<GW1TableCachePayloadItem[]>(leagueId, gw, "gw1_table");
+}
+
+export async function upsertGW1TablePayload(
+  leagueId: number,
+  gw: number,
+  payload: GW1TableCachePayloadItem[],
+  isFinal: boolean
+): Promise<void> {
+  return upsertCachedPayload(leagueId, gw, "gw1_table", payload, isFinal);
 }
 
 export async function getLatestCachedLeagueGw(): Promise<{

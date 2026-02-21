@@ -1,12 +1,13 @@
 import { logMetric } from "@/lib/metrics";
 
-type CacheView = "league" | "transfers" | "chips" | "activity_impact";
+type CacheView = "league" | "transfers" | "chips" | "activity_impact" | "gw1_table";
 
 const WARMUP_VIEWS: Array<{ view: CacheView; apiRoute: string }> = [
   { view: "league", apiRoute: "league" },
   { view: "transfers", apiRoute: "transfers" },
   { view: "chips", apiRoute: "chips" },
   { view: "activity_impact", apiRoute: "activity-impact" },
+  { view: "gw1_table", apiRoute: "gw1-table" },
 ];
 
 interface WarmTask {

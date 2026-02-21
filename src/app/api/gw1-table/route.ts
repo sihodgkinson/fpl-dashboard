@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getClassicLeague, getLiveEventData, getPlayers, getTeamEventData } from "@/lib/fpl";
 import { incrementCounter, withTiming } from "@/lib/metrics";
+import {
+  getCachedGW1TablePayload,
+  GW1TableCachePayloadItem,
+  isSupabaseCacheConfigured,
+  upsertGW1TablePayload,
+} from "@/lib/supabaseCache";
 
 interface LeagueEntry {
   entry: number;
@@ -8,26 +14,7 @@ interface LeagueEntry {
   player_name: string;
 }
 
-interface GW1Standing {
-  entry: number;
-  entry_name: string;
-  player_name: string;
-  rank: number;
-  movement: number;
-  gwPoints: number;
-  totalPoints: number;
-  benchPoints: number;
-  gwPlayers: {
-    name: string;
-    points: number;
-    isCaptain: boolean;
-    isViceCaptain: boolean;
-  }[];
-  benchPlayers: {
-    name: string;
-    points: number;
-  }[];
-}
+type GW1Standing = GW1TableCachePayloadItem;
 
 interface FrozenEntry {
   entry: number;
@@ -42,6 +29,9 @@ interface FrozenEntry {
 }
 
 const ENTRY_CONCURRENCY = 6;
+const LIVE_CACHE_TTL_SECONDS = Number(
+  process.env.FPL_LIVE_CACHE_TTL_SECONDS ?? "60"
+);
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -76,6 +66,138 @@ function rankByTotal(rows: Array<{ entry: number; totalPoints: number }>) {
     .map((row, index) => ({ ...row, rank: index + 1 }));
 }
 
+async function computeGW1Standings(
+  leagueId: number,
+  clampedGw: number
+): Promise<GW1Standing[] | null> {
+  const [league, players] = await Promise.all([getClassicLeague(leagueId), getPlayers()]);
+  if (!league) return null;
+
+  const entries = (league.standings.results as LeagueEntry[]) ?? [];
+  if (entries.length === 0) {
+    incrementCounter("cache.gw1_table.empty");
+    return [];
+  }
+
+  const playersById = new Map(players.map((player) => [player.id, player.web_name]));
+
+  const pointsByGw = new Map<number, Map<number, number>>();
+  await Promise.all(
+    Array.from({ length: clampedGw }, async (_, index) => {
+      const eventGw = index + 1;
+      const liveData = await getLiveEventData(eventGw);
+      pointsByGw.set(
+        eventGw,
+        new Map((liveData ?? []).map((p) => [p.id, p.stats.total_points]))
+      );
+    })
+  );
+
+  const frozenEntries = await mapWithConcurrency(
+    entries,
+    ENTRY_CONCURRENCY,
+    async (entry): Promise<FrozenEntry | null> => {
+      const gw1Data = await getTeamEventData(entry.entry, 1);
+      if (!gw1Data) return null;
+
+      return {
+        entry: entry.entry,
+        entry_name: entry.entry_name,
+        player_name: entry.player_name,
+        picks: gw1Data.picks,
+      };
+    }
+  );
+
+  const usableEntries = frozenEntries.filter(
+    (entry): entry is FrozenEntry => entry !== null
+  );
+
+  const totalsByEntry = new Map<number, number[]>();
+
+  for (const entry of usableEntries) {
+    const runningTotals: number[] = [];
+    let running = 0;
+
+    for (let gwNumber = 1; gwNumber <= clampedGw; gwNumber += 1) {
+      const pointsMap = pointsByGw.get(gwNumber) ?? new Map<number, number>();
+      const gwPoints = entry.picks.reduce((sum, pick) => {
+        const playerPoints = pointsMap.get(pick.element) ?? 0;
+        return sum + playerPoints * pick.multiplier;
+      }, 0);
+
+      running += gwPoints;
+      runningTotals.push(running);
+    }
+
+    totalsByEntry.set(entry.entry, runningTotals);
+  }
+
+  const currentRows = usableEntries.map((entry) => ({
+    entry: entry.entry,
+    totalPoints: totalsByEntry.get(entry.entry)?.[clampedGw - 1] ?? 0,
+  }));
+
+  const previousRows = usableEntries.map((entry) => ({
+    entry: entry.entry,
+    totalPoints:
+      clampedGw > 1 ? (totalsByEntry.get(entry.entry)?.[clampedGw - 2] ?? 0) : 0,
+  }));
+
+  const currentRanked = rankByTotal(currentRows);
+  const previousRankMap = new Map(
+    rankByTotal(previousRows).map((row) => [row.entry, row.rank])
+  );
+  const currentRankMap = new Map(currentRanked.map((row) => [row.entry, row.rank]));
+
+  const standings: GW1Standing[] = usableEntries
+    .map((entry) => {
+      const pointsMap = pointsByGw.get(clampedGw) ?? new Map<number, number>();
+
+      const starters = entry.picks.filter((pick) => pick.multiplier > 0);
+      const bench = entry.picks.filter((pick) => pick.multiplier === 0);
+
+      const gwPlayers = starters
+        .map((pick) => {
+          const playerPoints = pointsMap.get(pick.element) ?? 0;
+          return {
+            name: playersById.get(pick.element) ?? "Unknown",
+            points: playerPoints * pick.multiplier,
+            isCaptain: pick.is_captain,
+            isViceCaptain: pick.is_vice_captain,
+          };
+        })
+        .sort((a, b) => b.points - a.points);
+
+      const benchPlayers = bench.map((pick) => ({
+        name: playersById.get(pick.element) ?? "Unknown",
+        points: pointsMap.get(pick.element) ?? 0,
+      }));
+
+      const gwPoints = gwPlayers.reduce((sum, player) => sum + player.points, 0);
+      const benchPoints = benchPlayers.reduce((sum, player) => sum + player.points, 0);
+
+      const rank = currentRankMap.get(entry.entry) ?? 0;
+      const prevRank = previousRankMap.get(entry.entry) ?? rank;
+
+      return {
+        entry: entry.entry,
+        entry_name: entry.entry_name,
+        player_name: entry.player_name,
+        rank,
+        movement: prevRank - rank,
+        gwPoints,
+        totalPoints: totalsByEntry.get(entry.entry)?.[clampedGw - 1] ?? 0,
+        benchPoints,
+        gwPlayers,
+        benchPlayers,
+      };
+    })
+    .sort((a, b) => a.rank - b.rank);
+
+  return standings;
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const leagueId = Number(searchParams.get("leagueId"));
@@ -101,136 +223,39 @@ export async function GET(req: Request) {
     }
 
     const clampedGw = Math.min(gw, currentGw);
+    const isHistoricalGw = clampedGw < currentGw;
 
-    const [league, players] = await Promise.all([getClassicLeague(leagueId), getPlayers()]);
-    if (!league) {
+    const supabaseCacheEnabled = isSupabaseCacheConfigured();
+    if (supabaseCacheEnabled) {
+      const cached = await getCachedGW1TablePayload(leagueId, clampedGw);
+      if (cached) {
+        if (cached.isFinal || isHistoricalGw) {
+          incrementCounter("cache.gw1_table.hit");
+          return NextResponse.json({ standings: cached.payload });
+        }
+
+        const cacheAgeSeconds = Math.floor(
+          (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
+        );
+        if (cacheAgeSeconds < LIVE_CACHE_TTL_SECONDS) {
+          incrementCounter("cache.gw1_table.hit");
+          return NextResponse.json({ standings: cached.payload });
+        }
+      }
+    }
+
+    incrementCounter("cache.gw1_table.miss");
+    const standings = await computeGW1Standings(leagueId, clampedGw);
+    if (!standings) {
       return NextResponse.json(
         { error: `Failed to fetch league ${leagueId}` },
         { status: 500 }
       );
     }
 
-    const entries = (league.standings.results as LeagueEntry[]) ?? [];
-    if (entries.length === 0) {
-      incrementCounter("cache.gw1_table.empty");
-      return NextResponse.json({ standings: [] });
+    if (supabaseCacheEnabled) {
+      await upsertGW1TablePayload(leagueId, clampedGw, standings, isHistoricalGw);
     }
-
-    const playersById = new Map(players.map((player) => [player.id, player.web_name]));
-
-    const pointsByGw = new Map<number, Map<number, number>>();
-    await Promise.all(
-      Array.from({ length: clampedGw }, async (_, index) => {
-        const eventGw = index + 1;
-        const liveData = await getLiveEventData(eventGw);
-        pointsByGw.set(
-          eventGw,
-          new Map((liveData ?? []).map((p) => [p.id, p.stats.total_points]))
-        );
-      })
-    );
-
-    const frozenEntries = await mapWithConcurrency(
-      entries,
-      ENTRY_CONCURRENCY,
-      async (entry): Promise<FrozenEntry | null> => {
-        const gw1Data = await getTeamEventData(entry.entry, 1);
-        if (!gw1Data) return null;
-
-        return {
-          entry: entry.entry,
-          entry_name: entry.entry_name,
-          player_name: entry.player_name,
-          picks: gw1Data.picks,
-        };
-      }
-    );
-
-    const usableEntries = frozenEntries.filter(
-      (entry): entry is FrozenEntry => entry !== null
-    );
-
-    const totalsByEntry = new Map<number, number[]>();
-
-    for (const entry of usableEntries) {
-      const runningTotals: number[] = [];
-      let running = 0;
-
-      for (let gwNumber = 1; gwNumber <= clampedGw; gwNumber += 1) {
-        const pointsMap = pointsByGw.get(gwNumber) ?? new Map<number, number>();
-        const gwPoints = entry.picks.reduce((sum, pick) => {
-          const playerPoints = pointsMap.get(pick.element) ?? 0;
-          return sum + playerPoints * pick.multiplier;
-        }, 0);
-
-        running += gwPoints;
-        runningTotals.push(running);
-      }
-
-      totalsByEntry.set(entry.entry, runningTotals);
-    }
-
-    const currentRows = usableEntries.map((entry) => ({
-      entry: entry.entry,
-      totalPoints: totalsByEntry.get(entry.entry)?.[clampedGw - 1] ?? 0,
-    }));
-
-    const previousRows = usableEntries.map((entry) => ({
-      entry: entry.entry,
-      totalPoints:
-        clampedGw > 1 ? (totalsByEntry.get(entry.entry)?.[clampedGw - 2] ?? 0) : 0,
-    }));
-
-    const currentRanked = rankByTotal(currentRows);
-    const previousRankMap = new Map(
-      rankByTotal(previousRows).map((row) => [row.entry, row.rank])
-    );
-    const currentRankMap = new Map(currentRanked.map((row) => [row.entry, row.rank]));
-
-    const standings: GW1Standing[] = usableEntries
-      .map((entry) => {
-        const pointsMap = pointsByGw.get(clampedGw) ?? new Map<number, number>();
-
-        const starters = entry.picks.filter((pick) => pick.multiplier > 0);
-        const bench = entry.picks.filter((pick) => pick.multiplier === 0);
-
-        const gwPlayers = starters
-          .map((pick) => {
-            const playerPoints = pointsMap.get(pick.element) ?? 0;
-            return {
-              name: playersById.get(pick.element) ?? "Unknown",
-              points: playerPoints * pick.multiplier,
-              isCaptain: pick.is_captain,
-              isViceCaptain: pick.is_vice_captain,
-            };
-          })
-          .sort((a, b) => b.points - a.points);
-
-        const benchPlayers = bench.map((pick) => ({
-          name: playersById.get(pick.element) ?? "Unknown",
-          points: pointsMap.get(pick.element) ?? 0,
-        }));
-
-        const gwPoints = gwPlayers.reduce((sum, player) => sum + player.points, 0);
-        const benchPoints = benchPlayers.reduce((sum, player) => sum + player.points, 0);
-
-        const rank = currentRankMap.get(entry.entry) ?? 0;
-        const prevRank = previousRankMap.get(entry.entry) ?? rank;
-
-        return {
-          entry: entry.entry,
-          entry_name: entry.entry_name,
-          player_name: entry.player_name,
-          rank,
-          movement: prevRank - rank,
-          gwPoints,
-          totalPoints: totalsByEntry.get(entry.entry)?.[clampedGw - 1] ?? 0,
-          benchPoints,
-          gwPlayers,
-          benchPlayers,
-        };
-      })
-      .sort((a, b) => a.rank - b.rank);
 
     return NextResponse.json({ standings });
   });
