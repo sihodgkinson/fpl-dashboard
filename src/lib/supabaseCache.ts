@@ -29,7 +29,22 @@ export interface ChipsCachePayloadItem {
   chip: string | null;
 }
 
-type CacheView = "league" | "transfers" | "chips";
+export interface ActivityImpactCachePayloadItem {
+  entryId: number;
+  team: string;
+  manager: string;
+  chip: string | null;
+  transfers: Array<{ in: string; out: string; impact: number }>;
+  transferImpactNet: number;
+  chipImpact: number;
+  gwDecisionScore: number;
+  runningInfluenceTotal: number;
+  previousRunningInfluenceTotal: number;
+  pos: number;
+  movement: number;
+}
+
+type CacheView = "league" | "transfers" | "chips" | "activity_impact";
 
 interface CacheRow<TPayload> {
   gw?: number;
@@ -302,6 +317,28 @@ export async function upsertChipsPayload(
   isFinal: boolean
 ): Promise<void> {
   return upsertCachedPayload(leagueId, gw, "chips", payload, isFinal);
+}
+
+export async function getCachedActivityImpactPayload(
+  leagueId: number,
+  gw: number
+): Promise<
+  { payload: ActivityImpactCachePayloadItem[]; fetchedAt: string; isFinal: boolean } | null
+> {
+  return getCachedPayload<ActivityImpactCachePayloadItem[]>(
+    leagueId,
+    gw,
+    "activity_impact"
+  );
+}
+
+export async function upsertActivityImpactPayload(
+  leagueId: number,
+  gw: number,
+  payload: ActivityImpactCachePayloadItem[],
+  isFinal: boolean
+): Promise<void> {
+  return upsertCachedPayload(leagueId, gw, "activity_impact", payload, isFinal);
 }
 
 export async function getLatestCachedLeagueGw(): Promise<{
