@@ -6,6 +6,7 @@ import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards"
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable";
 import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
+import { X } from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { LeagueManager } from "@/components/common/LeagueManager";
@@ -63,6 +64,7 @@ interface DashboardClientProps {
 const LIVE_POLL_LOCK_KEY = "fpl-live-refresh-lock";
 const LIVE_POLL_LOCK_TTL_MS = 45_000;
 const LIVE_REFRESH_INTERVAL_MS = 30_000;
+const ORIENTATION_HINT_DISMISSED_KEY = "fpl-orientation-hint-dismissed-v2";
 
 function useLivePollingLeader() {
   const [isLeader, setIsLeader] = React.useState(false);
@@ -133,6 +135,7 @@ export default function DashboardClient({
   gw,
 }: DashboardClientProps) {
   const [tab, setTab] = React.useState("league");
+  const [showOrientationHint, setShowOrientationHint] = React.useState(false);
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
   const isPollingLeader = useLivePollingLeader();
@@ -274,6 +277,42 @@ export default function DashboardClient({
     return () => window.clearInterval(interval);
   }, [currentGw, gw, isPollingLeader, mutate, selectedLeagueId]);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const evaluateHintVisibility = () => {
+      const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+      const isPortrait = window.matchMedia("(orientation: portrait)").matches;
+      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const persistedDismissed =
+        window.localStorage.getItem(ORIENTATION_HINT_DISMISSED_KEY) === "1";
+
+      if (isLandscape && isMobileViewport) {
+        window.localStorage.setItem(ORIENTATION_HINT_DISMISSED_KEY, "1");
+        setShowOrientationHint(false);
+        return;
+      }
+
+      setShowOrientationHint(isMobileViewport && isPortrait && !persistedDismissed);
+    };
+
+    evaluateHintVisibility();
+    window.addEventListener("resize", evaluateHintVisibility);
+    window.addEventListener("orientationchange", evaluateHintVisibility);
+
+    return () => {
+      window.removeEventListener("resize", evaluateHintVisibility);
+      window.removeEventListener("orientationchange", evaluateHintVisibility);
+    };
+  }, []);
+
+  const dismissOrientationHint = React.useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(ORIENTATION_HINT_DISMISSED_KEY, "1");
+    }
+    setShowOrientationHint(false);
+  }, []);
+
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
@@ -347,6 +386,20 @@ export default function DashboardClient({
             </TabsTrigger>
           </TabsList>
         </Tabs>
+
+        {showOrientationHint ? (
+          <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+            <span>Viewing compact table. Rotate to landscape for full columns.</span>
+            <button
+              type="button"
+              onClick={dismissOrientationHint}
+              aria-label="Dismiss orientation hint"
+              className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ) : null}
 
         {/* ✅ Tab content (all pre-mounted, hidden with CSS) */}
         <div className="flex w-full min-h-0 flex-1 flex-col">
