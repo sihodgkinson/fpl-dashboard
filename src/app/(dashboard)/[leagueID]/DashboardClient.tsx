@@ -554,9 +554,9 @@ export default function DashboardClient({
       </header>
 
       {swipeGwFeedback ? (
-        <div className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 sm:hidden">
-          <div className="rounded-md border border-border bg-background/95 px-3 py-2 text-xs font-medium shadow-lg backdrop-blur">
-            GW {swipeGwFeedback.fromGw} → GW {swipeGwFeedback.toGw}
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center sm:hidden">
+          <div className="rounded-xl border border-border/60 bg-background/60 px-6 py-4 text-2xl font-semibold tracking-tight shadow-2xl backdrop-blur-md">
+            GW {swipeGwFeedback.fromGw} → {swipeGwFeedback.toGw}
           </div>
         </div>
       ) : null}
