@@ -218,20 +218,26 @@ function StatCard({
   if (value === null) {
     // ✅ Skeleton while loading
     return (
-      <Card className="p-4">
+      <Card className="p-4 min-h-[220px]">
         <Skeleton className="h-4 w-24 mb-2" />
-        <div className="stat-card-metric-row mt-1 mb-3 flex items-start gap-3">
-          <Skeleton className="stat-card-metric-value h-12 w-16" />
-          <Skeleton className="stat-card-metric-trend h-16 flex-1" />
+        <div className="stat-card-metric-row flex items-center">
+          <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
+            <Skeleton className="h-12 w-20" />
+          </div>
+          <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
+            <Skeleton className="h-16 w-full" />
+          </div>
         </div>
-        <Skeleton className="h-4 w-32 mb-1" />
-        <Skeleton className="h-3 w-20" />
+        <div className="leading-tight">
+          <Skeleton className="mb-1 h-4 w-32" />
+          <Skeleton className="h-3 w-20" />
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 min-h-[220px]">
       <p className="text-sm text-muted-foreground">{title}</p>
       <div className="stat-card-metric-row flex items-center">
         <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
