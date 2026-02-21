@@ -228,7 +228,7 @@ export function ActivityTab({
 
                   <td className="p-2 sm:p-4">
                     <div className="font-medium">{row.team}</div>
-                    <div className="mt-0.5 block text-xs text-muted-foreground md:hidden">
+                    <div className="block text-xs text-muted-foreground md:hidden">
                       {row.manager}
                     </div>
                   </td>
