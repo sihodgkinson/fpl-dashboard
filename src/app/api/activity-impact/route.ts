@@ -27,6 +27,7 @@ interface ActivityImpactRow extends ActivityImpactCachePayloadItem {
   team: string;
   manager: string;
   chip: string | null;
+  chipCaptainName: string | null;
   transfers: Array<{ in: string; out: string; impact: number }>;
   transferImpactNet: number;
   chipImpact: number;
@@ -38,6 +39,14 @@ interface ActivityImpactRow extends ActivityImpactCachePayloadItem {
 }
 
 const ENTRY_CONCURRENCY = 4;
+
+function hasIncompleteTripleCaptainData(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some(
+    (row) =>
+      row.chip === "3xc" &&
+      (!row.chipCaptainName || row.chipCaptainName.trim().length === 0)
+  );
+}
 
 async function mapWithConcurrency<T, R>(
   items: T[],
@@ -104,22 +113,23 @@ export async function GET(req: Request) {
     if (supabaseCacheEnabled) {
       const cached = await getCachedActivityImpactPayload(leagueId, clampedGw);
       if (cached) {
+        const cacheNeedsRepair = hasIncompleteTripleCaptainData(cached.payload);
         const cacheAgeSeconds = Math.floor(
           (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
         );
 
-        if (cached.isFinal) {
+        if (!cacheNeedsRepair && cached.isFinal) {
           incrementCounter("cache.activity_impact.hit");
           return NextResponse.json(cached.payload);
         }
 
-        if (isLockedGw) {
+        if (!cacheNeedsRepair && isLockedGw) {
           await upsertActivityImpactPayload(leagueId, clampedGw, cached.payload, true);
           incrementCounter("cache.activity_impact.hit");
           return NextResponse.json(cached.payload);
         }
 
-        if (cacheAgeSeconds < liveCacheTtlSeconds) {
+        if (!cacheNeedsRepair && cacheAgeSeconds < liveCacheTtlSeconds) {
           incrementCounter("cache.activity_impact.hit");
           return NextResponse.json(cached.payload);
         }
@@ -179,6 +189,7 @@ export async function GET(req: Request) {
         let runningInfluenceTotal = 0;
         let previousRunningInfluenceTotal = 0;
         let selectedChip: string | null = null;
+        let selectedChipCaptainName: string | null = null;
         let selectedTransfers: Array<{ in: string; out: string; impact: number }> = [];
         let selectedTransferImpactNet = 0;
         let selectedChipImpact = 0;
@@ -214,6 +225,9 @@ export async function GET(req: Request) {
               ? (pointsMap.get(captainPick.element) ?? 0)
               : 0;
             chipImpact = captainBasePoints;
+            selectedChipCaptainName = captainPick
+              ? (playersById.get(captainPick.element) ?? "Unknown")
+              : null;
           }
 
           const gwDecisionScore = transferImpactNet + chipImpact;
@@ -225,6 +239,9 @@ export async function GET(req: Request) {
 
           if (candidateGw === clampedGw) {
             selectedChip = chipName;
+            if (chipName !== "3xc") {
+              selectedChipCaptainName = null;
+            }
             selectedTransfers = gwTransfers.map((transfer) => ({
               in: playersById.get(transfer.element_in) ?? "Unknown",
               out: playersById.get(transfer.element_out) ?? "Unknown",
@@ -243,6 +260,7 @@ export async function GET(req: Request) {
           team: entry.entry_name,
           manager: entry.player_name,
           chip: selectedChip,
+          chipCaptainName: selectedChipCaptainName,
           transfers: selectedTransfers,
           transferImpactNet: selectedTransferImpactNet,
           chipImpact: selectedChipImpact,

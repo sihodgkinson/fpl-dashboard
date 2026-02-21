@@ -4,6 +4,7 @@ import useSWR from "swr";
 import { useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ResponsiveInfoCard } from "@/components/ui/responsive-info-card";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -14,6 +15,7 @@ interface ActivityImpactRow {
   team: string;
   manager: string;
   chip: string | null;
+  chipCaptainName: string | null;
   transfers: Array<{ in: string; out: string; impact: number }>;
   transferImpactNet: number;
   chipImpact: number;
@@ -61,13 +63,6 @@ function ActivityRowSkeleton() {
       <td className="hidden p-2 md:table-cell sm:p-4">
         <Skeleton className="h-4 w-28" />
       </td>
-      <td className="p-2 sm:p-4">
-        <Skeleton className="h-4 w-24" />
-      </td>
-      <td className="p-2 sm:p-4">
-        <Skeleton className="mb-1 h-4 w-40" />
-        <Skeleton className="h-4 w-36" />
-      </td>
       <td className="p-2 text-right sm:p-4">
         <Skeleton className="ml-auto h-4 w-12" />
       </td>
@@ -107,15 +102,57 @@ export function ActivityTab({
       <table className="w-full table-auto text-sm">
         <thead className="sticky top-0 z-10 bg-muted">
           <tr className="border-b bg-card font-semibold text-foreground">
-            <th className="p-2 text-left sm:p-4">Pos</th>
-            <th className="p-2 text-left sm:p-4">Team</th>
-            <th className="hidden p-2 text-left md:table-cell sm:p-4">Manager</th>
-            <th className="hidden p-2 text-left sm:table-cell sm:p-4">Chips Used</th>
-            <th className="hidden p-2 text-left sm:table-cell sm:p-4">Transfers</th>
-            <th className="hidden p-2 text-right sm:table-cell sm:p-4">Transfer Net</th>
-            <th className="hidden p-2 text-right sm:table-cell sm:p-4">Chip Impact</th>
-            <th className="p-2 text-right sm:p-4">GW Score</th>
-            <th className="p-2 text-right sm:p-4">Influence Total</th>
+            <th className="p-2 text-left sm:p-4 w-3/100">Pos</th>
+            <th className="p-2 text-left sm:p-4 w-25/100">Team</th>
+            <th className="hidden p-2 text-left md:table-cell sm:p-4 w-22/100">Manager</th>
+            <th className="hidden p-2 text-right sm:table-cell sm:p-4 w-10/100">
+              <div className="inline-flex items-center justify-end">
+                <ResponsiveInfoCard
+                  trigger={
+                    <button
+                      type="button"
+                      className="cursor-pointer underline decoration-dotted"
+                      aria-label="How Transfer Net is calculated"
+                    >
+                      Transfer Net
+                    </button>
+                  }
+                  content={
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Sum of transfer gains/losses this GW: points of players bought minus
+                      points of players sold, then minus transfer hit cost. For Free Hit,
+                      hit cost is treated as 0.
+                    </p>
+                  }
+                  className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                />
+              </div>
+            </th>
+            <th className="hidden p-2 text-right sm:table-cell sm:p-4 w-10/100">
+              <div className="inline-flex items-center justify-end">
+                <ResponsiveInfoCard
+                  trigger={
+                    <button
+                      type="button"
+                      className="cursor-pointer underline decoration-dotted"
+                      aria-label="How Chip Impact is calculated"
+                    >
+                      Chip Impact
+                    </button>
+                  }
+                  content={
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Extra points from chip effects this GW. Bench Boost equals bench
+                      points. Triple Captain equals the extra captain points from the
+                      third multiplier. Other chips currently show 0 impact.
+                    </p>
+                  }
+                  className="w-72 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                />
+              </div>
+            </th>
+            <th className="p-2 text-right sm:p-4 w-10/100">GW Gain</th>
+            <th className="p-2 text-right sm:p-4 w-10/100">Total Gain</th>
           </tr>
         </thead>
         <tbody>
@@ -148,41 +185,69 @@ export function ActivityTab({
 
                   <td className="hidden p-2 md:table-cell sm:p-4">{row.manager}</td>
 
-                  <td className="hidden p-2 sm:table-cell sm:p-4">
-                    {row.chip ? (
-                      <span>{formatChipName(row.chip)}</span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-
-                  <td className="hidden p-2 sm:table-cell sm:p-4">
-                    {row.transfers.length > 0 ? (
-                      <div className="space-y-1">
-                        {row.transfers.map((transfer, index) => (
-                          <div key={index}>
-                            {transfer.out} → {transfer.in}{" "}
-                            <span className={scoreClass(transfer.impact)}>
-                              ({formatSignedNumber(transfer.impact)})
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </td>
-
                   <td
                     className={`hidden p-2 text-right font-mono sm:table-cell sm:p-4 ${scoreClass(
                       row.transferImpactNet
                     )}`}
                   >
-                    {formatSignedNumber(row.transferImpactNet)}
+                    {row.transfers.length > 0 ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {formatSignedNumber(row.transferImpactNet)}
+                          </button>
+                        }
+                        content={
+                          <ul className="space-y-1 text-sm">
+                            {row.transfers.map((transfer, index) => (
+                              <li key={index}>
+                                <span className="text-muted-foreground">{transfer.out}</span>
+                                <span className="mx-2 text-muted-foreground">→</span>
+                                <span className="text-muted-foreground">{transfer.in}</span>{" "}
+                                <span className={scoreClass(transfer.impact)}>
+                                  ({formatSignedNumber(transfer.impact)})
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        }
+                        className="w-64 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{formatSignedNumber(row.transferImpactNet)}</span>
+                    )}
                   </td>
 
                   <td className={`hidden p-2 text-right font-mono sm:table-cell sm:p-4 ${scoreClass(row.chipImpact)}`}>
-                    {formatSignedNumber(row.chipImpact)}
+                    {row.chip ? (
+                      <ResponsiveInfoCard
+                        trigger={
+                          <button className="cursor-pointer underline decoration-dotted">
+                            {formatSignedNumber(row.chipImpact)}
+                          </button>
+                        }
+                        content={
+                          <div className="text-sm text-muted-foreground">
+                            {row.chip === "3xc" ? (
+                              <>
+                                <span>Triple Captain</span>
+                                {row.chipCaptainName ? (
+                                  <>
+                                    <span className="mx-2">→</span>
+                                    <span>{row.chipCaptainName}</span>
+                                  </>
+                                ) : null}
+                              </>
+                            ) : (
+                              formatChipName(row.chip)
+                            )}
+                          </div>
+                        }
+                        className="w-56 rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                      />
+                    ) : (
+                      <span>{formatSignedNumber(row.chipImpact)}</span>
+                    )}
                   </td>
 
                   <td className={`p-2 text-right font-mono sm:p-4 ${scoreClass(row.gwDecisionScore)}`}>
