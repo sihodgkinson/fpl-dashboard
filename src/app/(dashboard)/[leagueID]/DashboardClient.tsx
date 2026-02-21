@@ -4,8 +4,7 @@ import * as React from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
-import { TransfersTab } from "@/app/(dashboard)/[leagueID]/transfers/TransfersTable";
-import { ChipsTab } from "@/app/(dashboard)/[leagueID]/chips/ChipsTable";
+import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { LeagueManager } from "@/components/common/LeagueManager";
@@ -130,12 +129,10 @@ export default function DashboardClient({
     );
 
     // Prefetch inactive tab payload for the currently selected GW.
-    if (tab !== "transfers") {
+    if (tab !== "activity") {
       keysToPrefetch.add(
         `/api/transfers?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
-    }
-    if (tab !== "chips") {
       keysToPrefetch.add(
         `/api/chips?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
@@ -226,8 +223,7 @@ export default function DashboardClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="league">League Table</SelectItem>
-              <SelectItem value="transfers">Transfers</SelectItem>
-              <SelectItem value="chips">Chips</SelectItem>
+              <SelectItem value="activity">Activity</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -238,11 +234,8 @@ export default function DashboardClient({
             <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
               League Table
             </TabsTrigger>
-            <TabsTrigger value="transfers" type="button" className="px-3 sm:px-4">
-              Transfers
-            </TabsTrigger>
-            <TabsTrigger value="chips" type="button" className="px-3 sm:px-4">
-              Chips
+            <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
+              Activity
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -257,12 +250,8 @@ export default function DashboardClient({
             />
           </div>
 
-          <div className={tab === "transfers" ? "min-h-0 flex-1" : "hidden"}>
-            <TransfersTab leagueId={selectedLeagueId} currentGw={currentGw} />
-          </div>
-
-          <div className={tab === "chips" ? "min-h-0 flex-1" : "hidden"}>
-            <ChipsTab leagueId={selectedLeagueId} currentGw={currentGw} />
+          <div className={tab === "activity" ? "min-h-0 flex-1" : "hidden"}>
+            <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
           </div>
         </div>
       </main>
