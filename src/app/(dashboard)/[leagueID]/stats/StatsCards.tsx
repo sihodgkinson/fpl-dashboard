@@ -47,6 +47,8 @@ interface TrendResponse {
     mostTransfers: TrendSeries;
     mostInfluence: TrendSeries;
     leastInfluence: TrendSeries;
+    bestCaptainCall: TrendSeries;
+    worstCaptainCall: TrendSeries;
   };
 }
 
@@ -57,12 +59,13 @@ interface ActivityImpactRow {
 }
 
 type WidgetMode = "good" | "poor";
-type WidgetKey = "points" | "influence" | "bench";
+type WidgetKey = "points" | "influence" | "bench" | "captain";
 
 const WIDGET_MODE_STORAGE_KEYS: Record<WidgetKey, string> = {
   points: "fpl-widget-mode-points-v1",
   influence: "fpl-widget-mode-influence-v1",
   bench: "fpl-widget-mode-bench-v1",
+  captain: "fpl-widget-mode-captain-v1",
 };
 
 function useDisableChartTooltipOnTouch(): boolean {
@@ -296,7 +299,10 @@ function StatCard({
 
   return (
     <Card
-      className={cn("p-4 min-h-[220px]", onToggleMode ? "cursor-pointer sm:cursor-default" : "")}
+      className={cn(
+        "p-4 min-h-[220px] flex flex-col",
+        onToggleMode ? "cursor-pointer sm:cursor-default" : ""
+      )}
       onTouchStart={handleCardTouchStart}
       onTouchMove={handleCardTouchMove}
       onTouchEnd={handleCardTouchEnd}
@@ -322,8 +328,13 @@ function StatCard({
           </button>
         ) : null}
       </div>
-      <div className={`transition-opacity duration-200 ${contentVisible ? "opacity-100" : "opacity-0"}`}>
-        <div className="stat-card-metric-row flex items-center">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col transition-opacity duration-200",
+          contentVisible ? "opacity-100" : "opacity-0"
+        )}
+      >
+        <div className="stat-card-metric-row mb-2 flex items-center">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
             <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
               {displayValue ?? value}
@@ -340,7 +351,7 @@ function StatCard({
             />
           </div>
         </div>
-        <div className="leading-tight">
+        <div className="mt-auto leading-tight">
           <p className="text-base font-semibold">{team}</p>
           <p className="text-sm">{manager}</p>
         </div>
@@ -434,6 +445,7 @@ export function LeagueStatsCards({
     points: "good",
     influence: "good",
     bench: "good",
+    captain: "good",
   });
 
   React.useEffect(() => {
@@ -443,6 +455,8 @@ export function LeagueStatsCards({
       influence:
         (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.influence) as WidgetMode) || "good",
       bench: (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.bench) as WidgetMode) || "good",
+      captain:
+        (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.captain) as WidgetMode) || "good",
     });
   }, []);
 
@@ -456,6 +470,27 @@ export function LeagueStatsCards({
       return next;
     });
   };
+
+  const bestCaptainRow =
+    activityImpactData && activityImpactData.length > 0
+      ? [...activityImpactData].sort((a, b) => b.captainImpact - a.captainImpact)[0]
+      : null;
+  const worstCaptainRow =
+    activityImpactData && activityImpactData.length > 0
+      ? [...activityImpactData].sort((a, b) => a.captainImpact - b.captainImpact)[0]
+      : null;
+  const bestCaptainValue = bestCaptainRow?.captainImpact ?? null;
+  const worstCaptainValue = worstCaptainRow?.captainImpact ?? null;
+  const formatSigned = (value: number | null) =>
+    value === null ? null : value > 0 ? `+${value}` : String(value);
+  const captainClass = (value: number | null) =>
+    value === null
+      ? ""
+      : value > 0
+        ? "text-green-600 dark:text-green-400"
+        : value < 0
+          ? "text-red-600 dark:text-red-400"
+          : "";
 
   if (hasError) return <div>Error loading stats</div>;
 
@@ -537,7 +572,30 @@ export function LeagueStatsCards({
         mode={widgetMode.bench}
         onToggleMode={() => toggleWidgetMode("bench")}
       />
-      <Card className="min-h-[220px] p-4" />
+      <StatCard
+        title={widgetMode.captain === "good" ? "Best Captain Call" : "Worst Captain Call"}
+        value={widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue}
+        displayValue={formatSigned(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}
+        valueClassName={captainClass(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}
+        team={widgetMode.captain === "good" ? (bestCaptainRow?.team ?? null) : (worstCaptainRow?.team ?? null)}
+        manager={
+          widgetMode.captain === "good"
+            ? (bestCaptainRow?.manager ?? null)
+            : (worstCaptainRow?.manager ?? null)
+        }
+        trend={
+          widgetMode.captain === "good"
+            ? trendData?.series.bestCaptainCall
+            : trendData?.series.worstCaptainCall
+        }
+        isTrendLoading={isTrendLoading}
+        unit=""
+        chartId={widgetMode.captain === "good" ? "best-captain-call" : "worst-captain-call"}
+        enableTooltip={!disableTooltipOnTouch}
+        signedTooltipValue
+        mode={widgetMode.captain}
+        onToggleMode={() => toggleWidgetMode("captain")}
+      />
     </div>
   );
 }

@@ -79,6 +79,8 @@ export async function GET(req: Request) {
       const mostTransfers: TrendPoint[] = [];
       const mostInfluence: TrendPoint[] = [];
       const leastInfluence: TrendPoint[] = [];
+      const bestCaptainCall: TrendPoint[] = [];
+      const worstCaptainCall: TrendPoint[] = [];
 
       for (let candidateGw = fromGw; candidateGw <= toGw; candidateGw += 1) {
         const payload = byGw.get(candidateGw);
@@ -140,6 +142,26 @@ export async function GET(req: Request) {
           manager: leastInfluenceRow?.manager ?? null,
           team: leastInfluenceRow?.team ?? null,
         });
+        const bestCaptainRow =
+          activityPayload.length > 0
+            ? [...activityPayload].sort((a, b) => b.captainImpact - a.captainImpact)[0]
+            : null;
+        const worstCaptainRow =
+          activityPayload.length > 0
+            ? [...activityPayload].sort((a, b) => a.captainImpact - b.captainImpact)[0]
+            : null;
+        bestCaptainCall.push({
+          gw: candidateGw,
+          value: bestCaptainRow?.captainImpact ?? null,
+          manager: bestCaptainRow?.manager ?? null,
+          team: bestCaptainRow?.team ?? null,
+        });
+        worstCaptainCall.push({
+          gw: candidateGw,
+          value: worstCaptainRow?.captainImpact ?? null,
+          manager: worstCaptainRow?.manager ?? null,
+          team: worstCaptainRow?.team ?? null,
+        });
       }
 
       const response: {
@@ -154,6 +176,8 @@ export async function GET(req: Request) {
           mostTransfers: TrendSeries;
           mostInfluence: TrendSeries;
           leastInfluence: TrendSeries;
+          bestCaptainCall: TrendSeries;
+          worstCaptainCall: TrendSeries;
         };
       } = {
         fromGw,
@@ -187,6 +211,14 @@ export async function GET(req: Request) {
           leastInfluence: {
             points: leastInfluence,
             average: computeAverage(leastInfluence),
+          },
+          bestCaptainCall: {
+            points: bestCaptainCall,
+            average: computeAverage(bestCaptainCall),
+          },
+          worstCaptainCall: {
+            points: worstCaptainCall,
+            average: computeAverage(worstCaptainCall),
           },
         },
       };
