@@ -236,6 +236,7 @@ function StatCard({
   onToggleMode?: () => void;
 }) {
   const [contentVisible, setContentVisible] = React.useState(true);
+  const ignoreNextClickRef = React.useRef(false);
   const cardTouchRef = React.useRef<{
     startX: number;
     startY: number;
@@ -274,11 +275,16 @@ function StatCard({
     cardTouchRef.current = null;
     if (!onToggleMode || !state || state.moved) return;
     if (Date.now() - state.startTs > 320) return;
+    ignoreNextClickRef.current = true;
     onToggleMode();
   };
 
   const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!onToggleMode) return;
+    if (ignoreNextClickRef.current) {
+      ignoreNextClickRef.current = false;
+      return;
+    }
     const target = event.target as HTMLElement | null;
     if (!target) return;
     // Keep desktop sparkline interactions focused on tooltip/hover, not mode toggling.
