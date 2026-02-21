@@ -58,7 +58,7 @@ function ActivityRowSkeleton() {
         <Skeleton className="mb-1 h-4 w-32" />
         <Skeleton className="h-3 w-20" />
       </td>
-      <td className="hidden p-2 sm:table-cell sm:p-4">
+      <td className="hidden p-2 md:table-cell sm:p-4">
         <Skeleton className="h-4 w-28" />
       </td>
       <td className="p-2 sm:p-4">
@@ -109,10 +109,10 @@ export function ActivityTab({
           <tr className="border-b bg-card font-semibold text-foreground">
             <th className="p-2 text-left sm:p-4">Pos</th>
             <th className="p-2 text-left sm:p-4">Team</th>
-            <th className="hidden p-2 text-left sm:table-cell sm:p-4">Manager</th>
-            <th className="p-2 text-left sm:p-4">Chips Used</th>
-            <th className="p-2 text-left sm:p-4">Transfers</th>
-            <th className="p-2 text-right sm:p-4">Transfer Net</th>
+            <th className="hidden p-2 text-left md:table-cell sm:p-4">Manager</th>
+            <th className="hidden p-2 text-left sm:table-cell sm:p-4">Chips Used</th>
+            <th className="hidden p-2 text-left sm:table-cell sm:p-4">Transfers</th>
+            <th className="hidden p-2 text-right sm:table-cell sm:p-4">Transfer Net</th>
             <th className="hidden p-2 text-right sm:table-cell sm:p-4">Chip Impact</th>
             <th className="p-2 text-right sm:p-4">GW Score</th>
             <th className="p-2 text-right sm:p-4">Influence Total</th>
@@ -141,14 +141,14 @@ export function ActivityTab({
 
                   <td className="p-2 sm:p-4">
                     <div className="font-medium">{row.team}</div>
-                    <div className="mt-0.5 block text-xs text-muted-foreground sm:hidden">
+                    <div className="mt-0.5 block text-xs text-muted-foreground md:hidden">
                       {row.manager}
                     </div>
                   </td>
 
-                  <td className="hidden p-2 sm:table-cell sm:p-4">{row.manager}</td>
+                  <td className="hidden p-2 md:table-cell sm:p-4">{row.manager}</td>
 
-                  <td className="p-2 sm:p-4">
+                  <td className="hidden p-2 sm:table-cell sm:p-4">
                     {row.chip ? (
                       <span>{formatChipName(row.chip)}</span>
                     ) : (
@@ -156,7 +156,7 @@ export function ActivityTab({
                     )}
                   </td>
 
-                  <td className="p-2 sm:p-4">
+                  <td className="hidden p-2 sm:table-cell sm:p-4">
                     {row.transfers.length > 0 ? (
                       <div className="space-y-1">
                         {row.transfers.map((transfer, index) => (
@@ -173,7 +173,11 @@ export function ActivityTab({
                     )}
                   </td>
 
-                  <td className={`p-2 text-right font-mono sm:p-4 ${scoreClass(row.transferImpactNet)}`}>
+                  <td
+                    className={`hidden p-2 text-right font-mono sm:table-cell sm:p-4 ${scoreClass(
+                      row.transferImpactNet
+                    )}`}
+                  >
                     {formatSignedNumber(row.transferImpactNet)}
                   </td>
 

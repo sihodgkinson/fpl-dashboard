@@ -22,7 +22,7 @@ function TableRowSkeleton() {
         <Skeleton className="h-4 w-32 mb-1" />
         <Skeleton className="h-3 w-20" />
       </td>
-      <td className="p-2 sm:p-4 hidden sm:table-cell">
+      <td className="p-2 hidden md:table-cell sm:p-4">
         <Skeleton className="h-4 w-28" />
       </td>
       <td className="p-2 sm:p-4 text-right">
@@ -58,7 +58,7 @@ export function LeagueTable({
           <tr className="border-b text-foreground font-semibold">
             <th className="p-2 sm:p-4 text-left w-3/100">Pos</th>
             <th className="p-2 sm:p-4 text-left w-25/100">Team</th>
-            <th className="p-2 sm:p-4 text-left w-22/100 hidden sm:table-cell">
+            <th className="p-2 hidden md:table-cell sm:p-4 text-left w-22/100">
               Manager
             </th>
             <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
@@ -102,13 +102,13 @@ export function LeagueTable({
                   {/* Team */}
                   <td className="p-2 sm:p-4">
                     <div className="font-medium">{entry.entry_name}</div>
-                    <div className="text-muted-foreground text-xs block sm:hidden">
+                    <div className="text-muted-foreground text-xs block md:hidden">
                       {entry.player_name}
                     </div>
                   </td>
 
                   {/* Manager */}
-                  <td className="p-2 sm:p-4 hidden sm:table-cell">
+                  <td className="p-2 hidden md:table-cell sm:p-4">
                     {entry.player_name}
                   </td>
 
