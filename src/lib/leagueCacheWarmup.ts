@@ -1,10 +1,18 @@
 import { logMetric } from "@/lib/metrics";
 
-type CacheView = "league" | "transfers" | "chips";
+type CacheView = "league" | "transfers" | "chips" | "activity_impact";
+
+const WARMUP_VIEWS: Array<{ view: CacheView; apiRoute: string }> = [
+  { view: "league", apiRoute: "league" },
+  { view: "transfers", apiRoute: "transfers" },
+  { view: "chips", apiRoute: "chips" },
+  { view: "activity_impact", apiRoute: "activity-impact" },
+];
 
 interface WarmTask {
   gw: number;
   view: CacheView;
+  apiRoute: string;
 }
 
 interface WarmResult {
@@ -47,13 +55,12 @@ export async function warmLeagueCache(params: {
   const concurrency = Math.max(1, params.concurrency ?? 2);
   const timeBudgetMs = Math.max(1000, params.timeBudgetMs ?? 10_000);
   const toGw = Math.max(1, Math.floor(params.toGw ?? params.currentGw));
-  const views: CacheView[] = ["league", "transfers", "chips"];
   const tasks: WarmTask[] = [];
 
   // Fill recent gameweeks first so the first user interactions are fast.
   for (let gw = toGw; gw >= 1; gw -= 1) {
-    for (const view of views) {
-      tasks.push({ gw, view });
+    for (const { view, apiRoute } of WARMUP_VIEWS) {
+      tasks.push({ gw, view, apiRoute });
     }
   }
 
@@ -70,7 +77,7 @@ export async function warmLeagueCache(params: {
 
     attempted += 1;
     const url =
-      `${params.origin}/api/${task.view}` +
+      `${params.origin}/api/${task.apiRoute}` +
       `?leagueId=${params.leagueId}&gw=${task.gw}&currentGw=${params.currentGw}`;
 
     try {
