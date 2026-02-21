@@ -23,16 +23,26 @@ export function ResponsiveInfoCard({
   content,
   className,
 }: ResponsiveInfoCardProps) {
-  const [isMobile, setIsMobile] = React.useState(false);
+  const [usePopover, setUsePopover] = React.useState(false);
 
   React.useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 640);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+    if (typeof window === "undefined") return;
+
+    const hoverNone = window.matchMedia("(hover: none)");
+    const pointerCoarse = window.matchMedia("(pointer: coarse)");
+    const update = () => setUsePopover(hoverNone.matches || pointerCoarse.matches);
+
+    update();
+    hoverNone.addEventListener("change", update);
+    pointerCoarse.addEventListener("change", update);
+
+    return () => {
+      hoverNone.removeEventListener("change", update);
+      pointerCoarse.removeEventListener("change", update);
+    };
   }, []);
 
-  if (isMobile) {
+  if (usePopover) {
     return (
       <Popover>
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
