@@ -18,6 +18,7 @@ interface GameweekSelectorProps {
   currentGw: number;
   maxGw: number;
   className?: string; // NEW
+  showArrows?: boolean;
 }
 
 export function GameweekSelector({
@@ -25,6 +26,7 @@ export function GameweekSelector({
   currentGw,
   maxGw,
   className,
+  showArrows = true,
 }: GameweekSelectorProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -65,7 +67,7 @@ export function GameweekSelector({
     void prefetchForGw(gw);
     const params = new URLSearchParams(searchParams.toString());
     params.set("gw", String(gw));
-    router.push(`/dashboard?${params.toString()}`);
+    router.push(`/dashboard?${params.toString()}`, { scroll: false });
   };
 
   const handleChange = (value: string) => {
@@ -85,9 +87,9 @@ export function GameweekSelector({
   };
 
   return (
-    <div className="flex items-center gap-2 w-full sm:w-auto">
+    <div className={cn("flex items-center gap-2", showArrows ? "w-fit sm:w-auto" : "w-full")}>
       <Select onValueChange={handleChange} value={String(selectedGw)}>
-        <SelectTrigger className={cn("w-40", className)}>
+        <SelectTrigger className={cn(showArrows ? "w-40" : "w-full", className)}>
           <SelectValue placeholder="Select GW" />
         </SelectTrigger>
         <SelectContent>
@@ -99,25 +101,29 @@ export function GameweekSelector({
         </SelectContent>
       </Select>
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handlePrev}
-        disabled={selectedGw <= 1}
-        className="h-12 w-12"
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </Button>
+      {showArrows ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handlePrev}
+          disabled={selectedGw <= 1}
+          className="h-12 w-12"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+      ) : null}
 
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleNext}
-        disabled={selectedGw >= maxGw}
-        className="h-12 w-12"
-      >
-        <ChevronRight className="h-4 w-4" />
-      </Button>
+      {showArrows ? (
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleNext}
+          disabled={selectedGw >= maxGw}
+          className="h-12 w-12"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
@@ -9,7 +10,6 @@ import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table
 import { X } from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
-import { LeagueManager } from "@/components/common/LeagueManager";
 import { AccountMenu } from "@/components/common/AccountMenu";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -65,6 +65,11 @@ const LIVE_POLL_LOCK_KEY = "fpl-live-refresh-lock";
 const LIVE_POLL_LOCK_TTL_MS = 45_000;
 const LIVE_REFRESH_INTERVAL_MS = 30_000;
 const ORIENTATION_HINT_DISMISSED_KEY = "fpl-orientation-hint-dismissed-v2";
+const SWIPE_HINT_DISMISSED_KEY = "fpl-swipe-hint-dismissed-v1";
+const MOBILE_SWIPE_MIN_X = 60;
+const MOBILE_SWIPE_MAX_Y = 80;
+const MOBILE_SWIPE_LOCK_X = 12;
+const MOBILE_SWIPE_MAX_DURATION_MS = 700;
 
 function useLivePollingLeader() {
   const [isLeader, setIsLeader] = React.useState(false);
@@ -134,8 +139,19 @@ export default function DashboardClient({
   maxGw,
   gw,
 }: DashboardClientProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [tab, setTab] = React.useState("league");
   const [showOrientationHint, setShowOrientationHint] = React.useState(false);
+  const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+  const swipeRef = React.useRef<{
+    startX: number;
+    startY: number;
+    startTs: number;
+    horizontalLocked: boolean;
+    valid: boolean;
+  } | null>(null);
+  const isSwipeNavigatingRef = React.useRef(false);
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
   const isPollingLeader = useLivePollingLeader();
@@ -306,6 +322,22 @@ export default function DashboardClient({
     };
   }, []);
 
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const evaluateSwipeHintVisibility = () => {
+      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const dismissed = window.localStorage.getItem(SWIPE_HINT_DISMISSED_KEY) === "1";
+      setShowSwipeHint(isMobileViewport && !dismissed);
+    };
+
+    evaluateSwipeHintVisibility();
+    window.addEventListener("resize", evaluateSwipeHintVisibility);
+    return () => {
+      window.removeEventListener("resize", evaluateSwipeHintVisibility);
+    };
+  }, []);
+
   const dismissOrientationHint = React.useCallback(() => {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(ORIENTATION_HINT_DISMISSED_KEY, "1");
@@ -313,41 +345,184 @@ export default function DashboardClient({
     setShowOrientationHint(false);
   }, []);
 
+  const dismissSwipeHint = React.useCallback(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(SWIPE_HINT_DISMISSED_KEY, "1");
+    }
+    setShowSwipeHint(false);
+  }, []);
+
+  const navigateToGw = React.useCallback(
+    (targetGw: number) => {
+      const clampedTargetGw = Math.max(1, Math.min(maxGw, targetGw));
+      if (clampedTargetGw === gw) return;
+      if (isSwipeNavigatingRef.current) return;
+      isSwipeNavigatingRef.current = true;
+
+      const currentParams =
+        typeof window !== "undefined"
+          ? new URLSearchParams(window.location.search)
+          : new URLSearchParams(searchParams.toString());
+      const currentScrollY = typeof window !== "undefined" ? window.scrollY : 0;
+      const params = new URLSearchParams(currentParams.toString());
+      params.set("gw", String(clampedTargetGw));
+      params.set("leagueId", String(selectedLeagueId));
+      router.push(`/dashboard?${params.toString()}`, { scroll: false });
+
+      if (typeof window !== "undefined") {
+        // iOS/Safari can still jump despite scroll:false, so force-restore a few frames.
+        let attempts = 0;
+        const restoreScroll = () => {
+          window.scrollTo({ top: currentScrollY, left: 0, behavior: "auto" });
+          attempts += 1;
+          if (attempts < 6) {
+            window.requestAnimationFrame(restoreScroll);
+          } else {
+            isSwipeNavigatingRef.current = false;
+          }
+        };
+        window.requestAnimationFrame(restoreScroll);
+      } else {
+        isSwipeNavigatingRef.current = false;
+      }
+    },
+    [gw, maxGw, router, searchParams, selectedLeagueId]
+  );
+
+  const isSwipeEligibleTarget = React.useCallback((target: EventTarget | null) => {
+    const element = target instanceof HTMLElement ? target : null;
+    if (!element) return false;
+    return !element.closest(
+      'button, a, input, select, textarea, [role="button"], [role="menuitem"], [data-radix-select-trigger]'
+    );
+  }, []);
+
+  const handleMobileSwipeStart = React.useCallback(
+    (event: React.TouchEvent<HTMLElement>) => {
+      if (window.matchMedia("(min-width: 640px)").matches) return;
+      if (event.touches.length !== 1) return;
+      if (!isSwipeEligibleTarget(event.target)) return;
+      const touch = event.touches[0];
+      swipeRef.current = {
+        startX: touch.clientX,
+        startY: touch.clientY,
+        startTs: Date.now(),
+        horizontalLocked: false,
+        valid: true,
+      };
+    },
+    [isSwipeEligibleTarget]
+  );
+
+  const handleMobileSwipeMove = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
+    if (window.matchMedia("(min-width: 640px)").matches) return;
+    const state = swipeRef.current;
+    if (!state || !state.valid || event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - state.startX;
+    const deltaY = touch.clientY - state.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (!state.horizontalLocked && absX >= MOBILE_SWIPE_LOCK_X && absX > absY) {
+      state.horizontalLocked = true;
+    }
+
+    if (absY > MOBILE_SWIPE_MAX_Y && absY > absX) {
+      state.valid = false;
+    }
+  }, []);
+
+  const handleMobileSwipeEnd = React.useCallback(
+    (event: React.TouchEvent<HTMLElement>) => {
+      if (window.matchMedia("(min-width: 640px)").matches) return;
+      const state = swipeRef.current;
+      swipeRef.current = null;
+      if (!state || !state.valid) return;
+
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - state.startX;
+      const deltaY = touch.clientY - state.startY;
+      const duration = Date.now() - state.startTs;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
+
+      if (!state.horizontalLocked) return;
+      if (duration > MOBILE_SWIPE_MAX_DURATION_MS) return;
+      if (absY > MOBILE_SWIPE_MAX_Y) return;
+      if (absX < MOBILE_SWIPE_MIN_X) return;
+
+      if (deltaX < 0 && gw < maxGw) {
+        navigateToGw(gw + 1);
+      } else if (deltaX > 0 && gw > 1) {
+        navigateToGw(gw - 1);
+      }
+    },
+    [gw, maxGw, navigateToGw]
+  );
+
+  const handleMobileSwipeCancel = React.useCallback(() => {
+    swipeRef.current = null;
+  }, []);
+
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
       <header className="border-b px-4 py-4 sm:px-4 sm:py-4 md:px-6 md:py-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Top row: League selector */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-col gap-4">
+          {/* Top row: League selector + menu */}
+          <div className="flex w-full items-center gap-2 sm:justify-end">
             <LeagueSelector
               leagues={leagues}
               selectedLeagueId={selectedLeagueId}
               currentGw={currentGw}
-              className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
+              className="flex-1 sm:w-[240px] sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
             />
-            <LeagueManager
+            <AccountMenu
+              className="h-12 w-12 shrink-0 sm:h-12 sm:w-12"
               selectedLeagueId={selectedLeagueId}
               selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
               currentGw={currentGw}
             />
           </div>
 
-          {/* Bottom row (on mobile): Gameweek selector + account menu */}
-          <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
-            <GameweekSelector
-              selectedLeagueId={selectedLeagueId}
-              currentGw={currentGw}
-              maxGw={maxGw}
-              className="flex-1 sm:flex-none !h-12 text-base sm:h-12 sm:text-sm"
-            />
-            <AccountMenu className="h-12 w-12 sm:h-12 sm:w-12" />
+          {/* Bottom row (mobile): Gameweek selector */}
+          <div className="w-full sm:hidden">
+            <div className="w-full">
+              <GameweekSelector
+                selectedLeagueId={selectedLeagueId}
+                currentGw={currentGw}
+                maxGw={maxGw}
+                showArrows={false}
+                className="w-full !h-12 text-base"
+              />
+              {showSwipeHint ? (
+                <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  <span>Swipe left/right to change GW.</span>
+                  <button
+                    type="button"
+                    onClick={dismissSwipeHint}
+                    aria-label="Dismiss swipe hint"
+                    className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="mobile-landscape-scroll-main flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-6">
+      <main
+        className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-6"
+        onTouchStart={handleMobileSwipeStart}
+        onTouchMove={handleMobileSwipeMove}
+        onTouchEnd={handleMobileSwipeEnd}
+        onTouchCancel={handleMobileSwipeCancel}
+      >
         {/* Stats cards */}
         <LeagueStatsCards
           stats={stats}
@@ -372,20 +547,28 @@ export default function DashboardClient({
           </Select>
         </div>
 
-        {/* ✅ Desktop tabs (triggers only) */}
-        <Tabs value={tab} onValueChange={setTab} className="hidden sm:block w-full">
-          <TabsList>
-            <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
-              League Table
-            </TabsTrigger>
-            <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
-              Manager Influence
-            </TabsTrigger>
-            <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
-              GW1 Table
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* ✅ Desktop tabs + gameweek row */}
+        <div className="hidden w-full items-center justify-between sm:flex">
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList>
+              <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
+                League Table
+              </TabsTrigger>
+              <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
+                Manager Influence
+              </TabsTrigger>
+              <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
+                GW1 Table
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <GameweekSelector
+            selectedLeagueId={selectedLeagueId}
+            currentGw={currentGw}
+            maxGw={maxGw}
+            className="!h-12 sm:text-sm"
+          />
+        </div>
 
         {showOrientationHint ? (
           <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
