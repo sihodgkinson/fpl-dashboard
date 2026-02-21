@@ -5,6 +5,7 @@ import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable";
+import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { LeagueManager } from "@/components/common/LeagueManager";
@@ -35,6 +36,10 @@ interface StandingsResponse {
     mostBench: EnrichedStanding | null;
     mostTransfers: EnrichedStanding | null;
   } | null;
+}
+
+interface GW1TableResponse {
+  standings: GW1Standing[];
 }
 
 interface DashboardClientProps {
@@ -157,6 +162,18 @@ export default function DashboardClient({
   const standings = Array.isArray(data?.standings)
     ? data.standings
     : [];
+  const {
+    data: gw1Data,
+    error: gw1Error,
+  } = useSWR<GW1TableResponse>(
+    `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
+    fetcher,
+    {
+      refreshInterval: 0,
+      revalidateOnFocus: false,
+    }
+  );
+  const gw1Standings = Array.isArray(gw1Data?.standings) ? gw1Data.standings : [];
 
   const stats = data?.stats ?? null;
   const isLeagueDataLoading = !data && !error;
@@ -197,6 +214,11 @@ export default function DashboardClient({
         `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
     }
+    if (tab !== "gw1") {
+      keysToPrefetch.add(
+        `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
+      );
+    }
 
     // Warm nearby immutable GWs so backward navigation feels instant.
     if (gw > 1) {
@@ -210,6 +232,9 @@ export default function DashboardClient({
         );
         keysToPrefetch.add(
           `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${candidateGw}&window=8`
+        );
+        keysToPrefetch.add(
+          `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${candidateGw}&currentGw=${currentGw}`
         );
       }
     }
@@ -303,6 +328,7 @@ export default function DashboardClient({
             <SelectContent>
               <SelectItem value="league">League Table</SelectItem>
               <SelectItem value="activity">Manager Influence</SelectItem>
+              <SelectItem value="gw1">GW1 Table</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -315,6 +341,9 @@ export default function DashboardClient({
             </TabsTrigger>
             <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
               Manager Influence
+            </TabsTrigger>
+            <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
+              GW1 Table
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -331,6 +360,14 @@ export default function DashboardClient({
 
           <div className={tab === "activity" ? "min-h-0 flex-1" : "hidden"}>
             <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
+          </div>
+
+          <div className={tab === "gw1" ? "min-h-0 flex-1" : "hidden"}>
+            <GW1Table
+              standings={gw1Standings}
+              isLoading={!gw1Data && !gw1Error}
+              hasError={Boolean(gw1Error)}
+            />
           </div>
         </div>
       </main>
