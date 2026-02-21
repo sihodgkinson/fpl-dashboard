@@ -55,6 +55,71 @@ interface DashboardClientProps {
   gw: number;
 }
 
+const LIVE_POLL_LOCK_KEY = "fpl-live-refresh-lock";
+const LIVE_POLL_LOCK_TTL_MS = 45_000;
+const LIVE_REFRESH_INTERVAL_MS = 30_000;
+
+function useLivePollingLeader() {
+  const [isLeader, setIsLeader] = React.useState(false);
+  const tabIdRef = React.useRef<string>(
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random()}`
+  );
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const readLock = (): { owner: string; expiresAt: number } | null => {
+      try {
+        const raw = window.localStorage.getItem(LIVE_POLL_LOCK_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw) as { owner: string; expiresAt: number };
+      } catch {
+        return null;
+      }
+    };
+
+    const renewLock = () => {
+      const now = Date.now();
+      const parsed = readLock();
+      const ownedByThisTab = parsed?.owner === tabIdRef.current;
+      const expired = !parsed || parsed.expiresAt < now;
+
+      if (ownedByThisTab || expired) {
+        window.localStorage.setItem(
+          LIVE_POLL_LOCK_KEY,
+          JSON.stringify({
+            owner: tabIdRef.current,
+            expiresAt: now + LIVE_POLL_LOCK_TTL_MS,
+          })
+        );
+        setIsLeader(true);
+      } else {
+        setIsLeader(false);
+      }
+    };
+
+    const releaseLock = () => {
+      const parsed = readLock();
+      if (parsed?.owner === tabIdRef.current) {
+        window.localStorage.removeItem(LIVE_POLL_LOCK_KEY);
+      }
+    };
+
+    renewLock();
+    const interval = window.setInterval(renewLock, 10_000);
+    window.addEventListener("beforeunload", releaseLock);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("beforeunload", releaseLock);
+      releaseLock();
+    };
+  }, []);
+
+  return isLeader;
+}
+
 export default function DashboardClient({
   leagues,
   selectedLeagueId,
@@ -65,6 +130,7 @@ export default function DashboardClient({
   const [tab, setTab] = React.useState("league");
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
+  const isPollingLeader = useLivePollingLeader();
 
   // Find the selected league's preloaded data
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
@@ -161,6 +227,27 @@ export default function DashboardClient({
       window.clearTimeout(timer);
     };
   }, [currentGw, gw, prefetchKey, selectedLeagueId, tab]);
+
+  React.useEffect(() => {
+    if (gw !== currentGw) return;
+    if (!isPollingLeader) return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+
+    const refreshCurrentGw = async () => {
+      await Promise.allSettled([
+        mutate(
+          `/api/league?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
+        ),
+        mutate(
+          `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
+        ),
+        mutate(`/api/stats-trend?leagueId=${selectedLeagueId}&gw=${currentGw}&window=8`),
+      ]);
+    };
+
+    const interval = window.setInterval(refreshCurrentGw, LIVE_REFRESH_INTERVAL_MS);
+    return () => window.clearInterval(interval);
+  }, [currentGw, gw, isPollingLeader, mutate, selectedLeagueId]);
 
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">

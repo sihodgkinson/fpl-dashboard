@@ -47,6 +47,7 @@ export async function warmLeagueCache(params: {
   leagueId: number;
   currentGw: number;
   origin: string;
+  fromGw?: number;
   toGw?: number;
   concurrency?: number;
   timeBudgetMs?: number;
@@ -55,10 +56,12 @@ export async function warmLeagueCache(params: {
   const concurrency = Math.max(1, params.concurrency ?? 2);
   const timeBudgetMs = Math.max(1000, params.timeBudgetMs ?? 10_000);
   const toGw = Math.max(1, Math.floor(params.toGw ?? params.currentGw));
+  const fromGw = Math.max(1, Math.floor(params.fromGw ?? 1));
+  const normalizedFromGw = Math.min(fromGw, toGw);
   const tasks: WarmTask[] = [];
 
   // Fill recent gameweeks first so the first user interactions are fast.
-  for (let gw = toGw; gw >= 1; gw -= 1) {
+  for (let gw = toGw; gw >= normalizedFromGw; gw -= 1) {
     for (const { view, apiRoute } of WARMUP_VIEWS) {
       tasks.push({ gw, view, apiRoute });
     }
@@ -96,6 +99,7 @@ export async function warmLeagueCache(params: {
   logMetric("cache.warmup.league", {
     leagueId: params.leagueId,
     currentGw: params.currentGw,
+    fromGw: normalizedFromGw,
     toGw,
     ...result,
   });
