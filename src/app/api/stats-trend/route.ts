@@ -75,8 +75,10 @@ export async function GET(req: Request) {
       const mostPoints: TrendPoint[] = [];
       const fewestPoints: TrendPoint[] = [];
       const mostBench: TrendPoint[] = [];
+      const fewestBench: TrendPoint[] = [];
       const mostTransfers: TrendPoint[] = [];
       const mostInfluence: TrendPoint[] = [];
+      const leastInfluence: TrendPoint[] = [];
 
       for (let candidateGw = fromGw; candidateGw <= toGw; candidateGw += 1) {
         const payload = byGw.get(candidateGw);
@@ -95,6 +97,20 @@ export async function GET(req: Request) {
         mostBench.push(
           extractPoint(candidateGw, stats?.mostBench ?? null, stats?.mostBench?.benchPoints ?? null)
         );
+        const standings = payload?.standings ?? [];
+        const fewestBenchStanding =
+          standings.length > 0
+            ? standings.reduce((min: EnrichedStanding, team: EnrichedStanding) =>
+                team.benchPoints < min.benchPoints ? team : min
+              )
+            : null;
+        fewestBench.push(
+          extractPoint(
+            candidateGw,
+            fewestBenchStanding,
+            fewestBenchStanding?.benchPoints ?? null
+          )
+        );
         mostTransfers.push(
           extractPoint(
             candidateGw,
@@ -108,11 +124,21 @@ export async function GET(req: Request) {
           activityPayload.length > 0
             ? [...activityPayload].sort((a, b) => b.gwDecisionScore - a.gwDecisionScore)[0]
             : null;
+        const leastInfluenceRow =
+          activityPayload.length > 0
+            ? [...activityPayload].sort((a, b) => a.gwDecisionScore - b.gwDecisionScore)[0]
+            : null;
         mostInfluence.push({
           gw: candidateGw,
           value: mostInfluenceRow?.gwDecisionScore ?? null,
           manager: mostInfluenceRow?.manager ?? null,
           team: mostInfluenceRow?.team ?? null,
+        });
+        leastInfluence.push({
+          gw: candidateGw,
+          value: leastInfluenceRow?.gwDecisionScore ?? null,
+          manager: leastInfluenceRow?.manager ?? null,
+          team: leastInfluenceRow?.team ?? null,
         });
       }
 
@@ -124,8 +150,10 @@ export async function GET(req: Request) {
           mostPoints: TrendSeries;
           fewestPoints: TrendSeries;
           mostBench: TrendSeries;
+          fewestBench: TrendSeries;
           mostTransfers: TrendSeries;
           mostInfluence: TrendSeries;
+          leastInfluence: TrendSeries;
         };
       } = {
         fromGw,
@@ -144,6 +172,10 @@ export async function GET(req: Request) {
             points: mostBench,
             average: computeAverage(mostBench),
           },
+          fewestBench: {
+            points: fewestBench,
+            average: computeAverage(fewestBench),
+          },
           mostTransfers: {
             points: mostTransfers,
             average: computeAverage(mostTransfers),
@@ -151,6 +183,10 @@ export async function GET(req: Request) {
           mostInfluence: {
             points: mostInfluence,
             average: computeAverage(mostInfluence),
+          },
+          leastInfluence: {
+            points: leastInfluence,
+            average: computeAverage(leastInfluence),
           },
         },
       };

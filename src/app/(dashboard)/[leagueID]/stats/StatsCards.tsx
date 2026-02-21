@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EnrichedStanding } from "@/types/fpl";
+import { cn } from "@/lib/utils";
 import {
   Area,
   AreaChart,
@@ -42,8 +43,10 @@ interface TrendResponse {
     mostPoints: TrendSeries;
     fewestPoints: TrendSeries;
     mostBench: TrendSeries;
+    fewestBench: TrendSeries;
     mostTransfers: TrendSeries;
     mostInfluence: TrendSeries;
+    leastInfluence: TrendSeries;
   };
 }
 
@@ -52,6 +55,15 @@ interface ActivityImpactRow {
   manager: string;
   gwDecisionScore: number;
 }
+
+type WidgetMode = "good" | "poor";
+type WidgetKey = "points" | "influence" | "bench";
+
+const WIDGET_MODE_STORAGE_KEYS: Record<WidgetKey, string> = {
+  points: "fpl-widget-mode-points-v1",
+  influence: "fpl-widget-mode-influence-v1",
+  bench: "fpl-widget-mode-bench-v1",
+};
 
 function useDisableChartTooltipOnTouch(): boolean {
   const [disableTooltip, setDisableTooltip] = React.useState(false);
@@ -201,6 +213,8 @@ function StatCard({
   chartId,
   enableTooltip,
   signedTooltipValue,
+  mode,
+  onToggleMode,
 }: {
   title: string;
   value: number | null;
@@ -214,7 +228,51 @@ function StatCard({
   chartId: string;
   enableTooltip: boolean;
   signedTooltipValue?: boolean;
+  mode?: WidgetMode;
+  onToggleMode?: () => void;
 }) {
+  const [contentVisible, setContentVisible] = React.useState(true);
+  const cardTouchRef = React.useRef<{
+    startX: number;
+    startY: number;
+    startTs: number;
+    moved: boolean;
+  } | null>(null);
+
+  React.useEffect(() => {
+    setContentVisible(false);
+    const raf = requestAnimationFrame(() => setContentVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, [title, value, displayValue, team, manager]);
+
+  const handleCardTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (!onToggleMode || event.touches.length !== 1) return;
+    cardTouchRef.current = {
+      startX: event.touches[0].clientX,
+      startY: event.touches[0].clientY,
+      startTs: Date.now(),
+      moved: false,
+    };
+  };
+
+  const handleCardTouchMove = (event: React.TouchEvent<HTMLElement>) => {
+    const state = cardTouchRef.current;
+    if (!state || event.touches.length !== 1) return;
+    const deltaX = Math.abs(event.touches[0].clientX - state.startX);
+    const deltaY = Math.abs(event.touches[0].clientY - state.startY);
+    if (deltaX > 10 || deltaY > 10) {
+      state.moved = true;
+    }
+  };
+
+  const handleCardTouchEnd = () => {
+    const state = cardTouchRef.current;
+    cardTouchRef.current = null;
+    if (!onToggleMode || !state || state.moved) return;
+    if (Date.now() - state.startTs > 320) return;
+    onToggleMode();
+  };
+
   if (value === null) {
     // ✅ Skeleton while loading
     return (
@@ -237,28 +295,55 @@ function StatCard({
   }
 
   return (
-    <Card className="p-4 min-h-[220px]">
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <div className="stat-card-metric-row flex items-center">
-        <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
-          <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
-            {displayValue ?? value}
-          </h2>
-        </div>
-        <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
-          <MiniTrendChart
-            trend={trend}
-            isLoading={isTrendLoading}
-            unit={unit}
-            chartId={chartId}
-            enableTooltip={enableTooltip}
-            signedTooltipValue={signedTooltipValue}
-          />
-        </div>
+    <Card
+      className={cn("p-4 min-h-[220px]", onToggleMode ? "cursor-pointer sm:cursor-default" : "")}
+      onTouchStart={handleCardTouchStart}
+      onTouchMove={handleCardTouchMove}
+      onTouchEnd={handleCardTouchEnd}
+      onTouchCancel={() => {
+        cardTouchRef.current = null;
+      }}
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <p className="text-sm text-muted-foreground">{title}</p>
+        {onToggleMode ? (
+          <button
+            type="button"
+            onClick={onToggleMode}
+            className={cn(
+              "rounded-md border px-2 py-1 text-[11px] font-medium transition-colors hover:bg-muted pointer-events-none sm:pointer-events-auto",
+              mode === "good"
+                ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
+                : "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
+            )}
+            aria-label={`Show ${mode === "good" ? "poor" : "good"} performance`}
+          >
+            {mode === "good" ? "Good" : "Poor"}
+          </button>
+        ) : null}
       </div>
-      <div className="leading-tight">
-        <p className="text-base font-semibold">{team}</p>
-        <p className="text-sm">{manager}</p>
+      <div className={`transition-opacity duration-200 ${contentVisible ? "opacity-100" : "opacity-0"}`}>
+        <div className="stat-card-metric-row flex items-center">
+          <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
+            <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
+              {displayValue ?? value}
+            </h2>
+          </div>
+          <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
+            <MiniTrendChart
+              trend={trend}
+              isLoading={isTrendLoading}
+              unit={unit}
+              chartId={chartId}
+              enableTooltip={enableTooltip}
+              signedTooltipValue={signedTooltipValue}
+            />
+          </div>
+        </div>
+        <div className="leading-tight">
+          <p className="text-base font-semibold">{team}</p>
+          <p className="text-sm">{manager}</p>
+        </div>
       </div>
     </Card>
   );
@@ -271,6 +356,7 @@ interface LeagueStatsCardsProps {
     mostBench: EnrichedStanding | null;
     mostTransfers: EnrichedStanding | null;
   } | null;
+  standings: EnrichedStanding[];
   leagueId: number;
   gw: number;
   currentGw: number;
@@ -280,6 +366,7 @@ interface LeagueStatsCardsProps {
 
 export function LeagueStatsCards({
   stats,
+  standings,
   leagueId,
   gw,
   currentGw,
@@ -298,12 +385,19 @@ export function LeagueStatsCards({
     { revalidateOnFocus: false, refreshInterval: 0 }
   );
 
-  if (hasError) return <div>Error loading stats</div>;
   const effectiveStats = isLoading ? null : stats;
   const isTrendLoading = !trendData && !trendError;
   const mostInfluenceRow =
     activityImpactData && activityImpactData.length > 0
       ? [...activityImpactData].sort((a, b) => b.gwDecisionScore - a.gwDecisionScore)[0]
+      : null;
+  const leastInfluenceRow =
+    activityImpactData && activityImpactData.length > 0
+      ? [...activityImpactData].sort((a, b) => a.gwDecisionScore - b.gwDecisionScore)[0]
+      : null;
+  const fewestBenchRow =
+    standings.length > 0
+      ? standings.reduce((min, team) => (team.benchPoints < min.benchPoints ? team : min))
       : null;
   const mostInfluenceScore = mostInfluenceRow?.gwDecisionScore ?? null;
   const mostInfluenceDisplay =
@@ -320,56 +414,130 @@ export function LeagueStatsCards({
         : mostInfluenceScore < 0
           ? "text-red-600 dark:text-red-400"
           : "";
+  const leastInfluenceScore = leastInfluenceRow?.gwDecisionScore ?? null;
+  const leastInfluenceDisplay =
+    leastInfluenceScore === null
+      ? null
+      : leastInfluenceScore > 0
+        ? `+${leastInfluenceScore}`
+        : String(leastInfluenceScore);
+  const leastInfluenceClass =
+    leastInfluenceScore === null
+      ? ""
+      : leastInfluenceScore > 0
+        ? "text-green-600 dark:text-green-400"
+        : leastInfluenceScore < 0
+          ? "text-red-600 dark:text-red-400"
+          : "";
+
+  const [widgetMode, setWidgetMode] = React.useState<Record<WidgetKey, WidgetMode>>({
+    points: "good",
+    influence: "good",
+    bench: "good",
+  });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    setWidgetMode({
+      points: (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.points) as WidgetMode) || "good",
+      influence:
+        (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.influence) as WidgetMode) || "good",
+      bench: (window.localStorage.getItem(WIDGET_MODE_STORAGE_KEYS.bench) as WidgetMode) || "good",
+    });
+  }, []);
+
+  const toggleWidgetMode = (widget: WidgetKey) => {
+    setWidgetMode((prev) => {
+      const nextMode: WidgetMode = prev[widget] === "good" ? "poor" : "good";
+      const next = { ...prev, [widget]: nextMode };
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(WIDGET_MODE_STORAGE_KEYS[widget], nextMode);
+      }
+      return next;
+    });
+  };
+
+  if (hasError) return <div>Error loading stats</div>;
 
   return (
     <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
       <StatCard
-        title="Most GW Points"
-        value={effectiveStats?.mostPoints?.gwPoints ?? null}
-        team={effectiveStats?.mostPoints?.entry_name ?? null}
-        manager={effectiveStats?.mostPoints?.player_name ?? null}
-        trend={trendData?.series.mostPoints}
+        title={widgetMode.points === "good" ? "Most GW Points" : "Fewest GW Points"}
+        value={
+          widgetMode.points === "good"
+            ? (effectiveStats?.mostPoints?.gwPoints ?? null)
+            : (effectiveStats?.fewestPoints?.gwPoints ?? null)
+        }
+        team={
+          widgetMode.points === "good"
+            ? (effectiveStats?.mostPoints?.entry_name ?? null)
+            : (effectiveStats?.fewestPoints?.entry_name ?? null)
+        }
+        manager={
+          widgetMode.points === "good"
+            ? (effectiveStats?.mostPoints?.player_name ?? null)
+            : (effectiveStats?.fewestPoints?.player_name ?? null)
+        }
+        trend={widgetMode.points === "good" ? trendData?.series.mostPoints : trendData?.series.fewestPoints}
         isTrendLoading={isTrendLoading}
         unit="pts"
-        chartId="most-points"
+        chartId={widgetMode.points === "good" ? "most-points" : "fewest-points"}
         enableTooltip={!disableTooltipOnTouch}
+        mode={widgetMode.points}
+        onToggleMode={() => toggleWidgetMode("points")}
       />
       <StatCard
-        title="Most GW Influence"
-        value={mostInfluenceScore}
-        displayValue={mostInfluenceDisplay}
-        valueClassName={mostInfluenceClass}
-        team={mostInfluenceRow?.team ?? null}
-        manager={mostInfluenceRow?.manager ?? null}
-        trend={trendData?.series.mostInfluence}
+        title={widgetMode.influence === "good" ? "Most GW Influence" : "Least GW Influence"}
+        value={widgetMode.influence === "good" ? mostInfluenceScore : leastInfluenceScore}
+        displayValue={
+          widgetMode.influence === "good" ? mostInfluenceDisplay : leastInfluenceDisplay
+        }
+        valueClassName={widgetMode.influence === "good" ? mostInfluenceClass : leastInfluenceClass}
+        team={widgetMode.influence === "good" ? (mostInfluenceRow?.team ?? null) : (leastInfluenceRow?.team ?? null)}
+        manager={
+          widgetMode.influence === "good"
+            ? (mostInfluenceRow?.manager ?? null)
+            : (leastInfluenceRow?.manager ?? null)
+        }
+        trend={
+          widgetMode.influence === "good"
+            ? trendData?.series.mostInfluence
+            : trendData?.series.leastInfluence
+        }
         isTrendLoading={isTrendLoading}
         unit=""
-        chartId="most-influence"
+        chartId={widgetMode.influence === "good" ? "most-influence" : "least-influence"}
         enableTooltip={!disableTooltipOnTouch}
         signedTooltipValue
+        mode={widgetMode.influence}
+        onToggleMode={() => toggleWidgetMode("influence")}
       />
       <StatCard
-        title="Fewest GW Points"
-        value={effectiveStats?.fewestPoints?.gwPoints ?? null}
-        team={effectiveStats?.fewestPoints?.entry_name ?? null}
-        manager={effectiveStats?.fewestPoints?.player_name ?? null}
-        trend={trendData?.series.fewestPoints}
+        title={widgetMode.bench === "good" ? "Fewest GW Bench Points" : "Most GW Bench Points"}
+        value={
+          widgetMode.bench === "good"
+            ? (fewestBenchRow?.benchPoints ?? null)
+            : (effectiveStats?.mostBench?.benchPoints ?? null)
+        }
+        team={
+          widgetMode.bench === "good"
+            ? (fewestBenchRow?.entry_name ?? null)
+            : (effectiveStats?.mostBench?.entry_name ?? null)
+        }
+        manager={
+          widgetMode.bench === "good"
+            ? (fewestBenchRow?.player_name ?? null)
+            : (effectiveStats?.mostBench?.player_name ?? null)
+        }
+        trend={widgetMode.bench === "good" ? trendData?.series.fewestBench : trendData?.series.mostBench}
         isTrendLoading={isTrendLoading}
         unit="pts"
-        chartId="fewest-points"
+        chartId={widgetMode.bench === "good" ? "fewest-bench" : "most-bench"}
         enableTooltip={!disableTooltipOnTouch}
+        mode={widgetMode.bench}
+        onToggleMode={() => toggleWidgetMode("bench")}
       />
-      <StatCard
-        title="Most GW Bench Points"
-        value={effectiveStats?.mostBench?.benchPoints ?? null}
-        team={effectiveStats?.mostBench?.entry_name ?? null}
-        manager={effectiveStats?.mostBench?.player_name ?? null}
-        trend={trendData?.series.mostBench}
-        isTrendLoading={isTrendLoading}
-        unit="pts"
-        chartId="most-bench"
-        enableTooltip={!disableTooltipOnTouch}
-      />
+      <Card className="min-h-[220px] p-4" />
     </div>
   );
 }
