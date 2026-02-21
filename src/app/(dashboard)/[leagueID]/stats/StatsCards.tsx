@@ -43,7 +43,14 @@ interface TrendResponse {
     fewestPoints: TrendSeries;
     mostBench: TrendSeries;
     mostTransfers: TrendSeries;
+    mostInfluence: TrendSeries;
   };
+}
+
+interface ActivityImpactRow {
+  team: string;
+  manager: string;
+  gwDecisionScore: number;
 }
 
 function useDisableChartTooltipOnTouch(): boolean {
@@ -161,6 +168,8 @@ function MiniTrendChart({
 function StatCard({
   title,
   value,
+  displayValue,
+  valueClassName,
   team,
   manager,
   trend,
@@ -171,6 +180,8 @@ function StatCard({
 }: {
   title: string;
   value: number | null;
+  displayValue?: string | null;
+  valueClassName?: string;
   team: string | null;
   manager: string | null;
   trend: TrendSeries | null | undefined;
@@ -199,7 +210,9 @@ function StatCard({
       <p className="text-sm text-muted-foreground">{title}</p>
       <div className="stat-card-metric-row flex items-center">
         <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
-          <h2 className="text-5xl font-mono font-semibold">{value}</h2>
+          <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
+            {displayValue ?? value}
+          </h2>
         </div>
         <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
           <MiniTrendChart
@@ -228,6 +241,7 @@ interface LeagueStatsCardsProps {
   } | null;
   leagueId: number;
   gw: number;
+  currentGw: number;
   isLoading: boolean;
   hasError: boolean;
 }
@@ -236,6 +250,7 @@ export function LeagueStatsCards({
   stats,
   leagueId,
   gw,
+  currentGw,
   isLoading,
   hasError,
 }: LeagueStatsCardsProps) {
@@ -245,10 +260,34 @@ export function LeagueStatsCards({
     fetcher,
     { revalidateOnFocus: false, refreshInterval: 0 }
   );
+  const { data: activityImpactData } = useSWR<ActivityImpactRow[]>(
+    `/api/activity-impact?leagueId=${leagueId}&gw=${gw}&currentGw=${currentGw}`,
+    fetcher,
+    { revalidateOnFocus: false, refreshInterval: 0 }
+  );
 
   if (hasError) return <div>Error loading stats</div>;
   const effectiveStats = isLoading ? null : stats;
   const isTrendLoading = !trendData && !trendError;
+  const mostInfluenceRow =
+    activityImpactData && activityImpactData.length > 0
+      ? [...activityImpactData].sort((a, b) => b.gwDecisionScore - a.gwDecisionScore)[0]
+      : null;
+  const mostInfluenceScore = mostInfluenceRow?.gwDecisionScore ?? null;
+  const mostInfluenceDisplay =
+    mostInfluenceScore === null
+      ? null
+      : mostInfluenceScore > 0
+        ? `+${mostInfluenceScore}`
+        : String(mostInfluenceScore);
+  const mostInfluenceClass =
+    mostInfluenceScore === null
+      ? ""
+      : mostInfluenceScore > 0
+        ? "text-green-600 dark:text-green-400"
+        : mostInfluenceScore < 0
+          ? "text-red-600 dark:text-red-400"
+          : "";
 
   return (
     <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
@@ -261,6 +300,19 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId="most-points"
+        enableTooltip={!disableTooltipOnTouch}
+      />
+      <StatCard
+        title="Most GW Influence"
+        value={mostInfluenceScore}
+        displayValue={mostInfluenceDisplay}
+        valueClassName={mostInfluenceClass}
+        team={mostInfluenceRow?.team ?? null}
+        manager={mostInfluenceRow?.manager ?? null}
+        trend={trendData?.series.mostInfluence}
+        isTrendLoading={isTrendLoading}
+        unit="pts"
+        chartId="most-influence"
         enableTooltip={!disableTooltipOnTouch}
       />
       <StatCard
@@ -283,17 +335,6 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId="most-bench"
-        enableTooltip={!disableTooltipOnTouch}
-      />
-      <StatCard
-        title="Most GW Transfers"
-        value={effectiveStats?.mostTransfers?.transfers ?? null}
-        team={effectiveStats?.mostTransfers?.entry_name ?? null}
-        manager={effectiveStats?.mostTransfers?.player_name ?? null}
-        trend={trendData?.series.mostTransfers}
-        isTrendLoading={isTrendLoading}
-        unit=""
-        chartId="most-transfers"
         enableTooltip={!disableTooltipOnTouch}
       />
     </div>

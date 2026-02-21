@@ -202,6 +202,7 @@ export default function DashboardClient({
           stats={stats}
           leagueId={selectedLeagueId}
           gw={gw}
+          currentGw={currentGw}
           isLoading={isLeagueDataLoading}
           hasError={Boolean(error)}
         />
@@ -214,7 +215,7 @@ export default function DashboardClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="league">League Table</SelectItem>
-              <SelectItem value="activity">Activity</SelectItem>
+              <SelectItem value="activity">Manager Influence</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -226,7 +227,7 @@ export default function DashboardClient({
               League Table
             </TabsTrigger>
             <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
-              Activity
+              Manager Influence
             </TabsTrigger>
           </TabsList>
         </Tabs>

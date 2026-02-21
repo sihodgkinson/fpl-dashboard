@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { withTiming } from "@/lib/metrics";
-import { getCachedLeaguePayloadRange } from "@/lib/supabaseCache";
+import {
+  getCachedActivityImpactPayloadRange,
+  getCachedLeaguePayloadRange,
+} from "@/lib/supabaseCache";
 import { EnrichedStanding } from "@/types/fpl";
 
 const DEFAULT_WINDOW = 8;
@@ -62,13 +65,18 @@ export async function GET(req: Request) {
 
       const fromGw = Math.max(1, gw - windowSize + 1);
       const toGw = gw;
-      const rows = await getCachedLeaguePayloadRange(leagueId, fromGw, toGw);
+      const [rows, activityRows] = await Promise.all([
+        getCachedLeaguePayloadRange(leagueId, fromGw, toGw),
+        getCachedActivityImpactPayloadRange(leagueId, fromGw, toGw),
+      ]);
       const byGw = new Map(rows.map((row) => [row.gw, row.payload]));
+      const activityByGw = new Map(activityRows.map((row) => [row.gw, row.payload]));
 
       const mostPoints: TrendPoint[] = [];
       const fewestPoints: TrendPoint[] = [];
       const mostBench: TrendPoint[] = [];
       const mostTransfers: TrendPoint[] = [];
+      const mostInfluence: TrendPoint[] = [];
 
       for (let candidateGw = fromGw; candidateGw <= toGw; candidateGw += 1) {
         const payload = byGw.get(candidateGw);
@@ -94,6 +102,18 @@ export async function GET(req: Request) {
             stats?.mostTransfers?.transfers ?? null
           )
         );
+
+        const activityPayload = activityByGw.get(candidateGw) ?? [];
+        const mostInfluenceRow =
+          activityPayload.length > 0
+            ? [...activityPayload].sort((a, b) => b.gwDecisionScore - a.gwDecisionScore)[0]
+            : null;
+        mostInfluence.push({
+          gw: candidateGw,
+          value: mostInfluenceRow?.gwDecisionScore ?? null,
+          manager: mostInfluenceRow?.manager ?? null,
+          team: mostInfluenceRow?.team ?? null,
+        });
       }
 
       const response: {
@@ -105,6 +125,7 @@ export async function GET(req: Request) {
           fewestPoints: TrendSeries;
           mostBench: TrendSeries;
           mostTransfers: TrendSeries;
+          mostInfluence: TrendSeries;
         };
       } = {
         fromGw,
@@ -127,6 +148,10 @@ export async function GET(req: Request) {
             points: mostTransfers,
             average: computeAverage(mostTransfers),
           },
+          mostInfluence: {
+            points: mostInfluence,
+            average: computeAverage(mostInfluence),
+          },
         },
       };
 
@@ -134,4 +159,3 @@ export async function GET(req: Request) {
     }
   );
 }
-
