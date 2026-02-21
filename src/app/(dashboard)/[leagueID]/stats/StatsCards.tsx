@@ -55,6 +55,7 @@ interface TrendResponse {
 interface ActivityImpactRow {
   team: string;
   manager: string;
+  captainImpact: number;
   gwDecisionScore: number;
 }
 
