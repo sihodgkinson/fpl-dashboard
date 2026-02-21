@@ -11,6 +11,10 @@ interface UserLeagueRow {
   league_name: string | null;
 }
 
+interface LeagueIdRow {
+  league_id: number;
+}
+
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -132,6 +136,32 @@ export async function listUserLeagues(userId: string): Promise<UserLeague[]> {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     });
+    return [];
+  }
+}
+
+export async function listDistinctLeagueIds(): Promise<number[]> {
+  const config = getSupabaseConfig();
+  if (!config) return [];
+
+  const url =
+    `${config.url}/rest/v1/user_leagues` +
+    "?select=league_id&order=league_id.asc";
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return [];
+    const rows = (await res.json()) as LeagueIdRow[];
+    return [...new Set(rows.map((row) => row.league_id).filter((id) => id > 0))];
+  } catch {
     return [];
   }
 }

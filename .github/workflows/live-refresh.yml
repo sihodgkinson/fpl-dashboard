@@ -1,0 +1,30 @@
+name: Live Refresh
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  refresh-live-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger live refresh endpoint
+        env:
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
+          LIVE_REFRESH_SECRET: ${{ secrets.LIVE_REFRESH_SECRET }}
+        run: |
+          if [ -z "$APP_BASE_URL" ]; then
+            echo "APP_BASE_URL secret is not set"
+            exit 1
+          fi
+
+          if [ -z "$LIVE_REFRESH_SECRET" ]; then
+            echo "LIVE_REFRESH_SECRET secret is not set"
+            exit 1
+          fi
+
+          curl -fsS -X POST "$APP_BASE_URL/api/internal/refresh-live/run" \
+            -H "x-live-refresh-secret: $LIVE_REFRESH_SECRET" \
+            -H "content-type: application/json"
