@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
@@ -579,25 +580,25 @@ export default function DashboardClient({
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
-      <header className="px-4 pt-4 pb-0 sm:border-b sm:px-4 sm:py-4 md:px-6 md:py-6">
-        <div className="flex flex-col gap-4">
+      <header className="border-b border-[#1d1d1e] px-4 py-0 sm:px-4 md:px-5">
+        <div className="flex flex-col gap-3">
           {/* Top row: Brand + controls */}
-          <div className="flex w-full items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+          <div className="flex h-[72px] w-full items-center justify-between gap-3">
+            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/favicon.ico"
-                alt="FPL Dashboard logo"
-                className="h-12 w-12 rounded-lg border border-border/70"
+                alt="GameweekIQ logo"
+                className="h-8 w-8 rounded-md border border-border/70"
               />
               <span className="text-sm font-semibold tracking-tight sm:text-base">
-                FPL Dashboard
+                GameweekIQ
               </span>
-            </div>
+            </Link>
 
             <div className="sm:hidden">
               <AccountMenu
-                className="h-12 w-12 shrink-0"
+                className="h-8 w-8 shrink-0"
                 selectedLeagueId={selectedLeagueId}
                 selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
                 currentGw={currentGw}
@@ -632,10 +633,10 @@ export default function DashboardClient({
                 leagues={leagues}
                 selectedLeagueId={selectedLeagueId}
                 currentGw={currentGw}
-                className="w-[240px] !h-12 text-sm"
+                className="w-[240px] !h-8 text-sm"
               />
               <AccountMenu
-                className="h-12 w-12 shrink-0 sm:h-12 sm:w-12"
+                className="h-8 w-8 shrink-0"
                 selectedLeagueId={selectedLeagueId}
                 selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
                 currentGw={currentGw}
@@ -643,7 +644,7 @@ export default function DashboardClient({
             </div>
           </div>
 
-          <div className="-mx-4 border-b sm:hidden md:-mx-6" />
+          <div className="-mx-4 border-b border-[#1d1d1e] sm:hidden md:-mx-5" />
 
           {/* Mobile row: League selector + GW selector */}
           <div className="w-full sm:hidden">
@@ -652,15 +653,15 @@ export default function DashboardClient({
                 leagues={leagues}
                 selectedLeagueId={selectedLeagueId}
                 currentGw={currentGw}
-                className="min-w-0 flex-1 !h-12 text-base"
+                className="min-w-0 flex-1 !h-8 text-sm"
               />
-              <div className="ml-auto w-[112px] shrink-0">
+              <div className="ml-auto w-[96px] shrink-0">
                 <GameweekSelector
                   selectedLeagueId={selectedLeagueId}
                   currentGw={currentGw}
                   maxGw={maxGw}
                   showArrows={false}
-                  className="!h-12 w-full text-base"
+                  className="!h-8 w-full text-sm"
                 />
               </div>
             </div>
@@ -708,7 +709,7 @@ export default function DashboardClient({
 
       {swipeGwFeedback ? (
         <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center sm:hidden">
-          <div className="rounded-xl border border-border/60 bg-background/60 px-6 py-4 text-2xl font-semibold tracking-tight shadow-2xl backdrop-blur-md">
+          <div className="rounded-xl border border-border/60 bg-background/60 px-5 py-4 text-2xl font-semibold tracking-tight shadow-2xl backdrop-blur-md">
             GW {swipeGwFeedback.fromGw} → {swipeGwFeedback.toGw}
           </div>
         </div>
@@ -716,7 +717,7 @@ export default function DashboardClient({
 
       {/* Main content */}
       <main
-        className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-6"
+        className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-5"
         onTouchStart={handleMobileSwipeStart}
         onTouchMove={handleMobileSwipeMove}
         onTouchEnd={handleMobileSwipeEnd}
