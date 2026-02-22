@@ -154,7 +154,7 @@ export default async function Home() {
               <h1 className="text-balance text-4xl font-semibold tracking-[-0.02em] leading-[1.05] sm:text-6xl sm:leading-[1.03]">
                 Mini-league standings, decoded.
                 <br />
-                Every change explained.
+                Every change exposed.
               </h1>
               <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:max-w-none sm:whitespace-nowrap sm:text-base sm:leading-[1.55]">
                 Live, gameweek-by-gameweek insights that show exactly how transfers,
@@ -260,7 +260,7 @@ export default async function Home() {
             <div className="mx-auto w-full max-w-[1282px]">
               <div className="mx-auto max-w-[860px] text-center">
                 <h3 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl sm:leading-[1.08]">
-                  Everything you need to out-think your mini-league.
+                  Everything you need to out-think your mini-league rivals.
                 </h3>
                 <p className="mt-5 text-pretty text-base leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-lg">
                   Focused tools built around gameweek decisions, so you can spot
