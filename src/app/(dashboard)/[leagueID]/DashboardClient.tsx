@@ -7,7 +7,7 @@ import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards"
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable";
 import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
-import { X } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { AccountMenu } from "@/components/common/AccountMenu";
@@ -41,6 +41,14 @@ interface StandingsResponse {
 
 interface GW1TableResponse {
   standings: GW1Standing[];
+}
+
+interface BackfillStatusResponse {
+  summary: {
+    queued: number;
+    running: number;
+    failed: number;
+  };
 }
 
 interface DashboardClientProps {
@@ -185,6 +193,18 @@ export default function DashboardClient({
       revalidateOnFocus: false,
     }
   );
+  const { data: backfillStatus, mutate: mutateBackfillStatus } = useSWR<BackfillStatusResponse>(
+    "/api/user/backfill-status",
+    fetcher,
+    {
+      refreshInterval: (latestData) => {
+        const queued = latestData?.summary.queued ?? 0;
+        const running = latestData?.summary.running ?? 0;
+        return queued + running > 0 ? 2500 : 0;
+      },
+      revalidateOnFocus: true,
+    }
+  );
 
   const standings = Array.isArray(data?.standings)
     ? data.standings
@@ -204,6 +224,13 @@ export default function DashboardClient({
 
   const stats = data?.stats ?? null;
   const isLeagueDataLoading = !data && !error;
+  const queuedJobs = backfillStatus?.summary.queued ?? 0;
+  const runningJobs = backfillStatus?.summary.running ?? 0;
+  const failedJobs = backfillStatus?.summary.failed ?? 0;
+  const hasActiveBackfillJobs = queuedJobs + runningJobs > 0;
+  const [showBackfillSuccess, setShowBackfillSuccess] = React.useState(false);
+  const [isRetryingBackfill, setIsRetryingBackfill] = React.useState(false);
+  const previousHasActiveBackfillJobsRef = React.useRef(false);
 
   const prefetchKey = React.useCallback(
     async (key: string) => {
@@ -367,6 +394,51 @@ export default function DashboardClient({
     }, 1200);
     return () => window.clearTimeout(timer);
   }, [swipeGwFeedback]);
+
+  React.useEffect(() => {
+    const hadActiveJobs = previousHasActiveBackfillJobsRef.current;
+    if (hadActiveJobs && !hasActiveBackfillJobs && failedJobs === 0) {
+      setShowBackfillSuccess(true);
+      const refreshGws = new Set<number>([currentGw, gw]);
+      const refreshKeys: string[] = [];
+      for (const refreshGw of refreshGws) {
+        refreshKeys.push(
+          `/api/league?leagueId=${selectedLeagueId}&gw=${refreshGw}&currentGw=${currentGw}`,
+          `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${refreshGw}&currentGw=${currentGw}`,
+          `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${refreshGw}&currentGw=${currentGw}`,
+          `/api/transfers?leagueId=${selectedLeagueId}&gw=${refreshGw}&currentGw=${currentGw}`,
+          `/api/chips?leagueId=${selectedLeagueId}&gw=${refreshGw}&currentGw=${currentGw}`,
+          `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${refreshGw}&window=8`
+        );
+      }
+      void Promise.allSettled(refreshKeys.map((key) => mutate(key)));
+    }
+    if (hasActiveBackfillJobs || failedJobs > 0) {
+      setShowBackfillSuccess(false);
+    }
+    previousHasActiveBackfillJobsRef.current = hasActiveBackfillJobs;
+  }, [currentGw, failedJobs, gw, hasActiveBackfillJobs, mutate, selectedLeagueId]);
+
+  React.useEffect(() => {
+    if (!showBackfillSuccess) return;
+    const timeout = window.setTimeout(() => {
+      setShowBackfillSuccess(false);
+    }, 3500);
+    return () => window.clearTimeout(timeout);
+  }, [showBackfillSuccess]);
+
+  const handleRetryBackfill = React.useCallback(async () => {
+    if (isRetryingBackfill) return;
+    setIsRetryingBackfill(true);
+    try {
+      await fetch("/api/user/backfill-retry", {
+        method: "POST",
+      });
+    } finally {
+      setIsRetryingBackfill(false);
+      void mutateBackfillStatus();
+    }
+  }, [isRetryingBackfill, mutateBackfillStatus]);
 
   const navigateToGw = React.useCallback(
     (targetGw: number, source: "swipe" | "other" = "other") => {
@@ -533,6 +605,29 @@ export default function DashboardClient({
             </div>
 
             <div className="hidden items-center gap-2 sm:flex">
+              {hasActiveBackfillJobs ? (
+                <div className="inline-flex h-10 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Updating league data</span>
+                </div>
+              ) : null}
+              {!hasActiveBackfillJobs && failedJobs > 0 ? (
+                <button
+                  type="button"
+                  onClick={handleRetryBackfill}
+                  disabled={isRetryingBackfill}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+                >
+                  <AlertTriangle className="h-3.5 w-3.5" />
+                  <span>Failed to update league data. Click to retry.</span>
+                </button>
+              ) : null}
+              {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
+                <div className="inline-flex h-10 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>League data updated successfully</span>
+                </div>
+              ) : null}
               <LeagueSelector
                 leagues={leagues}
                 selectedLeagueId={selectedLeagueId}
@@ -569,6 +664,29 @@ export default function DashboardClient({
                 />
               </div>
             </div>
+            {hasActiveBackfillJobs ? (
+              <div className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Updating league data</span>
+              </div>
+            ) : null}
+            {!hasActiveBackfillJobs && failedJobs > 0 ? (
+              <button
+                type="button"
+                onClick={handleRetryBackfill}
+                disabled={isRetryingBackfill}
+                className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Failed to update league data. Click to retry.</span>
+              </button>
+            ) : null}
+            {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
+              <div className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>League data updated successfully</span>
+              </div>
+            ) : null}
             <div className="w-full">
               {showSwipeHint ? (
                 <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">

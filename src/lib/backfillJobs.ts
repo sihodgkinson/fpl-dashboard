@@ -248,3 +248,20 @@ export async function listBackfillJobsForLeagues(
     return [];
   }
 }
+
+export async function requeueFailedBackfillJobsForLeagues(
+  leagueIds: number[]
+): Promise<{ queued: number }> {
+  if (leagueIds.length === 0) return { queued: 0 };
+
+  const jobs = await listBackfillJobsForLeagues(leagueIds);
+  const failedLeagueIds = [...new Set(jobs.filter((job) => job.status === "failed").map((job) => job.league_id))];
+
+  let queued = 0;
+  for (const leagueId of failedLeagueIds) {
+    const result = await enqueueLeagueBackfillJob(leagueId);
+    if (result.queued) queued += 1;
+  }
+
+  return { queued };
+}

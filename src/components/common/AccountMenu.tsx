@@ -4,8 +4,6 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import {
-  AlertTriangle,
-  Loader2,
   LogOut,
   Menu,
   Monitor,
@@ -132,7 +130,6 @@ export function AccountMenu({
   const gw = searchParams.get("gw") || String(currentGw);
   const queuedJobs = backfillStatus?.summary.queued ?? 0;
   const runningJobs = backfillStatus?.summary.running ?? 0;
-  const failedJobs = backfillStatus?.summary.failed ?? 0;
   const hasActiveBackfillJobs = queuedJobs + runningJobs > 0;
 
   const resetLeagueSectionState = React.useCallback(() => {
@@ -399,26 +396,6 @@ export function AccountMenu({
             </div>
           ) : null}
         </div>
-        {hasActiveBackfillJobs || failedJobs > 0 ? (
-          <>
-            <DropdownMenuSeparator className="my-0" />
-            <div className="px-4 py-3">
-              {hasActiveBackfillJobs ? (
-                <div className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-amber-700 dark:text-amber-300">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Updating league data</span>
-                </div>
-              ) : null}
-
-              {!hasActiveBackfillJobs && failedJobs > 0 ? (
-                <div className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-red-700 dark:text-red-300">
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  <span>{failedJobs} backfill failed</span>
-                </div>
-              ) : null}
-            </div>
-          </>
-        ) : null}
         <DropdownMenuSeparator className="my-0" />
         <div className="flex items-center justify-between gap-3 px-4 py-3">
           <span className="text-sm text-muted-foreground">Theme</span>

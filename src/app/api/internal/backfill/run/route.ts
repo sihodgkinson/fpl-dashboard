@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   claimNextLeagueBackfillJob,
+  enqueueLeagueBackfillJob,
   finalizeLeagueBackfillJob,
 } from "@/lib/backfillJobs";
 import { getCurrentGameweek } from "@/lib/fpl";
 import { warmLeagueCache } from "@/lib/leagueCacheWarmup";
+
+const BACKFILL_VIEWS_PER_GW = 5;
+const MAX_BACKFILL_ATTEMPTS = 3;
 
 function isAuthorized(request: NextRequest): boolean {
   const configuredSecret = process.env.BACKFILL_RUNNER_SECRET;
@@ -31,17 +35,40 @@ export async function POST(request: NextRequest) {
 
     try {
       const currentGw = await getCurrentGameweek();
+      const targetGw = Math.max(1, currentGw);
+      const expectedTasks = targetGw * BACKFILL_VIEWS_PER_GW;
       await warmLeagueCache({
         leagueId: job.league_id,
         currentGw,
-        toGw: Math.max(1, currentGw - 1),
+        toGw: targetGw,
         origin,
         concurrency: 3,
         timeBudgetMs: 300_000,
-      });
+      }).then(async (result) => {
+        const isComplete =
+          !result.timedOut &&
+          result.failed === 0 &&
+          result.succeeded === expectedTasks &&
+          result.attempted === expectedTasks;
 
-      await finalizeLeagueBackfillJob({ jobId: job.id, success: true });
-      processed.push({ jobId: job.id, leagueId: job.league_id, ok: true });
+        if (isComplete) {
+          await finalizeLeagueBackfillJob({ jobId: job.id, success: true });
+          processed.push({ jobId: job.id, leagueId: job.league_id, ok: true });
+          return;
+        }
+
+        await finalizeLeagueBackfillJob({
+          jobId: job.id,
+          success: false,
+          error: `Backfill incomplete: expected=${expectedTasks}, attempted=${result.attempted}, succeeded=${result.succeeded}, failed=${result.failed}, timedOut=${result.timedOut}`,
+        });
+
+        if (job.attempts < MAX_BACKFILL_ATTEMPTS) {
+          await enqueueLeagueBackfillJob(job.league_id);
+        }
+
+        processed.push({ jobId: job.id, leagueId: job.league_id, ok: false });
+      });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       await finalizeLeagueBackfillJob({
@@ -49,6 +76,9 @@ export async function POST(request: NextRequest) {
         success: false,
         error: errorMessage,
       });
+      if (job.attempts < MAX_BACKFILL_ATTEMPTS) {
+        await enqueueLeagueBackfillJob(job.league_id);
+      }
       processed.push({ jobId: job.id, leagueId: job.league_id, ok: false });
     }
   }

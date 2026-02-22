@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     leagueId,
     currentGw,
     origin,
-    toGw: Math.max(1, currentGw - 1),
+    toGw: currentGw,
     concurrency: 2,
     timeBudgetMs: 5_000,
   });
