@@ -141,40 +141,37 @@ export default async function Home() {
       <main>
         <section className="relative overflow-hidden border-b border-[#1d1d1e] bg-[linear-gradient(to_bottom,#08090a_50%,#7f8288_100%)]">
           <div className="px-4 md:px-10 lg:px-20">
-            <div className="mx-auto w-full max-w-[1282px] pb-24 pt-24 sm:pb-28 sm:pt-32">
+            <div className="mx-auto w-full max-w-[1282px] pb-24 pt-12 sm:pb-28 sm:pt-32">
             <div className="max-w-[860px]">
-              <span className="mb-8 inline-flex items-center rounded-full border border-border/70 bg-background/75 px-4 py-1.5 text-sm font-medium text-[#83878e] backdrop-blur">
+              <span className="mb-8 inline-flex items-center rounded-full border border-border/70 bg-background/75 px-4 py-1.5 text-[11px] font-medium text-[#83878e] backdrop-blur sm:text-sm">
                 Built for FPL managers who want an edge every gameweek
               </span>
-              <h1 className="text-balance text-5xl font-semibold tracking-[-0.02em] leading-[1.04] sm:text-6xl sm:leading-[1.03]">
+              <h1 className="text-balance text-4xl font-semibold tracking-[-0.02em] leading-[1.05] sm:text-6xl sm:leading-[1.03]">
                 Mini-league standings, decoded.
-                <br className="hidden sm:block" />
+                <br />
                 Every change explained.
               </h1>
               <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#83878e] sm:text-base sm:leading-[1.55]">
                 Live, gameweek-by-gameweek insights that show exactly how transfers,
-                <br />
                 chips, and captain calls impact your mini-league.
               </p>
             </div>
 
             <div className="mt-12 sm:mt-14">
-              <div className="relative left-1/2 w-full max-w-[360px] -translate-x-1/2 md:w-[1320px] md:max-w-none">
+              <div className="relative mx-auto w-full max-w-[360px] md:max-w-[1320px]">
                 <div className="overflow-hidden rounded-2xl border border-border/70 shadow-[0_70px_140px_-55px_rgba(2,6,23,0.8)]">
-                  <div className="relative aspect-[9/19.5] w-full md:hidden">
-                    <Image
+                  <div className="w-full md:hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src="/landing/mobile-light.png"
                       alt="GameweekIQ mobile dashboard in light mode"
-                      fill
-                      priority
-                      className="object-cover dark:hidden"
+                      className="block h-auto w-full dark:hidden"
                     />
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src="/landing/mobile-dark.png"
                       alt="GameweekIQ mobile dashboard in dark mode"
-                      fill
-                      priority
-                      className="hidden object-cover dark:block"
+                      className="hidden h-auto w-full dark:block"
                     />
                   </div>
 
@@ -202,9 +199,9 @@ export default async function Home() {
 
         <section className="bg-[#08090a] py-16 sm:py-20">
           <div className="px-4 md:px-10 lg:px-20">
-            <div className="mx-auto flex w-full max-w-[1282px] flex-col gap-16">
+            <div className="mx-auto flex w-full max-w-[1282px] flex-col gap-10 sm:gap-16">
               <section>
-                <h2 className="max-w-[1100px] pt-2 text-balance text-4xl font-semibold leading-[1.1] tracking-tight text-[#83878e] sm:pt-4 sm:text-5xl sm:leading-[1.08]">
+                <h2 className="max-w-[1100px] pt-2 text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-[#83878e] sm:pt-4 sm:text-5xl sm:leading-[1.08]">
                   <span className="text-foreground">Your league table, upgraded.</span>{" "}
                   Go beyond points totals. GameweekIQ combines classic standings with
                   decision-level intelligence so you can quickly understand who gained,
@@ -212,15 +209,13 @@ export default async function Home() {
                 </h2>
               </section>
 
-              <section className="grid grid-cols-1 gap-0 sm:grid-cols-3">
+              <section className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-0">
                 {pillars.map(({ title, description, icon: Icon }, index) => (
                   <article
                     key={title}
-                    className="border-b border-[#1d1d1e] p-6 sm:min-h-[460px] sm:border-b-0 sm:p-10"
-                    style={{
-                      borderRight:
-                        index < pillars.length - 1 ? "1px solid #1d1d1e" : "none",
-                    }}
+                    className={`p-6 sm:min-h-[460px] sm:p-10 ${
+                      index < pillars.length - 1 ? "sm:border-r sm:border-[#1d1d1e]" : ""
+                    }`}
                   >
                     <div className="h-88 rounded-lg border border-[#1d1d1e] bg-[#0d0f11]" />
                     <Icon className="mt-6 h-6 w-6 text-[#6a6f76]" strokeWidth={1.8} />
@@ -236,7 +231,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="my-28 h-px w-full bg-[#1d1d1e]" />
+          <div className="my-16 h-px w-full bg-[#1d1d1e] sm:my-20" />
 
           <section id="features" className="scroll-mt-28 px-4 pb-16 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -273,7 +268,7 @@ export default async function Home() {
             </div>
           </section>
 
-          <div className="my-20 h-px w-full bg-[#1d1d1e]" />
+          <div className="my-16 h-px w-full bg-[#1d1d1e] sm:my-20" />
 
           <section id="pricing" className="scroll-mt-28 px-4 pb-28 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -282,7 +277,7 @@ export default async function Home() {
                   Pricing
                 </h3>
                 <p className="mt-5 text-pretty text-base leading-relaxed text-[#83878e] sm:text-lg">
-                  Start free today while GameweekIQ is in beta.
+                  Start free today while GameweekIQ is in beta.{" "}
                   <br className="hidden sm:block" />
                   Premium is on the roadmap for managers who want deeper
                   competitive intelligence.
