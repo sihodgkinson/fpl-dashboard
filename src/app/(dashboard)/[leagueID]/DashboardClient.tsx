@@ -580,10 +580,10 @@ export default function DashboardClient({
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
-      <header className="border-b border-[#1d1d1e] px-4 py-0 sm:px-4 md:px-5">
-        <div className="flex flex-col gap-3">
+      <header className="px-4 pt-4 pb-0 sm:border-b sm:border-[#1d1d1e] sm:px-4 sm:pt-0 md:px-5">
+        <div className="flex flex-col gap-0">
           {/* Top row: Brand + controls */}
-          <div className="flex h-[72px] w-full items-center justify-between gap-3">
+          <div className="flex h-8 w-full items-center justify-between gap-3 sm:h-[72px]">
             <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -644,10 +644,10 @@ export default function DashboardClient({
             </div>
           </div>
 
-          <div className="-mx-4 border-b border-[#1d1d1e] sm:hidden md:-mx-5" />
+          <div className="-mx-4 my-4 border-b border-[#1d1d1e] sm:hidden md:-mx-5" />
 
           {/* Mobile row: League selector + GW selector */}
-          <div className="w-full sm:hidden">
+          <div className="w-full pb-0 sm:hidden">
             <div className="flex w-full items-center gap-2">
               <LeagueSelector
                 leagues={leagues}
