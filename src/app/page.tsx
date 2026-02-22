@@ -178,20 +178,18 @@ export default async function Home() {
                     />
                   </div>
 
-                  <div className="relative hidden aspect-[16/9] w-full md:block">
-                    <Image
+                  <div className="hidden w-full md:block">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src="/landing/dashboard-light.png"
                       alt="GameweekIQ desktop dashboard in light mode"
-                      fill
-                      priority
-                      className="object-cover dark:hidden"
+                      className="block h-auto w-full dark:hidden"
                     />
-                    <Image
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
                       src="/landing/dashboard-dark.png"
                       alt="GameweekIQ desktop dashboard in dark mode"
-                      fill
-                      priority
-                      className="hidden object-cover dark:block"
+                      className="hidden h-auto w-full dark:block"
                     />
                   </div>
                 </div>
