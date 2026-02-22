@@ -3,6 +3,7 @@ import {
   getCurrentGameweek,
   getMaxGameweek,
 } from "@/lib/fpl";
+import { redirect } from "next/navigation";
 import { enrichStandings } from "@/features/league/utils/enrichStandings";
 import DashboardClient from "@/app/(dashboard)/[leagueID]/DashboardClient";
 import { OnboardingGate } from "@/components/common/OnboardingGate";
@@ -23,7 +24,7 @@ export default async function DashboardPage({
 
   const sessionUser = await getServerSessionUser();
   if (!sessionUser?.id) {
-    return <OnboardingGate isAuthenticated={false} currentGw={currentGw} />;
+    redirect("/");
   }
 
   const configuredLeagues = await listUserLeagues(sessionUser.id);

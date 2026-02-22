@@ -69,7 +69,7 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <main className="min-h-svh flex items-center justify-center p-6">
+    <main className="min-h-svh flex items-center justify-center p-5">
       <div className="max-w-md text-center space-y-3">
         <h1 className="text-lg font-semibold">Completing sign-in</h1>
         {error ? (

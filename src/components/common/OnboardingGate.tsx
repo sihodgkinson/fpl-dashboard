@@ -32,7 +32,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
 
   if (!isAuthenticated) {
     return (
-      <main className="min-h-svh grid place-items-center p-6">
+      <main className="min-h-svh grid place-items-center p-5">
         <div className="w-full max-w-md flex flex-col items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -108,7 +108,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   }
 
   return (
-    <main className="min-h-svh grid place-items-center p-6">
+    <main className="min-h-svh grid place-items-center p-5">
       <div className="w-full max-w-md flex flex-col items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -159,6 +159,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
           className="h-[38px] w-[240px]"
           onClick={async () => {
             await fetch("/api/auth/logout", { method: "POST" });
+            router.push("/");
             router.refresh();
           }}
         >

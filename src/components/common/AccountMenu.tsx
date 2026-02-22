@@ -144,7 +144,7 @@ export function AccountMenu({
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     await mutate();
-    router.push("/dashboard");
+    router.push("/");
     router.refresh();
   }
 

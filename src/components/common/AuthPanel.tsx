@@ -76,6 +76,7 @@ export function AuthPanel() {
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
     await mutate();
+    router.push("/");
     router.refresh();
   }
 
