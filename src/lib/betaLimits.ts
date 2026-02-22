@@ -13,3 +13,28 @@ export const MAX_MANAGERS_PER_LEAGUE = parsePositiveInteger(
   process.env.FPL_MAX_MANAGERS_PER_LEAGUE,
   30
 );
+
+export const LEAGUE_PREVIEW_RATE_LIMIT_WINDOW_SECONDS = parsePositiveInteger(
+  process.env.FPL_LEAGUE_PREVIEW_RATE_LIMIT_WINDOW_SECONDS,
+  300
+);
+
+export const LEAGUE_PREVIEW_RATE_LIMIT_MAX_REQUESTS = parsePositiveInteger(
+  process.env.FPL_LEAGUE_PREVIEW_RATE_LIMIT_MAX_REQUESTS,
+  10
+);
+
+export const LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS = parsePositiveInteger(
+  process.env.FPL_LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS,
+  600
+);
+
+export const LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS = parsePositiveInteger(
+  process.env.FPL_LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS,
+  2
+);
+
+export const ACTIVE_BACKFILL_STALE_AFTER_SECONDS = parsePositiveInteger(
+  process.env.FPL_ACTIVE_BACKFILL_STALE_AFTER_SECONDS,
+  900
+);

@@ -2,13 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClassicLeague, getCurrentGameweek } from "@/lib/fpl";
 import { warmLeagueCache } from "@/lib/leagueCacheWarmup";
 import {
+  ACTIVE_BACKFILL_STALE_AFTER_SECONDS,
+  LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS,
+  LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS,
+  LEAGUE_PREVIEW_RATE_LIMIT_MAX_REQUESTS,
+  LEAGUE_PREVIEW_RATE_LIMIT_WINDOW_SECONDS,
   MAX_LEAGUES_PER_USER,
   MAX_MANAGERS_PER_LEAGUE,
 } from "@/lib/betaLimits";
 import {
   enqueueLeagueBackfillJob,
+  listBackfillJobsForLeagues,
   removePendingLeagueBackfillJobs,
 } from "@/lib/backfillJobs";
+import { checkSupabaseRateLimit } from "@/lib/supabaseRateLimit";
 import {
   addUserLeague,
   listUserLeagues,
@@ -54,6 +61,31 @@ export async function POST(request: NextRequest) {
 
   const leagueId = Number(body.leagueId);
   const previewOnly = body.preview === true;
+  const rateLimit = await checkSupabaseRateLimit({
+    scope: `league_${previewOnly ? "preview" : "add"}`,
+    identifier: user.id,
+    windowSeconds: previewOnly
+      ? LEAGUE_PREVIEW_RATE_LIMIT_WINDOW_SECONDS
+      : LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS,
+    maxRequests: previewOnly
+      ? LEAGUE_PREVIEW_RATE_LIMIT_MAX_REQUESTS
+      : LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS,
+  });
+
+  if (!rateLimit.allowed) {
+    const message = previewOnly
+      ? "Too many league checks. Please wait before trying again."
+      : "Too many league add attempts. Please wait before trying again.";
+    const response = NextResponse.json(
+      {
+        error: message,
+        retryAfterSeconds: rateLimit.retryAfterSeconds,
+      },
+      { status: 429 }
+    );
+    response.headers.set("Retry-After", String(rateLimit.retryAfterSeconds));
+    return response;
+  }
 
   if (!Number.isInteger(leagueId) || leagueId <= 0) {
     return NextResponse.json(
@@ -108,6 +140,25 @@ export async function POST(request: NextRequest) {
       managerCount,
       preview: true,
     });
+  }
+
+  const now = Date.now();
+  const activeBackfillStaleAfterMs = ACTIVE_BACKFILL_STALE_AFTER_SECONDS * 1000;
+  const activeJobs = await listBackfillJobsForLeagues(userLeagues.map((league) => league.id));
+  const hasActiveBackfillForUser = activeJobs.some((job) => {
+    if (job.status !== "pending" && job.status !== "running") return false;
+    const updatedAtMs = new Date(job.updated_at).getTime();
+    if (!Number.isFinite(updatedAtMs)) return false;
+    return now - updatedAtMs <= activeBackfillStaleAfterMs;
+  });
+
+  if (hasActiveBackfillForUser) {
+    return NextResponse.json(
+      {
+        error: "A league backfill is already in progress. Please wait for it to finish before adding another league.",
+      },
+      { status: 409 }
+    );
   }
 
   const createdResult = await addUserLeague({
