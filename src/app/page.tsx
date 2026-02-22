@@ -19,18 +19,24 @@ const pillars = [
     description:
       "Track every gameweek with near-live updates so you can react before rivals do.",
     icon: Zap,
+    imageLight: "/landing/feature-live-league-light.png",
+    imageDark: "/landing/feature-live-league-dark.png",
   },
   {
     title: "Decision Impact Analysis",
     description:
       "Quantify rival decisions with clear gain/loss scoring so every move is measurable.",
     icon: BarChart3,
+    imageLight: "/landing/feature-impact-analysis-light.png",
+    imageDark: "/landing/feature-impact-analysis-dark.png",
   },
   {
     title: "Designed for speed",
     description:
       "Fast loading and instant switching keep insights quick across desktop and mobile.",
     icon: Gauge,
+    imageLight: "/landing/feature-speed-light.png",
+    imageDark: "/landing/feature-speed-dark.png",
   },
 ];
 
@@ -49,7 +55,7 @@ const pricingTiers = [
   {
     name: "Free",
     price: "$0",
-    subtitle: "All core features are free during beta period",
+    subtitle: "All features are free while in beta",
     cta: "Get started",
     href: "/api/auth/google/start",
     features: [
@@ -150,7 +156,7 @@ export default async function Home() {
                 <br />
                 Every change explained.
               </h1>
-              <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-base sm:leading-[1.55]">
+              <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:max-w-none sm:whitespace-nowrap sm:text-base sm:leading-[1.55]">
                 Live, gameweek-by-gameweek insights that show exactly how transfers,
                 chips, and captain calls impact your mini-league.
               </p>
@@ -209,7 +215,7 @@ export default async function Home() {
               </section>
 
               <section className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-0">
-                {pillars.map(({ title, description, icon: Icon }, index) => (
+                {pillars.map(({ title, description, icon: Icon, imageLight, imageDark }, index) => (
                   <article
                     key={title}
                     className={`p-6 sm:min-h-[460px] sm:p-10 ${
@@ -218,7 +224,23 @@ export default async function Home() {
                         : ""
                     }`}
                   >
-                    <div className="h-88 rounded-lg border border-border bg-[#e9edf4] dark:border-border dark:bg-[#0d0f11]" />
+                    <div className="relative h-88 overflow-hidden rounded-lg border border-border bg-[#e9edf4] dark:border-border dark:bg-[#0d0f11]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageLight}
+                        alt={`${title} light mode`}
+                        className="h-full w-full object-cover object-center opacity-90 dark:hidden"
+                      />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={imageDark}
+                        alt={`${title} dark mode`}
+                        className="hidden h-full w-full object-cover object-center opacity-80 dark:block"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_85%_at_50%_18%,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0)_55%)] dark:bg-[radial-gradient(120%_85%_at_50%_18%,rgba(255,255,255,0.08)_0%,rgba(255,255,255,0)_55%)]" />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/25 dark:to-black/35" />
+                      <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),inset_0_-110px_140px_-75px_rgba(15,23,42,0.4)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06),inset_0_-110px_140px_-75px_rgba(2,6,23,0.78)]" />
+                    </div>
                     <Icon className="mt-6 h-6 w-6 text-[#5f6470] dark:text-[#6a6f76]" strokeWidth={1.8} />
                     <h3 className="mt-4 text-[19px] font-semibold tracking-tight text-foreground sm:text-[20px]">
                       {title}
@@ -243,7 +265,7 @@ export default async function Home() {
                 <p className="mt-5 text-pretty text-base leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-lg">
                   Focused tools built around gameweek decisions, so you can spot
                   <br className="hidden sm:block" />
-                  momentum shifts early and act with confidence.
+                  {" "}momentum shifts early and act with confidence.
                 </p>
               </div>
 
@@ -279,6 +301,7 @@ export default async function Home() {
                 </h3>
                 <p className="mt-5 text-pretty text-base leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-lg">
                   Start free today while GameweekIQ is in beta.{" "}
+                  <br className="sm:hidden" />
                   <br className="hidden sm:block" />
                   Premium is on the roadmap for managers who want deeper
                   competitive intelligence.
