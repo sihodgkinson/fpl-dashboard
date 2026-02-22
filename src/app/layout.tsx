@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FPL Dashboard",
-  description: "Fantasy Premier League insights dashboard.",
+  title: "GameweekIQ",
+  description:
+    "Mini-league standings, decoded. Every change explained with live FPL decision insights.",
 };
 
 export default function RootLayout({
