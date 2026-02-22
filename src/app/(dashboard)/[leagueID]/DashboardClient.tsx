@@ -651,7 +651,7 @@ export default function DashboardClient({
                 leagues={leagues}
                 selectedLeagueId={selectedLeagueId}
                 currentGw={currentGw}
-                className="min-w-0 flex-1 !h-8 text-sm"
+                className="min-w-0 flex-1 !h-8 [@media(orientation:portrait)]:!h-12 text-sm"
               />
               <div className="ml-auto w-[96px] shrink-0">
                 <GameweekSelector
@@ -659,7 +659,7 @@ export default function DashboardClient({
                   currentGw={currentGw}
                   maxGw={maxGw}
                   showArrows={false}
-                  className="!h-8 w-full text-sm"
+                  className="!h-8 [@media(orientation:portrait)]:!h-12 w-full text-sm"
                 />
               </div>
             </div>
