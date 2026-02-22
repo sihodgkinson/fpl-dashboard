@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   BarChart3,
   Check,
@@ -89,7 +88,7 @@ export default async function Home() {
 
   return (
     <div id="top" className="min-h-svh bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-[#1d1d1e] bg-[#0a0a0a]">
+      <header className="sticky top-0 z-40 border-b border-[#d6dce7] bg-[#f2f4f8] dark:border-[#1d1d1e] dark:bg-[#0a0a0a]">
         <div className="px-4 md:px-10 lg:px-20">
           <div className="mx-auto flex h-[72px] w-full max-w-[1282px] items-center justify-between">
             <a
@@ -109,26 +108,26 @@ export default async function Home() {
               <nav className="hidden items-center gap-2 text-[14px] text-muted-foreground md:flex">
                 <a
                   href="#features"
-                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#17181a] hover:text-foreground"
+                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#e3e8f1] hover:text-foreground dark:hover:bg-[#17181a]"
                 >
                   Features
                 </a>
                 <a
                   href="#pricing"
-                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#17181a] hover:text-foreground"
+                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#e3e8f1] hover:text-foreground dark:hover:bg-[#17181a]"
                 >
                   Pricing
                 </a>
                 <button
                   type="button"
-                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#17181a] hover:text-foreground"
+                  className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#e3e8f1] hover:text-foreground dark:hover:bg-[#17181a]"
                 >
                   Contact
                 </button>
               </nav>
               <Link
                 href={primaryCtaHref}
-                className="inline-flex h-8 items-center rounded-[6px] bg-primary px-3 text-[14px] font-semibold text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-flex h-8 items-center rounded-[6px] bg-primary px-3 text-[14px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 dark:bg-[#f2f4f8] dark:text-[#171a20]"
               >
                 {primaryCtaLabel}
               </Link>
@@ -139,11 +138,11 @@ export default async function Home() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#1d1d1e] bg-[linear-gradient(to_bottom,#08090a_50%,#7f8288_100%)]">
+        <section className="relative overflow-hidden border-b border-[#d6dce7] bg-[linear-gradient(to_bottom,#f2f4f8_50%,#e3e8f1_100%)] dark:border-[#1d1d1e] dark:bg-[linear-gradient(to_bottom,#08090a_50%,#7f8288_100%)]">
           <div className="px-4 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px] pb-24 pt-12 sm:pb-28 sm:pt-32">
             <div className="max-w-[860px]">
-              <span className="mb-8 inline-flex items-center rounded-full border border-border/70 bg-background/75 px-4 py-1.5 text-[11px] font-medium text-[#83878e] backdrop-blur sm:text-sm">
+              <span className="mb-8 inline-flex items-center rounded-full border border-[#d1d7e2] bg-[#eef2f8]/85 px-4 py-1.5 text-[11px] font-medium text-[#5f6470] backdrop-blur dark:border-border/70 dark:bg-background/75 dark:text-[#83878e] sm:text-sm">
                 Built for FPL managers who want an edge every gameweek
               </span>
               <h1 className="text-balance text-4xl font-semibold tracking-[-0.02em] leading-[1.05] sm:text-6xl sm:leading-[1.03]">
@@ -151,15 +150,15 @@ export default async function Home() {
                 <br />
                 Every change explained.
               </h1>
-              <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#83878e] sm:text-base sm:leading-[1.55]">
+              <p className="mt-6 max-w-2xl text-pretty text-sm leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-base sm:leading-[1.55]">
                 Live, gameweek-by-gameweek insights that show exactly how transfers,
                 chips, and captain calls impact your mini-league.
               </p>
             </div>
 
             <div className="mt-12 sm:mt-14">
-              <div className="relative mx-auto w-full max-w-[360px] md:max-w-[1320px]">
-                <div className="overflow-hidden rounded-2xl border border-border/70 shadow-[0_70px_140px_-55px_rgba(2,6,23,0.8)]">
+              <div className="relative isolate mx-auto w-full max-w-[360px] md:max-w-[1320px]">
+                <div className="overflow-hidden rounded-2xl border border-border/70 shadow-[0_26px_58px_-24px_rgba(39,52,77,0.3)] dark:shadow-[0_70px_140px_-55px_rgba(2,6,23,0.8)]">
                   <div className="w-full md:hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
@@ -190,18 +189,18 @@ export default async function Home() {
                     />
                   </div>
                 </div>
-                <div className="pointer-events-none absolute inset-x-[8%] -bottom-10 h-20 rounded-full bg-black/30 blur-2xl dark:bg-black/50" />
+                <div className="pointer-events-none absolute inset-x-[8%] -bottom-12 -z-10 h-24 rounded-full bg-slate-500/30 blur-2xl dark:bg-black/50" />
               </div>
             </div>
             </div>
           </div>
         </section>
 
-        <section className="bg-[#08090a] py-16 sm:py-20">
+        <section className="bg-[#f2f4f8] py-16 dark:bg-[#08090a] sm:py-20">
           <div className="px-4 md:px-10 lg:px-20">
             <div className="mx-auto flex w-full max-w-[1282px] flex-col gap-10 sm:gap-16">
               <section>
-                <h2 className="max-w-[1100px] pt-2 text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-[#83878e] sm:pt-4 sm:text-5xl sm:leading-[1.08]">
+                <h2 className="max-w-[1100px] pt-2 text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-[#5f6470] dark:text-[#83878e] sm:pt-4 sm:text-5xl sm:leading-[1.08]">
                   <span className="text-foreground">Your league table, upgraded.</span>{" "}
                   Go beyond points totals. GameweekIQ combines classic standings with
                   decision-level intelligence so you can quickly understand who gained,
@@ -214,15 +213,17 @@ export default async function Home() {
                   <article
                     key={title}
                     className={`p-6 sm:min-h-[460px] sm:p-10 ${
-                      index < pillars.length - 1 ? "sm:border-r sm:border-[#1d1d1e]" : ""
+                      index < pillars.length - 1
+                        ? "sm:border-r sm:border-[#d6dce7] dark:sm:border-[#1d1d1e]"
+                        : ""
                     }`}
                   >
-                    <div className="h-88 rounded-lg border border-[#1d1d1e] bg-[#0d0f11]" />
-                    <Icon className="mt-6 h-6 w-6 text-[#6a6f76]" strokeWidth={1.8} />
+                    <div className="h-88 rounded-lg border border-[#d6dce7] bg-[#e9edf4] dark:border-[#1d1d1e] dark:bg-[#0d0f11]" />
+                    <Icon className="mt-6 h-6 w-6 text-[#5f6470] dark:text-[#6a6f76]" strokeWidth={1.8} />
                     <h3 className="mt-4 text-[19px] font-semibold tracking-tight text-foreground sm:text-[20px]">
                       {title}
                     </h3>
-                    <p className="mt-3 text-base leading-relaxed text-[#83878e]">
+                    <p className="mt-3 text-base leading-relaxed text-[#5f6470] dark:text-[#83878e]">
                       {description}
                     </p>
                   </article>
@@ -231,7 +232,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="my-16 h-px w-full bg-[#1d1d1e] sm:my-20" />
+          <div className="my-16 h-px w-full bg-[#d6dce7] dark:bg-[#1d1d1e] sm:my-20" />
 
           <section id="features" className="scroll-mt-28 px-4 pb-16 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -239,7 +240,7 @@ export default async function Home() {
                 <h3 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl sm:leading-[1.08]">
                   Everything you need to out-think your mini-league.
                 </h3>
-                <p className="mt-5 text-pretty text-base leading-relaxed text-[#83878e] sm:text-lg">
+                <p className="mt-5 text-pretty text-base leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-lg">
                   Focused tools built around gameweek decisions, so you can spot
                   <br className="hidden sm:block" />
                   momentum shifts early and act with confidence.
@@ -252,10 +253,10 @@ export default async function Home() {
                   return (
                     <article
                       key={feature}
-                      className="flex h-[240px] w-full max-w-[420px] flex-col rounded-xl border border-[#1d1d1e] bg-[#0d0f11] p-6 sm:h-[255px] lg:h-[273px] lg:w-[320px]"
+                      className="flex h-[240px] w-full max-w-[420px] flex-col rounded-xl border border-[#d6dce7] bg-[#e9edf4] p-6 dark:border-[#1d1d1e] dark:bg-[#0d0f11] sm:h-[255px] lg:h-[273px] lg:w-[320px]"
                     >
-                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-[#1b1c1d]">
-                        <Icon className="h-6 w-6 text-white" strokeWidth={2} />
+                      <div className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-[#dde3ec] dark:bg-[#1b1c1d]">
+                        <Icon className="h-6 w-6 text-[#171a20] dark:text-white" strokeWidth={2} />
                       </div>
                       <p className="mt-auto pt-8 text-pretty text-[19px] leading-[1.28] tracking-tight text-foreground sm:text-[20px]">
                         {feature}
@@ -268,7 +269,7 @@ export default async function Home() {
             </div>
           </section>
 
-          <div className="my-16 h-px w-full bg-[#1d1d1e] sm:my-20" />
+          <div className="my-16 h-px w-full bg-[#d6dce7] dark:bg-[#1d1d1e] sm:my-20" />
 
           <section id="pricing" className="scroll-mt-28 px-4 pb-28 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -276,7 +277,7 @@ export default async function Home() {
                 <h3 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl sm:leading-[1.08]">
                   Pricing
                 </h3>
-                <p className="mt-5 text-pretty text-base leading-relaxed text-[#83878e] sm:text-lg">
+                <p className="mt-5 text-pretty text-base leading-relaxed text-[#5f6470] dark:text-[#83878e] sm:text-lg">
                   Start free today while GameweekIQ is in beta.{" "}
                   <br className="hidden sm:block" />
                   Premium is on the roadmap for managers who want deeper
@@ -288,25 +289,25 @@ export default async function Home() {
                 {pricingTiers.map((tier) => (
                   <article
                     key={tier.name}
-                    className={`flex min-h-[560px] flex-col rounded-2xl border bg-[#0d0f11] ${
+                    className={`flex min-h-[560px] flex-col rounded-2xl border bg-[#e9edf4] dark:bg-[#0d0f11] ${
                       tier.highlighted
-                        ? "border-[#2f3440] shadow-[0_18px_40px_-28px_rgba(166,186,255,0.45)]"
-                        : "border-[#1d1d1e]"
+                        ? "border-[#bcc5d3] shadow-[0_18px_40px_-28px_rgba(44,51,65,0.2)] dark:border-[#2f3440] dark:shadow-[0_18px_40px_-28px_rgba(166,186,255,0.45)]"
+                        : "border-[#d6dce7] dark:border-[#1d1d1e]"
                     }`}
                   >
-                    <div className="border-b border-[#1d1d1e] p-7">
+                    <div className="border-b border-[#d6dce7] p-7 dark:border-[#1d1d1e]">
                       <h4 className="text-3xl font-semibold tracking-tight text-foreground">
                         {tier.name}
                       </h4>
                       <p className="mt-3 text-2xl font-medium text-foreground">{tier.price}</p>
-                      <p className="mt-2 text-sm text-[#83878e]">{tier.subtitle}</p>
+                      <p className="mt-2 text-sm text-[#5f6470] dark:text-[#83878e]">{tier.subtitle}</p>
                     </div>
 
                     <ul className="flex-1 space-y-3 p-7">
                       {tier.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-3 text-[15px] text-[#cfd2d8]">
-                          <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#2f3540]">
-                            <Check className="h-3.5 w-3.5 text-[#d5defd]" strokeWidth={2.5} />
+                        <li key={feature} className="flex items-start gap-3 text-[15px] text-[#434955] dark:text-[#cfd2d8]">
+                          <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#cfd8e6] dark:bg-[#2f3540]">
+                            <Check className="h-3.5 w-3.5 text-[#2f3949] dark:text-[#d5defd]" strokeWidth={2.5} />
                           </span>
                           <span>{feature}</span>
                         </li>
@@ -323,7 +324,7 @@ export default async function Home() {
                         className={`inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold transition-all ${
                           tier.highlighted
                             ? "bg-white text-black hover:bg-white/90"
-                            : "bg-[#1c2026] text-foreground hover:bg-[#232832]"
+                            : "bg-[#e2e7ef] text-foreground hover:bg-[#d6dde8] dark:bg-[#1c2026] dark:hover:bg-[#232832]"
                         }`}
                       >
                         {tier.cta === "Get started" ? primaryCtaLabel : tier.cta}
