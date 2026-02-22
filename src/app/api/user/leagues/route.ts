@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClassicLeague, getCurrentGameweek } from "@/lib/fpl";
 import { warmLeagueCache } from "@/lib/leagueCacheWarmup";
 import {
+  MAX_LEAGUES_PER_USER,
+  MAX_MANAGERS_PER_LEAGUE,
+} from "@/lib/betaLimits";
+import {
   enqueueLeagueBackfillJob,
   removePendingLeagueBackfillJobs,
 } from "@/lib/backfillJobs";
@@ -26,6 +30,10 @@ export async function GET(request: NextRequest) {
   return attachAuthCookies(
     NextResponse.json({
       leagues,
+      limits: {
+        maxLeaguesPerUser: MAX_LEAGUES_PER_USER,
+        maxManagersPerLeague: MAX_MANAGERS_PER_LEAGUE,
+      },
     }),
     refreshedSession
   );
@@ -54,11 +62,40 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const userLeagues = await listUserLeagues(user.id);
+  const alreadyAdded = userLeagues.some((league) => league.id === leagueId);
+
+  if (alreadyAdded) {
+    return NextResponse.json(
+      { error: "This league is already in your dashboard." },
+      { status: 409 }
+    );
+  }
+
+  if (userLeagues.length >= MAX_LEAGUES_PER_USER) {
+    return NextResponse.json(
+      {
+        error: `You can add up to ${MAX_LEAGUES_PER_USER} leagues while beta limits are active.`,
+      },
+      { status: 400 }
+    );
+  }
+
   const league = await getClassicLeague(leagueId);
   if (!league?.league?.name) {
     return NextResponse.json(
       { error: `Could not find FPL classic league ${leagueId}.` },
       { status: 404 }
+    );
+  }
+
+  const managerCount = league.standings.results.length;
+  if (managerCount > MAX_MANAGERS_PER_LEAGUE) {
+    return NextResponse.json(
+      {
+        error: `League too large for beta limits (${managerCount} managers). The current limit is ${MAX_MANAGERS_PER_LEAGUE}.`,
+      },
+      { status: 400 }
     );
   }
 
@@ -68,6 +105,7 @@ export async function POST(request: NextRequest) {
         id: leagueId,
         name: league.league.name,
       },
+      managerCount,
       preview: true,
     });
   }

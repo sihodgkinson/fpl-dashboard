@@ -16,6 +16,7 @@ interface AddLeagueResponse {
     id: number;
     name: string;
   };
+  managerCount?: number;
   error?: string;
 }
 
@@ -25,6 +26,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   const [previewLeague, setPreviewLeague] = React.useState<{
     id: number;
     name: string;
+    managerCount: number | null;
   } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
@@ -73,7 +75,14 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         setError(payload.error || "Could not validate that league.");
         return;
       }
-      setPreviewLeague(payload.league);
+      const managerCount =
+        typeof payload.managerCount === "number" && payload.managerCount >= 0
+          ? payload.managerCount
+          : null;
+      setPreviewLeague({
+        ...payload.league,
+        managerCount,
+      });
     } catch {
       setError("Could not validate that league.");
     } finally {
@@ -117,6 +126,9 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
           className="h-18 w-18 rounded-2xl border border-[#dadce0] object-cover dark:border-[#8e918f]"
         />
         <h1 className="text-center text-base font-semibold">Add your first league</h1>
+        <p className="w-[240px] text-center text-xs text-muted-foreground">
+          Beta limits: up to 3 leagues, up to 30 managers per league.
+        </p>
         <Input
           inputMode="numeric"
           placeholder="FPL Classic League ID"
@@ -131,6 +143,9 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         {previewLeague ? (
           <p className="w-[240px] text-center text-sm">
             League found: <span className="font-medium">{previewLeague.name}</span>
+            {previewLeague.managerCount !== null
+              ? ` (${previewLeague.managerCount} managers)`
+              : ""}
           </p>
         ) : null}
         {error ? <p className="w-[240px] text-center text-sm text-destructive">{error}</p> : null}

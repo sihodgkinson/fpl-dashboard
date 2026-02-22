@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import {
+  CircleHelp,
   LogOut,
   Menu,
   Monitor,
@@ -22,6 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 interface SessionResponse {
@@ -46,6 +48,7 @@ interface AddLeagueResponse {
     id: number;
     name: string;
   };
+  managerCount?: number;
   preview?: boolean;
   fullBackfillQueued?: boolean;
   error?: string;
@@ -56,6 +59,17 @@ interface BackfillStatusResponse {
     queued: number;
     running: number;
     failed: number;
+  };
+}
+
+interface UserLeaguesResponse {
+  leagues: Array<{
+    id: number;
+    name: string;
+  }>;
+  limits?: {
+    maxLeaguesPerUser?: number;
+    maxManagersPerLeague?: number;
   };
 }
 
@@ -75,6 +89,14 @@ const backfillFetcher = async (url: string) => {
   return (await res.json()) as BackfillStatusResponse;
 };
 
+const userLeaguesFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return (await res.json()) as UserLeaguesResponse;
+};
+
 export function AccountMenu({
   className,
   selectedLeagueId,
@@ -91,6 +113,7 @@ export function AccountMenu({
   const [previewLeague, setPreviewLeague] = React.useState<{
     id: number;
     name: string;
+    managerCount: number | null;
   } | null>(null);
   const [addError, setAddError] = React.useState<string | null>(null);
   const [removeError, setRemoveError] = React.useState<string | null>(null);
@@ -101,9 +124,16 @@ export function AccountMenu({
     null
   );
   const { theme, setTheme } = useTheme();
-  const { data, mutate } = useSWR<SessionResponse>("/api/auth/session", sessionFetcher, {
+  const { data, mutate: mutateSession } = useSWR<SessionResponse>("/api/auth/session", sessionFetcher, {
     revalidateOnFocus: true,
   });
+  const { data: userLeaguesData, mutate: mutateUserLeagues } = useSWR<UserLeaguesResponse>(
+    "/api/user/leagues",
+    userLeaguesFetcher,
+    {
+      revalidateOnFocus: true,
+    }
+  );
   const shouldPollBackfillStatus = Boolean(pendingLeagueSelectionId);
   const { data: backfillStatus } = useSWR<BackfillStatusResponse>(
     "/api/user/backfill-status",
@@ -131,6 +161,10 @@ export function AccountMenu({
   const queuedJobs = backfillStatus?.summary.queued ?? 0;
   const runningJobs = backfillStatus?.summary.running ?? 0;
   const hasActiveBackfillJobs = queuedJobs + runningJobs > 0;
+  const maxLeaguesPerUser = userLeaguesData?.limits?.maxLeaguesPerUser ?? 3;
+  const maxManagersPerLeague = userLeaguesData?.limits?.maxManagersPerLeague ?? 30;
+  const currentLeagueCount = userLeaguesData?.leagues.length ?? 0;
+  const isAtLeagueLimit = currentLeagueCount >= maxLeaguesPerUser;
 
   const resetLeagueSectionState = React.useCallback(() => {
     setAddOpen(false);
@@ -143,7 +177,7 @@ export function AccountMenu({
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    await mutate();
+    await mutateSession();
     router.push("/");
     router.refresh();
   }
@@ -175,7 +209,14 @@ export function AccountMenu({
         return;
       }
 
-      setPreviewLeague(payload.league);
+      const managerCount =
+        typeof payload.managerCount === "number" && payload.managerCount >= 0
+          ? payload.managerCount
+          : null;
+      setPreviewLeague({
+        ...payload.league,
+        managerCount,
+      });
     } catch {
       setAddError("Failed to validate league.");
     } finally {
@@ -208,6 +249,7 @@ export function AccountMenu({
       setMenuOpen(false);
       setLeagueIdInput("");
       setPreviewLeague(null);
+      void mutateUserLeagues();
       setPendingLeagueSelectionId(payload.league.id);
     } catch {
       setAddError("Failed to add league.");
@@ -242,6 +284,7 @@ export function AccountMenu({
       }
       setRemoveOpen(false);
       setMenuOpen(false);
+      void mutateUserLeagues();
       router.refresh();
     } finally {
       setIsRemoving(false);
@@ -300,10 +343,30 @@ export function AccountMenu({
         </div>
         <DropdownMenuSeparator className="my-0" />
         <div className="px-4 py-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">League limits</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                >
+                  <CircleHelp className="h-3.5 w-3.5" />
+                  Limits
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 px-3 py-2 text-xs">
+                Beta limits: up to {maxLeaguesPerUser} tracked clubs/leagues per
+                account and up to {maxManagersPerLeague} managers per league.
+              </PopoverContent>
+            </Popover>
+          </div>
           <Button
             type="button"
             variant="ghost"
             className="w-full justify-start gap-2 px-0"
+            disabled={isAtLeagueLimit}
             onClick={() => {
               setAddOpen((prev) => {
                 const nextOpen = !prev;
@@ -320,10 +383,17 @@ export function AccountMenu({
             <Plus className="h-4 w-4" />
             Add league
           </Button>
+          {isAtLeagueLimit ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              You have reached the beta limit of {maxLeaguesPerUser} leagues.
+            </p>
+          ) : null}
           {addOpen ? (
             <div className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Enter an FPL classic league ID to add it to your dashboard.
+                Enter an FPL classic league ID. Beta limits: up to{" "}
+                {maxLeaguesPerUser} leagues, up to {maxManagersPerLeague} managers
+                per league.
               </p>
               <Input
                 inputMode="numeric"
@@ -338,6 +408,9 @@ export function AccountMenu({
               {previewLeague ? (
                 <p className="text-xs">
                   League found: <span className="font-medium">{previewLeague.name}</span>
+                  {previewLeague.managerCount !== null
+                    ? ` (${previewLeague.managerCount} managers)`
+                    : ""}
                 </p>
               ) : null}
               {addError ? <p className="text-xs text-destructive">{addError}</p> : null}

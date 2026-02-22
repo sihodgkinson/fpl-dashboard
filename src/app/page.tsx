@@ -55,7 +55,7 @@ const pricingTiers = [
   {
     name: "Free",
     price: "$0",
-    subtitle: "All features are free while in beta",
+    subtitle: "All features are free while in beta (with usage limits)",
     cta: "Get started",
     href: "/api/auth/google/start",
     features: [
@@ -63,6 +63,8 @@ const pricingTiers = [
       "Manager Influence with decision scoring",
       "Near-live updates during active gameweeks",
       "Automatic league backfill on add",
+      "Up to 3 tracked clubs/leagues per account",
+      "Up to 30 managers per league",
       "Mobile swipe controls and responsive tables",
       "Google sign-in and multi-device sync",
     ],
@@ -356,6 +358,9 @@ export default async function Home() {
                   </article>
                 ))}
               </div>
+              <p className="mx-auto mt-6 max-w-[760px] text-center text-xs text-[#5f6470] dark:text-[#83878e]">
+                Beta capacity limits apply and may change as infrastructure scales.
+              </p>
             </div>
           </section>
         </section>
