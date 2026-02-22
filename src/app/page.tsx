@@ -88,7 +88,7 @@ export default async function Home() {
 
   return (
     <div id="top" className="min-h-svh bg-background text-foreground">
-      <header className="sticky top-0 z-40 border-b border-[#d6dce7] bg-[#f2f4f8] dark:border-[#1d1d1e] dark:bg-[#0a0a0a]">
+      <header className="sticky top-0 z-40 border-b border-border bg-[#f2f4f8] dark:border-border dark:bg-[#0a0a0a]">
         <div className="px-4 md:px-10 lg:px-20">
           <div className="mx-auto flex h-[72px] w-full max-w-[1282px] items-center justify-between">
             <a
@@ -127,7 +127,7 @@ export default async function Home() {
               </nav>
               <Link
                 href={primaryCtaHref}
-                className="inline-flex h-8 items-center rounded-[6px] bg-primary px-3 text-[14px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 dark:bg-[#f2f4f8] dark:text-[#171a20]"
+                className="inline-flex h-8 items-center rounded-[6px] bg-[#171a20] px-3 text-[14px] font-semibold text-[#f2f4f8] transition-opacity hover:opacity-90 dark:bg-[#f2f4f8] dark:text-[#171a20]"
               >
                 {primaryCtaLabel}
               </Link>
@@ -138,7 +138,7 @@ export default async function Home() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-[#d6dce7] bg-[linear-gradient(to_bottom,#f2f4f8_50%,#e3e8f1_100%)] dark:border-[#1d1d1e] dark:bg-[linear-gradient(to_bottom,#08090a_50%,#7f8288_100%)]">
+        <section className="relative overflow-hidden border-b border-border bg-[linear-gradient(to_bottom,#f2f4f8_50%,#e3e8f1_100%)] dark:border-border dark:bg-[linear-gradient(to_bottom,#08090a_50%,#7f8288_100%)]">
           <div className="px-4 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px] pb-24 pt-12 sm:pb-28 sm:pt-32">
             <div className="max-w-[860px]">
@@ -214,11 +214,11 @@ export default async function Home() {
                     key={title}
                     className={`p-6 sm:min-h-[460px] sm:p-10 ${
                       index < pillars.length - 1
-                        ? "sm:border-r sm:border-[#d6dce7] dark:sm:border-[#1d1d1e]"
+                        ? "sm:border-r sm:border-border dark:sm:border-border"
                         : ""
                     }`}
                   >
-                    <div className="h-88 rounded-lg border border-[#d6dce7] bg-[#e9edf4] dark:border-[#1d1d1e] dark:bg-[#0d0f11]" />
+                    <div className="h-88 rounded-lg border border-border bg-[#e9edf4] dark:border-border dark:bg-[#0d0f11]" />
                     <Icon className="mt-6 h-6 w-6 text-[#5f6470] dark:text-[#6a6f76]" strokeWidth={1.8} />
                     <h3 className="mt-4 text-[19px] font-semibold tracking-tight text-foreground sm:text-[20px]">
                       {title}
@@ -232,7 +232,7 @@ export default async function Home() {
             </div>
           </div>
 
-          <div className="my-16 h-px w-full bg-[#d6dce7] dark:bg-[#1d1d1e] sm:my-20" />
+          <div className="my-16 h-px w-full bg-border dark:bg-border sm:my-20" />
 
           <section id="features" className="scroll-mt-28 px-4 pb-16 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -253,7 +253,7 @@ export default async function Home() {
                   return (
                     <article
                       key={feature}
-                      className="flex h-[240px] w-full max-w-[420px] flex-col rounded-xl border border-[#d6dce7] bg-[#e9edf4] p-6 dark:border-[#1d1d1e] dark:bg-[#0d0f11] sm:h-[255px] lg:h-[273px] lg:w-[320px]"
+                      className="flex h-[240px] w-full max-w-[420px] flex-col rounded-xl border border-border bg-[#e9edf4] p-6 dark:border-border dark:bg-[#0d0f11] sm:h-[255px] lg:h-[273px] lg:w-[320px]"
                     >
                       <div className="inline-flex h-12 w-12 items-center justify-center rounded-md bg-[#dde3ec] dark:bg-[#1b1c1d]">
                         <Icon className="h-6 w-6 text-[#171a20] dark:text-white" strokeWidth={2} />
@@ -269,7 +269,7 @@ export default async function Home() {
             </div>
           </section>
 
-          <div className="my-16 h-px w-full bg-[#d6dce7] dark:bg-[#1d1d1e] sm:my-20" />
+          <div className="my-16 h-px w-full bg-border dark:bg-border sm:my-20" />
 
           <section id="pricing" className="scroll-mt-28 px-4 pb-28 md:px-10 lg:px-20">
             <div className="mx-auto w-full max-w-[1282px]">
@@ -291,11 +291,11 @@ export default async function Home() {
                     key={tier.name}
                     className={`flex min-h-[560px] flex-col rounded-2xl border bg-[#e9edf4] dark:bg-[#0d0f11] ${
                       tier.highlighted
-                        ? "border-[#bcc5d3] shadow-[0_18px_40px_-28px_rgba(44,51,65,0.2)] dark:border-[#2f3440] dark:shadow-[0_18px_40px_-28px_rgba(166,186,255,0.45)]"
-                        : "border-[#d6dce7] dark:border-[#1d1d1e]"
+                        ? "border-[#bcc5d3] shadow-[0_18px_40px_-28px_rgba(44,51,65,0.2)] dark:border-border dark:shadow-[0_18px_40px_-28px_rgba(166,186,255,0.45)]"
+                        : "border-border dark:border-border"
                     }`}
                   >
-                    <div className="border-b border-[#d6dce7] p-7 dark:border-[#1d1d1e]">
+                    <div className="border-b border-border p-7 dark:border-border">
                       <h4 className="text-3xl font-semibold tracking-tight text-foreground">
                         {tier.name}
                       </h4>

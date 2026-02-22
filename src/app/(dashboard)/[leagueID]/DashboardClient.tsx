@@ -580,20 +580,18 @@ export default function DashboardClient({
   return (
     <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
       {/* Header with selectors */}
-      <header className="px-4 pt-4 pb-0 sm:border-b sm:border-border sm:px-4 sm:pt-0 md:px-5">
+      <header className="px-4 pt-0 pb-0 sm:border-b sm:border-border sm:px-4 sm:pt-0 md:px-5">
         <div className="flex flex-col gap-0">
           {/* Top row: Brand + controls */}
-          <div className="flex h-8 w-full items-center justify-between gap-3 sm:h-[72px]">
-            <Link href="/" className="flex items-center gap-2 transition-opacity hover:opacity-90">
+          <div className="flex h-[72px] w-full items-center justify-between gap-3">
+            <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/favicon.ico"
                 alt="GameweekIQ logo"
-                className="h-8 w-8 rounded-md border border-border/70"
+                className="h-8 w-8 rounded-md border border-border/80"
               />
-              <span className="text-sm font-semibold tracking-tight sm:text-base">
-                GameweekIQ
-              </span>
+              <span className="text-base font-medium tracking-tight">GameweekIQ</span>
             </Link>
 
             <div className="sm:hidden">
@@ -644,10 +642,10 @@ export default function DashboardClient({
             </div>
           </div>
 
-          <div className="-mx-4 my-4 border-b border-border sm:hidden md:-mx-5" />
+          <div className="-mx-4 border-b border-border sm:hidden md:-mx-5" />
 
           {/* Mobile row: League selector + GW selector */}
-          <div className="w-full pb-0 sm:hidden">
+          <div className="w-full pb-0 pt-4 sm:hidden">
             <div className="flex w-full items-center gap-2">
               <LeagueSelector
                 leagues={leagues}
