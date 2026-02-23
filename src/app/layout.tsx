@@ -14,9 +14,36 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://gameweekiq.com"),
   title: "GameweekIQ",
   description:
     "Mini-league standings, decoded. Every change explained with live FPL decision insights.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "https://gameweekiq.com",
+    siteName: "GameweekIQ",
+    title: "GameweekIQ",
+    description:
+      "Mini-league standings, decoded. Every change explained with live FPL decision insights.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "GameweekIQ - FPL mini-league intelligence",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "GameweekIQ",
+    description:
+      "Mini-league standings, decoded. Every change explained with live FPL decision insights.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
