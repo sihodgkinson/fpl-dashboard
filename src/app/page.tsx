@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ModeToggle } from "@/components/common/ModeToggle";
+import { WaitlistSignup } from "@/components/common/WaitlistSignup";
 import { getServerSessionUser } from "@/lib/supabaseAuth";
 
 const pillars = [
@@ -348,20 +349,16 @@ export default async function Home() {
                     </ul>
 
                     <div className="p-7 pt-0">
-                      <Link
-                        href={
-                          tier.cta === "Get started"
-                            ? primaryCtaHref
-                            : tier.href
-                        }
-                        className={`inline-flex h-10 w-full items-center justify-center rounded-md text-sm font-semibold transition-all ${
-                          tier.highlighted
-                            ? "bg-white text-black hover:bg-white/90"
-                            : "bg-[#e2e7ef] text-foreground hover:bg-[#d6dde8] dark:bg-[#1c2026] dark:hover:bg-[#232832]"
-                        }`}
-                      >
-                        {tier.cta === "Get started" ? primaryCtaLabel : tier.cta}
-                      </Link>
+                      {tier.cta === "Join waitlist" ? (
+                        <WaitlistSignup />
+                      ) : (
+                        <Link
+                          href={primaryCtaHref}
+                          className="inline-flex h-10 w-full items-center justify-center rounded-md bg-white text-sm font-semibold text-black transition-all hover:bg-white/90"
+                        >
+                          {primaryCtaLabel}
+                        </Link>
+                      )}
                     </div>
                   </article>
                 ))}
