@@ -55,7 +55,7 @@ const pricingTiers = [
   {
     name: "Free",
     price: "$0",
-    subtitle: "All features are free while in beta (with usage limits)",
+    subtitle: "All features are free while in beta*",
     cta: "Get started",
     href: "/api/auth/google/start",
     features: [
@@ -216,8 +216,8 @@ export default async function Home() {
               <section>
                 <h2 className="max-w-[1100px] pt-2 text-balance text-3xl font-semibold leading-[1.12] tracking-tight text-[#5f6470] dark:text-[#83878e] sm:pt-4 sm:text-5xl sm:leading-[1.08]">
                   <span className="text-foreground">Your league table, upgraded.</span>{" "}
-                  Go beyond points totals. GameweekIQ combines classic standings with
-                  decision-level intelligence so you can quickly understand who gained,
+                  Go beyond points totals with
+                  decision-level intelligence to quickly understand who gained,
                   who slipped, and why.
                 </h2>
               </section>
@@ -365,7 +365,7 @@ export default async function Home() {
                 ))}
               </div>
               <p className="mx-auto mt-6 max-w-[760px] text-center text-xs text-[#5f6470] dark:text-[#83878e]">
-                Beta capacity limits apply and may change as infrastructure scales.
+                *Beta capacity limits apply and may change as infrastructure scales.
               </p>
             </div>
           </section>

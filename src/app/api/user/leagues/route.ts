@@ -191,7 +191,7 @@ export async function POST(request: NextRequest) {
   if (managerCount > MAX_MANAGERS_PER_LEAGUE) {
     return NextResponse.json(
       {
-        error: `League too large for beta limits (${managerCount} managers). The current limit is ${MAX_MANAGERS_PER_LEAGUE}.`,
+        error: `League too large to add. The current limit is ${MAX_MANAGERS_PER_LEAGUE} managers per league.`,
       },
       { status: 400 }
     );
