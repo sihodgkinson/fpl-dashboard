@@ -39,7 +39,7 @@ export const LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS = parsePositiveInteger(
 
 export const LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS = parsePositiveInteger(
   process.env.FPL_LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS,
-  2
+  5
 );
 
 export const ACTIVE_BACKFILL_STALE_AFTER_SECONDS = parsePositiveInteger(

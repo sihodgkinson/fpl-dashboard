@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
   if (!rateLimit.allowed) {
     const message = previewOnly
       ? "Too many league checks. Please wait before trying again."
-      : "Too many league add attempts. Please wait before trying again.";
+      : "Too many league add attempts. Please wait 10mins before trying again.";
     const response = NextResponse.json(
       {
         error: message,
