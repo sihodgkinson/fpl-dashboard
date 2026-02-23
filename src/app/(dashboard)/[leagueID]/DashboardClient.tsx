@@ -605,7 +605,7 @@ export default function DashboardClient({
 
             <div className="hidden items-center gap-2 sm:flex">
               {hasActiveBackfillJobs ? (
-                <div className="inline-flex h-10 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <div className="inline-flex h-8 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   <span>Updating league data</span>
                 </div>
@@ -615,14 +615,14 @@ export default function DashboardClient({
                   type="button"
                   onClick={handleRetryBackfill}
                   disabled={isRetryingBackfill}
-                  className="inline-flex h-10 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+                  className="inline-flex h-8 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
                 >
                   <AlertTriangle className="h-3.5 w-3.5" />
                   <span>Failed to update league data. Click to retry.</span>
                 </button>
               ) : null}
               {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-                <div className="inline-flex h-10 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+                <div className="inline-flex h-8 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   <span>League data updated successfully</span>
                 </div>
@@ -664,7 +664,7 @@ export default function DashboardClient({
               </div>
             </div>
             {hasActiveBackfillJobs ? (
-              <div className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+              <div className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 <span>Updating league data</span>
               </div>
@@ -674,14 +674,14 @@ export default function DashboardClient({
                 type="button"
                 onClick={handleRetryBackfill}
                 disabled={isRetryingBackfill}
-                className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+                className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
                 <span>Failed to update league data. Click to retry.</span>
               </button>
             ) : null}
             {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-              <div className="mt-2 inline-flex h-9 w-full items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+              <div className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 <span>League data updated successfully</span>
               </div>
