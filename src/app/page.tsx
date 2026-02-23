@@ -93,6 +93,8 @@ export default async function Home() {
   const isAuthenticated = Boolean(sessionUser?.id);
   const primaryCtaHref = isAuthenticated ? "/dashboard" : "/api/auth/google/start";
   const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started";
+  const contactSubject = encodeURIComponent("GameweekIQ enquiry");
+  const contactHref = `mailto:hello@gameweekiq.com?subject=${contactSubject}`;
 
   return (
     <div id="top" className="min-h-svh bg-background text-foreground">
@@ -132,12 +134,12 @@ export default async function Home() {
                 >
                   Pricing
                 </a>
-                <button
-                  type="button"
+                <a
+                  href={contactHref}
                   className="inline-flex h-8 cursor-pointer items-center rounded-[6px] px-3.5 transition-colors hover:bg-[#e3e8f1] hover:text-foreground dark:hover:bg-[#17181a]"
                 >
                   Contact
-                </button>
+                </a>
               </nav>
               <Link
                 href={primaryCtaHref}
