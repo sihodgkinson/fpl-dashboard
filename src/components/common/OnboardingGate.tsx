@@ -18,6 +18,7 @@ interface AddLeagueResponse {
     name: string;
   };
   managerCount?: number;
+  retryAfterSeconds?: number;
   error?: string;
 }
 
@@ -53,6 +54,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   const [error, setError] = React.useState<string | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
   const [isAdding, setIsAdding] = React.useState(false);
+  const [retryAfterSeconds, setRetryAfterSeconds] = React.useState(0);
   const { data: userLeaguesData } = useSWR<UserLeaguesResponse>(
     isAuthenticated ? "/api/user/leagues" : null,
     userLeaguesFetcher,
@@ -65,12 +67,23 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
     userLeaguesData?.guardrails?.isGlobalBackfillAtCapacity ?? false;
   const globalActiveBackfillJobs = userLeaguesData?.guardrails?.globalActiveBackfillJobs ?? 0;
   const globalActiveBackfillLimit = userLeaguesData?.guardrails?.globalActiveBackfillLimit ?? 0;
-  const addBlockedReason = !addLeagueEnabled
+  const isRateLimited = retryAfterSeconds > 0;
+  const addBlockedReason = isRateLimited
+    ? `Too many requests. Try again in ${retryAfterSeconds}s.`
+    : !addLeagueEnabled
     ? "Adding leagues is temporarily paused for beta capacity."
     : isGlobalBackfillAtCapacity
       ? `League processing is at capacity (${globalActiveBackfillJobs}/${globalActiveBackfillLimit}). Please try again shortly.`
       : null;
   const isAddDisabled = addBlockedReason !== null;
+
+  React.useEffect(() => {
+    if (retryAfterSeconds <= 0) return;
+    const timer = window.setTimeout(() => {
+      setRetryAfterSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [retryAfterSeconds]);
 
   if (!isAuthenticated) {
     return (
@@ -111,7 +124,18 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         body: JSON.stringify({ leagueId, preview: true }),
       });
       const payload = (await res.json()) as AddLeagueResponse;
-      if (!res.ok || !payload.league) {
+      if (!res.ok) {
+        if (
+          res.status === 429 &&
+          typeof payload.retryAfterSeconds === "number" &&
+          payload.retryAfterSeconds > 0
+        ) {
+          setRetryAfterSeconds(Math.ceil(payload.retryAfterSeconds));
+        }
+        setError(payload.error || "Could not validate that league.");
+        return;
+      }
+      if (!payload.league) {
         setError(payload.error || "Could not validate that league.");
         return;
       }
@@ -143,7 +167,18 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         body: JSON.stringify({ leagueId: previewLeague.id }),
       });
       const payload = (await res.json()) as AddLeagueResponse;
-      if (!res.ok || !payload.league) {
+      if (!res.ok) {
+        if (
+          res.status === 429 &&
+          typeof payload.retryAfterSeconds === "number" &&
+          payload.retryAfterSeconds > 0
+        ) {
+          setRetryAfterSeconds(Math.ceil(payload.retryAfterSeconds));
+        }
+        setError(payload.error || "Failed to add league.");
+        return;
+      }
+      if (!payload.league) {
         setError(payload.error || "Failed to add league.");
         return;
       }

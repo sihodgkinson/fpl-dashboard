@@ -51,6 +51,7 @@ interface AddLeagueResponse {
   managerCount?: number;
   preview?: boolean;
   fullBackfillQueued?: boolean;
+  retryAfterSeconds?: number;
   error?: string;
 }
 
@@ -127,6 +128,7 @@ export function AccountMenu({
   const [isAdding, setIsAdding] = React.useState(false);
   const [isChecking, setIsChecking] = React.useState(false);
   const [isRemoving, setIsRemoving] = React.useState(false);
+  const [retryAfterSeconds, setRetryAfterSeconds] = React.useState(0);
   const [pendingLeagueSelectionId, setPendingLeagueSelectionId] = React.useState<number | null>(
     null
   );
@@ -160,6 +162,14 @@ export function AccountMenu({
     setAvatarFailed(false);
   }, [data?.user?.avatarUrl]);
 
+  React.useEffect(() => {
+    if (retryAfterSeconds <= 0) return;
+    const timer = window.setTimeout(() => {
+      setRetryAfterSeconds((seconds) => Math.max(0, seconds - 1));
+    }, 1000);
+    return () => window.clearTimeout(timer);
+  }, [retryAfterSeconds]);
+
   const user = data?.user;
   const name = user?.name || "Signed in user";
   const email = user?.email || "No email";
@@ -178,7 +188,10 @@ export function AccountMenu({
   const globalActiveBackfillJobs = userLeaguesData?.guardrails?.globalActiveBackfillJobs ?? 0;
   const globalActiveBackfillLimit = userLeaguesData?.guardrails?.globalActiveBackfillLimit ?? 0;
   const isAtLeagueLimit = currentLeagueCount >= maxLeaguesPerUser;
-  const addBlockedReason = !addLeagueEnabled
+  const isRateLimited = retryAfterSeconds > 0;
+  const addBlockedReason = isRateLimited
+    ? `Too many requests. Try again in ${retryAfterSeconds}s.`
+    : !addLeagueEnabled
     ? "Adding leagues is temporarily paused for beta capacity."
     : hasActiveBackfillForUser || hasActiveBackfillJobs
       ? "Wait for your current league backfill to finish before adding another league."
@@ -227,7 +240,18 @@ export function AccountMenu({
       });
 
       const payload = (await res.json()) as AddLeagueResponse;
-      if (!res.ok || !payload.league) {
+      if (!res.ok) {
+        if (
+          res.status === 429 &&
+          typeof payload.retryAfterSeconds === "number" &&
+          payload.retryAfterSeconds > 0
+        ) {
+          setRetryAfterSeconds(Math.ceil(payload.retryAfterSeconds));
+        }
+        setAddError(payload.error || "Failed to validate league.");
+        return;
+      }
+      if (!payload.league) {
         setAddError(payload.error || "Failed to validate league.");
         return;
       }
@@ -263,7 +287,18 @@ export function AccountMenu({
       });
 
       const payload = (await res.json()) as AddLeagueResponse;
-      if (!res.ok || !payload.league) {
+      if (!res.ok) {
+        if (
+          res.status === 429 &&
+          typeof payload.retryAfterSeconds === "number" &&
+          payload.retryAfterSeconds > 0
+        ) {
+          setRetryAfterSeconds(Math.ceil(payload.retryAfterSeconds));
+        }
+        setAddError(payload.error || "Failed to add league.");
+        return;
+      }
+      if (!payload.league) {
         setAddError(payload.error || "Failed to add league.");
         return;
       }
