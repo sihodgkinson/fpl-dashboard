@@ -71,6 +71,13 @@ interface UserLeaguesResponse {
     maxLeaguesPerUser?: number;
     maxManagersPerLeague?: number;
   };
+  guardrails?: {
+    addLeagueEnabled?: boolean;
+    hasActiveBackfillForUser?: boolean;
+    globalActiveBackfillJobs?: number;
+    globalActiveBackfillLimit?: number;
+    isGlobalBackfillAtCapacity?: boolean;
+  };
 }
 
 const sessionFetcher = async (url: string) => {
@@ -164,7 +171,23 @@ export function AccountMenu({
   const maxLeaguesPerUser = userLeaguesData?.limits?.maxLeaguesPerUser ?? 3;
   const maxManagersPerLeague = userLeaguesData?.limits?.maxManagersPerLeague ?? 30;
   const currentLeagueCount = userLeaguesData?.leagues.length ?? 0;
+  const addLeagueEnabled = userLeaguesData?.guardrails?.addLeagueEnabled ?? true;
+  const hasActiveBackfillForUser = userLeaguesData?.guardrails?.hasActiveBackfillForUser ?? false;
+  const isGlobalBackfillAtCapacity =
+    userLeaguesData?.guardrails?.isGlobalBackfillAtCapacity ?? false;
+  const globalActiveBackfillJobs = userLeaguesData?.guardrails?.globalActiveBackfillJobs ?? 0;
+  const globalActiveBackfillLimit = userLeaguesData?.guardrails?.globalActiveBackfillLimit ?? 0;
   const isAtLeagueLimit = currentLeagueCount >= maxLeaguesPerUser;
+  const addBlockedReason = !addLeagueEnabled
+    ? "Adding leagues is temporarily paused for beta capacity."
+    : hasActiveBackfillForUser || hasActiveBackfillJobs
+      ? "Wait for your current league backfill to finish before adding another league."
+      : isGlobalBackfillAtCapacity
+        ? `League processing is at capacity (${globalActiveBackfillJobs}/${globalActiveBackfillLimit}). Please try again shortly.`
+        : isAtLeagueLimit
+          ? `You have reached the beta limit of ${maxLeaguesPerUser} leagues.`
+          : null;
+  const isAddActionDisabled = addBlockedReason !== null;
 
   const resetLeagueSectionState = React.useCallback(() => {
     setAddOpen(false);
@@ -366,7 +389,7 @@ export function AccountMenu({
             type="button"
             variant="ghost"
             className="w-full justify-start gap-2 px-0"
-            disabled={isAtLeagueLimit}
+            disabled={isAddActionDisabled}
             onClick={() => {
               setAddOpen((prev) => {
                 const nextOpen = !prev;
@@ -383,9 +406,9 @@ export function AccountMenu({
             <Plus className="h-4 w-4" />
             Add league
           </Button>
-          {isAtLeagueLimit ? (
+          {addBlockedReason ? (
             <p className="mt-2 text-xs text-muted-foreground">
-              You have reached the beta limit of {maxLeaguesPerUser} leagues.
+              {addBlockedReason}
             </p>
           ) : null}
           {addOpen ? (
@@ -403,7 +426,7 @@ export function AccountMenu({
                   setLeagueIdInput(event.target.value);
                   setPreviewLeague(null);
                 }}
-                disabled={isAdding || isChecking}
+                disabled={isAdding || isChecking || isAddActionDisabled}
               />
               {previewLeague ? (
                 <p className="text-xs">
@@ -418,7 +441,7 @@ export function AccountMenu({
                 <Button
                   type="button"
                   onClick={handleCheckLeague}
-                  disabled={isChecking || isAdding}
+                  disabled={isChecking || isAdding || isAddActionDisabled}
                   className="h-8 px-3 text-xs"
                 >
                   {isChecking ? "Checking..." : "Check League"}
@@ -427,7 +450,7 @@ export function AccountMenu({
                 <Button
                   type="button"
                   onClick={handleAddLeague}
-                  disabled={isAdding}
+                  disabled={isAdding || isAddActionDisabled}
                   className="h-8 px-3 text-xs"
                 >
                   {isAdding ? "Adding..." : "Confirm Add"}

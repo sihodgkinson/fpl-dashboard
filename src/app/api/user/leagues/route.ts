@@ -3,6 +3,8 @@ import { getClassicLeague, getCurrentGameweek } from "@/lib/fpl";
 import { warmLeagueCache } from "@/lib/leagueCacheWarmup";
 import {
   ACTIVE_BACKFILL_STALE_AFTER_SECONDS,
+  ADD_LEAGUE_ENABLED,
+  GLOBAL_ACTIVE_BACKFILL_LIMIT,
   LEAGUE_ADD_RATE_LIMIT_MAX_REQUESTS,
   LEAGUE_ADD_RATE_LIMIT_WINDOW_SECONDS,
   LEAGUE_PREVIEW_RATE_LIMIT_MAX_REQUESTS,
@@ -12,6 +14,7 @@ import {
 } from "@/lib/betaLimits";
 import {
   enqueueLeagueBackfillJob,
+  listActiveBackfillJobs,
   listBackfillJobsForLeagues,
   removePendingLeagueBackfillJobs,
 } from "@/lib/backfillJobs";
@@ -27,12 +30,42 @@ import {
   getRequestSessionUser,
 } from "@/lib/supabaseAuth";
 
+function getFreshActiveJobs<T extends { status: string; updated_at: string }>(
+  jobs: T[],
+  staleAfterSeconds: number
+): T[] {
+  const now = Date.now();
+  const staleAfterMs = staleAfterSeconds * 1000;
+
+  return jobs.filter((job) => {
+    if (job.status !== "pending" && job.status !== "running") return false;
+    const updatedAtMs = new Date(job.updated_at).getTime();
+    if (!Number.isFinite(updatedAtMs)) return false;
+    return now - updatedAtMs <= staleAfterMs;
+  });
+}
+
 export async function GET(request: NextRequest) {
   const { user, refreshedSession } = await getRequestSessionUser(request);
   if (!user?.id) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   const leagues = await listUserLeagues(user.id);
+  const [userBackfillJobs, globalActiveJobsRaw] = await Promise.all([
+    listBackfillJobsForLeagues(leagues.map((league) => league.id)),
+    listActiveBackfillJobs(),
+  ]);
+  const userActiveJobs = getFreshActiveJobs(
+    userBackfillJobs,
+    ACTIVE_BACKFILL_STALE_AFTER_SECONDS
+  );
+  const globalActiveJobs = getFreshActiveJobs(
+    globalActiveJobsRaw,
+    ACTIVE_BACKFILL_STALE_AFTER_SECONDS
+  );
+  const hasActiveBackfillForUser = userActiveJobs.length > 0;
+  const isGlobalBackfillAtCapacity =
+    globalActiveJobs.length >= GLOBAL_ACTIVE_BACKFILL_LIMIT;
 
   return attachAuthCookies(
     NextResponse.json({
@@ -40,6 +73,13 @@ export async function GET(request: NextRequest) {
       limits: {
         maxLeaguesPerUser: MAX_LEAGUES_PER_USER,
         maxManagersPerLeague: MAX_MANAGERS_PER_LEAGUE,
+      },
+      guardrails: {
+        addLeagueEnabled: ADD_LEAGUE_ENABLED,
+        hasActiveBackfillForUser,
+        globalActiveBackfillJobs: globalActiveJobs.length,
+        globalActiveBackfillLimit: GLOBAL_ACTIVE_BACKFILL_LIMIT,
+        isGlobalBackfillAtCapacity,
       },
     }),
     refreshedSession
@@ -113,6 +153,32 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (!previewOnly && !ADD_LEAGUE_ENABLED) {
+    return NextResponse.json(
+      {
+        error:
+          "Adding new leagues is temporarily paused while we manage beta capacity.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (!previewOnly) {
+    const activeGlobalJobs = getFreshActiveJobs(
+      await listActiveBackfillJobs(),
+      ACTIVE_BACKFILL_STALE_AFTER_SECONDS
+    );
+    if (activeGlobalJobs.length >= GLOBAL_ACTIVE_BACKFILL_LIMIT) {
+      return NextResponse.json(
+        {
+          error:
+            "League processing is currently at capacity. Please try again shortly.",
+        },
+        { status: 503 }
+      );
+    }
+  }
+
   const league = await getClassicLeague(leagueId);
   if (!league?.league?.name) {
     return NextResponse.json(
@@ -142,15 +208,9 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const now = Date.now();
-  const activeBackfillStaleAfterMs = ACTIVE_BACKFILL_STALE_AFTER_SECONDS * 1000;
   const activeJobs = await listBackfillJobsForLeagues(userLeagues.map((league) => league.id));
-  const hasActiveBackfillForUser = activeJobs.some((job) => {
-    if (job.status !== "pending" && job.status !== "running") return false;
-    const updatedAtMs = new Date(job.updated_at).getTime();
-    if (!Number.isFinite(updatedAtMs)) return false;
-    return now - updatedAtMs <= activeBackfillStaleAfterMs;
-  });
+  const hasActiveBackfillForUser =
+    getFreshActiveJobs(activeJobs, ACTIVE_BACKFILL_STALE_AFTER_SECONDS).length > 0;
 
   if (hasActiveBackfillForUser) {
     return NextResponse.json(

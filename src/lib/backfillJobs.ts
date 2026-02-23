@@ -249,6 +249,33 @@ export async function listBackfillJobsForLeagues(
   }
 }
 
+export async function listActiveBackfillJobs(): Promise<BackfillJobStatusRow[]> {
+  const config = getSupabaseConfig();
+  if (!config) return [];
+
+  const url =
+    `${config.url}/rest/v1/league_backfill_jobs` +
+    "?status=in.(pending,running)" +
+    "&select=id,league_id,status,attempts,last_error,updated_at,created_at,finished_at" +
+    "&order=updated_at.desc&limit=1000";
+
+  try {
+    const res = await fetch(url, {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) return [];
+    return (await res.json()) as BackfillJobStatusRow[];
+  } catch {
+    return [];
+  }
+}
+
 export async function requeueFailedBackfillJobsForLeagues(
   leagueIds: number[]
 ): Promise<{ queued: number }> {

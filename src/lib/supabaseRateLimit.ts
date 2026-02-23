@@ -59,3 +59,47 @@ export async function checkSupabaseRateLimit(params: {
     retryAfterSeconds,
   };
 }
+
+export async function countRateLimitRows(): Promise<number> {
+  const config = getSupabaseConfig();
+  if (!config) return 0;
+
+  const response = await fetch(
+    `${config.url}/rest/v1/request_rate_limits?select=id`,
+    {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Prefer: "count=exact",
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) return 0;
+  const contentRange = response.headers.get("content-range");
+  if (!contentRange) return 0;
+  const total = Number(contentRange.split("/")[1]);
+  return Number.isFinite(total) && total >= 0 ? total : 0;
+}
+
+export async function deleteOldRateLimitRows(hours: number): Promise<{ deleted: boolean }> {
+  const config = getSupabaseConfig();
+  if (!config) return { deleted: false };
+  if (!Number.isFinite(hours) || hours <= 0) return { deleted: false };
+
+  const cutoffIso = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const response = await fetch(
+    `${config.url}/rest/v1/request_rate_limits?created_at=lt.${encodeURIComponent(cutoffIso)}`,
+    {
+      method: "DELETE",
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  return { deleted: response.ok };
+}

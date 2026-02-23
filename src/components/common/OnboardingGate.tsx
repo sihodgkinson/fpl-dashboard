@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
@@ -20,6 +21,27 @@ interface AddLeagueResponse {
   error?: string;
 }
 
+interface UserLeaguesResponse {
+  limits?: {
+    maxLeaguesPerUser?: number;
+    maxManagersPerLeague?: number;
+  };
+  guardrails?: {
+    addLeagueEnabled?: boolean;
+    isGlobalBackfillAtCapacity?: boolean;
+    globalActiveBackfillJobs?: number;
+    globalActiveBackfillLimit?: number;
+  };
+}
+
+const userLeaguesFetcher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return (await res.json()) as UserLeaguesResponse;
+};
+
 export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGateProps) {
   const router = useRouter();
   const [leagueIdInput, setLeagueIdInput] = React.useState("");
@@ -31,6 +53,24 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   const [error, setError] = React.useState<string | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
   const [isAdding, setIsAdding] = React.useState(false);
+  const { data: userLeaguesData } = useSWR<UserLeaguesResponse>(
+    isAuthenticated ? "/api/user/leagues" : null,
+    userLeaguesFetcher,
+    { revalidateOnFocus: true }
+  );
+  const maxLeaguesPerUser = userLeaguesData?.limits?.maxLeaguesPerUser ?? 3;
+  const maxManagersPerLeague = userLeaguesData?.limits?.maxManagersPerLeague ?? 30;
+  const addLeagueEnabled = userLeaguesData?.guardrails?.addLeagueEnabled ?? true;
+  const isGlobalBackfillAtCapacity =
+    userLeaguesData?.guardrails?.isGlobalBackfillAtCapacity ?? false;
+  const globalActiveBackfillJobs = userLeaguesData?.guardrails?.globalActiveBackfillJobs ?? 0;
+  const globalActiveBackfillLimit = userLeaguesData?.guardrails?.globalActiveBackfillLimit ?? 0;
+  const addBlockedReason = !addLeagueEnabled
+    ? "Adding leagues is temporarily paused for beta capacity."
+    : isGlobalBackfillAtCapacity
+      ? `League processing is at capacity (${globalActiveBackfillJobs}/${globalActiveBackfillLimit}). Please try again shortly.`
+      : null;
+  const isAddDisabled = addBlockedReason !== null;
 
   if (!isAuthenticated) {
     return (
@@ -127,8 +167,13 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         />
         <h1 className="text-center text-base font-semibold">Add your first league</h1>
         <p className="w-[240px] text-center text-xs text-muted-foreground">
-          Beta limits: up to 3 leagues, up to 30 managers per league.
+          Beta limits: up to {maxLeaguesPerUser} leagues, up to {maxManagersPerLeague} managers per league.
         </p>
+        {addBlockedReason ? (
+          <p className="w-[240px] text-center text-xs text-muted-foreground">
+            {addBlockedReason}
+          </p>
+        ) : null}
         <Input
           inputMode="numeric"
           placeholder="FPL Classic League ID"
@@ -137,7 +182,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
             setLeagueIdInput(event.target.value);
             setPreviewLeague(null);
           }}
-          disabled={isChecking || isAdding}
+          disabled={isChecking || isAdding || isAddDisabled}
           className="h-[38px] w-[240px]"
         />
         {previewLeague ? (
@@ -154,7 +199,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
             type="button"
             className="h-[38px] w-[240px]"
             onClick={handleCheckLeague}
-            disabled={isChecking || isAdding}
+            disabled={isChecking || isAdding || isAddDisabled}
           >
             {isChecking ? "Checking..." : "Check league"}
           </Button>
@@ -163,7 +208,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
             type="button"
             className="h-[38px] w-[240px]"
             onClick={handleAddLeague}
-            disabled={isAdding}
+            disabled={isAdding || isAddDisabled}
           >
             {isAdding ? "Adding..." : "Add league"}
           </Button>
