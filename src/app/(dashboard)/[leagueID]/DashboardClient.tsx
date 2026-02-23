@@ -587,9 +587,15 @@ export default function DashboardClient({
             <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/favicon.ico"
+                src="/landing/logo-light.svg"
                 alt="GameweekIQ logo"
-                className="h-8 w-8 rounded-md border border-border/80"
+                className="h-8 w-8 object-contain dark:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/landing/logo-dark.svg"
+                alt="GameweekIQ logo"
+                className="hidden h-8 w-8 object-contain dark:block"
               />
               <span className="text-base font-medium tracking-tight">GameweekIQ</span>
             </Link>

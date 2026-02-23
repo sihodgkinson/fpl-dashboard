@@ -91,9 +91,15 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         <div className="w-full max-w-md flex flex-col items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/favicon.ico"
-            alt="FPL Dashboard"
-            className="h-18 w-18 rounded-2xl border border-[#dadce0] object-cover dark:border-[#8e918f]"
+            src="/landing/logo-light.svg"
+            alt="GameweekIQ logo"
+            className="h-18 w-18 object-contain dark:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/landing/logo-dark.svg"
+            alt="GameweekIQ logo"
+            className="hidden h-18 w-18 object-contain dark:block"
           />
           <h1 className="text-center text-base font-semibold">Sign in to FPL Dashboard</h1>
           <GoogleSignInButton
@@ -196,9 +202,15 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
       <div className="w-full max-w-md flex flex-col items-center gap-3">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/favicon.ico"
-          alt="FPL Dashboard"
-          className="h-18 w-18 rounded-2xl border border-[#dadce0] object-cover dark:border-[#8e918f]"
+          src="/landing/logo-light.svg"
+          alt="GameweekIQ logo"
+          className="h-18 w-18 object-contain dark:hidden"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/landing/logo-dark.svg"
+          alt="GameweekIQ logo"
+          className="hidden h-18 w-18 object-contain dark:block"
         />
         <h1 className="text-center text-base font-semibold">Add your first league</h1>
         <p className="w-[240px] text-center text-xs text-muted-foreground">
