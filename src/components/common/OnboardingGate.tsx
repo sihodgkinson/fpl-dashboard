@@ -43,6 +43,24 @@ const userLeaguesFetcher = async (url: string) => {
   return (await res.json()) as UserLeaguesResponse;
 };
 
+function extractLeagueId(rawInput: string): number | null {
+  const value = rawInput.trim();
+  if (value.length === 0) return null;
+
+  if (/^\d+$/.test(value)) {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  const urlMatch = value.match(/\/leagues\/(\d+)\/standings/i);
+  if (urlMatch?.[1]) {
+    const parsed = Number(urlMatch[1]);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+  }
+
+  return null;
+}
+
 export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGateProps) {
   const router = useRouter();
   const [leagueIdInput, setLeagueIdInput] = React.useState("");
@@ -54,6 +72,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   const [error, setError] = React.useState<string | null>(null);
   const [isChecking, setIsChecking] = React.useState(false);
   const [isAdding, setIsAdding] = React.useState(false);
+  const [showLeagueIdHelp, setShowLeagueIdHelp] = React.useState(false);
   const [retryAfterSeconds, setRetryAfterSeconds] = React.useState(0);
   const { data: userLeaguesData } = useSWR<UserLeaguesResponse>(
     isAuthenticated ? "/api/user/leagues" : null,
@@ -113,9 +132,9 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   }
 
   async function handleCheckLeague() {
-    const leagueId = Number(leagueIdInput.trim());
-    if (!Number.isInteger(leagueId) || leagueId <= 0) {
-      setError("Enter a valid positive league ID.");
+    const leagueId = extractLeagueId(leagueIdInput);
+    if (!leagueId) {
+      setError("Paste a league ID or an FPL league URL.");
       return;
     }
 
@@ -199,7 +218,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
 
   return (
     <main className="min-h-svh grid place-items-center p-5">
-      <div className="w-full max-w-md flex flex-col items-center gap-3">
+      <div className="w-full max-w-md flex flex-col items-center gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/landing/logo-light.svg"
@@ -216,14 +235,47 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
         <p className="w-[240px] text-center text-xs text-muted-foreground">
           Beta limits: up to {maxLeaguesPerUser} leagues, up to {maxManagersPerLeague} managers per league.
         </p>
+        <div className="w-[240px] rounded-md border border-border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => setShowLeagueIdHelp((open) => !open)}
+            className="flex w-full items-center justify-between text-left font-medium text-foreground"
+            aria-expanded={showLeagueIdHelp}
+            aria-controls="league-id-help-panel"
+          >
+            Where to find your league ID
+            <span className="text-muted-foreground">{showLeagueIdHelp ? "−" : "+"}</span>
+          </button>
+          <div
+            id="league-id-help-panel"
+            className={`overflow-hidden transition-all duration-300 ease-out ${
+              showLeagueIdHelp ? "mt-2 max-h-56 opacity-100" : "max-h-0 opacity-0"
+            }`}
+          >
+            <p>
+              On the FPL website, open your league standings page and copy the number in the url, or just copy the entire url and paste it below.
+            </p>
+            <p className="mt-2 rounded bg-background px-2 py-1 font-mono text-[11px] text-foreground">
+              /leagues/430552/standings/c
+            </p>
+            <a
+              href="https://fantasy.premierleague.com/leagues"
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex text-foreground underline underline-offset-2"
+            >
+              Open FPL leagues
+            </a>
+          </div>
+        </div>
         {addBlockedReason ? (
           <p className="w-[240px] text-center text-xs text-muted-foreground">
             {addBlockedReason}
           </p>
         ) : null}
         <Input
-          inputMode="numeric"
-          placeholder="FPL Classic League ID"
+          inputMode="text"
+          placeholder="League ID or FPL league URL"
           value={leagueIdInput}
           onChange={(event) => {
             setLeagueIdInput(event.target.value);
