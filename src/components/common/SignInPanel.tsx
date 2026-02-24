@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
+import { Button } from "@/components/ui/button";
 
 interface SignInPanelProps {
   nextPath: string;
@@ -38,6 +40,9 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
             window.location.assign("/api/auth/google/start");
           }}
         />
+        <Button asChild type="button" variant="ghost" className="h-[38px] w-[240px]">
+          <Link href="/">Back to homepage</Link>
+        </Button>
       </div>
     </main>
   );
