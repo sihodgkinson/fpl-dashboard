@@ -240,3 +240,74 @@ export async function getServerSessionUser() {
   if (!accessToken) return null;
   return getUserForAccessToken(accessToken);
 }
+
+export async function requestEmailOtp(email: string, emailRedirectTo?: string) {
+  const res = await authFetch("/auth/v1/otp", {
+    method: "POST",
+    body: JSON.stringify({
+      email,
+      create_user: true,
+      should_create_user: true,
+      ...((emailRedirectTo ? { redirect_to: emailRedirectTo, email_redirect_to: emailRedirectTo } : {})),
+    }),
+  });
+
+  if (!res) return { ok: false as const, error: "Auth is not configured." };
+
+  let payload: SupabaseAuthResponse = {};
+  try {
+    payload = (await res.json()) as SupabaseAuthResponse;
+  } catch {
+    payload = {};
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false as const,
+      error: getAuthError(payload, "Failed to send login code."),
+    };
+  }
+
+  return { ok: true as const };
+}
+
+export async function verifyEmailOtp(email: string, token: string) {
+  const res = await authFetch("/auth/v1/verify", {
+    method: "POST",
+    body: JSON.stringify({
+      type: "email",
+      email,
+      token,
+    }),
+  });
+
+  if (!res) return { ok: false as const, error: "Auth is not configured." };
+
+  let payload: SupabaseAuthResponse = {};
+  try {
+    payload = (await res.json()) as SupabaseAuthResponse;
+  } catch {
+    payload = {};
+  }
+
+  const session =
+    payload.access_token && payload.refresh_token
+      ? {
+          access_token: payload.access_token,
+          refresh_token: payload.refresh_token,
+        }
+      : null;
+
+  if (!res.ok || !payload.user || !session) {
+    return {
+      ok: false as const,
+      error: getAuthError(payload, "Invalid or expired login code."),
+    };
+  }
+
+  return {
+    ok: true as const,
+    user: payload.user,
+    session,
+  };
+}
