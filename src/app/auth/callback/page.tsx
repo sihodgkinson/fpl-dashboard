@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { sanitizeNextPath } from "@/lib/authNextPath";
 
 const AUTH_NEXT_KEY = "auth_next_path";
@@ -34,7 +34,6 @@ function clearStoredNextPath() {
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -55,8 +54,8 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      const requestedNextPath =
-        searchParams.get("next") || getStoredNextPath() || "/dashboard";
+      const nextFromQuery = new URLSearchParams(window.location.search).get("next");
+      const requestedNextPath = nextFromQuery || getStoredNextPath() || "/dashboard";
       const nextPath = sanitizeNextPath(requestedNextPath, "/dashboard");
 
       try {
@@ -92,7 +91,7 @@ export default function AuthCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [router, searchParams]);
+  }, [router]);
 
   return (
     <main className="min-h-svh flex items-center justify-center p-5">
