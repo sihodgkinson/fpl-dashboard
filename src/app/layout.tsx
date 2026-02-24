@@ -21,6 +21,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
   },
+  icons: {
+    icon: [{ url: "/favicon.ico?v=2", sizes: "any" }],
+    shortcut: ["/favicon.ico?v=2"],
+    apple: [{ url: "/apple-touch-icon.png?v=2", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     type: "website",
     url: "https://gameweekiq.com",
