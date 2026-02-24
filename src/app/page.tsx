@@ -11,6 +11,7 @@ import {
   Zap,
 } from "lucide-react";
 import { ModeToggle } from "@/components/common/ModeToggle";
+import { AuthHashSessionBridge } from "@/components/common/AuthHashSessionBridge";
 import { WaitlistSignup } from "@/components/common/WaitlistSignup";
 import { getServerSessionUser } from "@/lib/supabaseAuth";
 
@@ -99,6 +100,7 @@ export default async function Home() {
 
   return (
     <div id="top" className="min-h-svh bg-background text-foreground">
+      <AuthHashSessionBridge />
       <header className="sticky top-0 z-40 border-b border-border bg-[#f2f4f8] dark:border-border dark:bg-[#0a0a0a]">
         <div className="px-4 md:px-10 lg:px-20">
           <div className="mx-auto flex h-[72px] w-full max-w-[1282px] items-center justify-between">
