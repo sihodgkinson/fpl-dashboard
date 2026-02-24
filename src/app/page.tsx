@@ -58,7 +58,7 @@ const pricingTiers = [
     price: "$0",
     subtitle: "All features are free while in beta*",
     cta: "Get started",
-    href: "/api/auth/google/start",
+    href: "/signin",
     features: [
       "Live League Table + GW 1 Table",
       "Manager Influence with decision scoring",
@@ -92,7 +92,7 @@ const pricingTiers = [
 export default async function Home() {
   const sessionUser = await getServerSessionUser();
   const isAuthenticated = Boolean(sessionUser?.id);
-  const primaryCtaHref = isAuthenticated ? "/dashboard" : "/api/auth/google/start";
+  const primaryCtaHref = isAuthenticated ? "/dashboard" : "/signin";
   const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started";
   const contactSubject = encodeURIComponent("GameweekIQ enquiry");
   const contactHref = `mailto:hello@gameweekiq.com?subject=${contactSubject}`;
@@ -353,7 +353,7 @@ export default async function Home() {
                         <WaitlistSignup />
                       ) : (
                         <Link
-                          href={primaryCtaHref}
+                          href={isAuthenticated ? "/dashboard" : tier.href}
                           className="inline-flex h-10 w-full items-center justify-center rounded-md bg-white text-sm font-semibold text-black transition-all hover:bg-white/90"
                         >
                           {primaryCtaLabel}

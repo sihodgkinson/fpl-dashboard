@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
+import { SignInPanel } from "@/components/common/SignInPanel";
 
 interface OnboardingGateProps {
   isAuthenticated: boolean;
@@ -105,30 +105,7 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
   }, [retryAfterSeconds]);
 
   if (!isAuthenticated) {
-    return (
-      <main className="min-h-svh grid place-items-center p-5">
-        <div className="w-full max-w-md flex flex-col items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/landing/logo-light.svg"
-            alt="GameweekIQ logo"
-            className="h-18 w-18 object-contain dark:hidden"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/landing/logo-dark.svg"
-            alt="GameweekIQ logo"
-            className="hidden h-18 w-18 object-contain dark:block"
-          />
-          <h1 className="text-center text-base font-semibold">Sign in to FPL Dashboard</h1>
-          <GoogleSignInButton
-            onClick={() => {
-              window.location.assign("/api/auth/google/start");
-            }}
-          />
-        </div>
-      </main>
-    );
+    return <SignInPanel nextPath="/dashboard" />;
   }
 
   async function handleCheckLeague() {

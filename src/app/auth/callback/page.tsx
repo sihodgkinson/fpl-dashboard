@@ -1,7 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { sanitizeNextPath } from "@/lib/authNextPath";
+
+const AUTH_NEXT_KEY = "auth_next_path";
 
 function parseHashParams(hash: string) {
   const source = hash.startsWith("#") ? hash.slice(1) : hash;
@@ -13,8 +16,25 @@ function parseHashParams(hash: string) {
   };
 }
 
+function getStoredNextPath() {
+  try {
+    return window.sessionStorage.getItem(AUTH_NEXT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function clearStoredNextPath() {
+  try {
+    window.sessionStorage.removeItem(AUTH_NEXT_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 export default function AuthCallbackPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -35,6 +55,10 @@ export default function AuthCallbackPage() {
         return;
       }
 
+      const requestedNextPath =
+        searchParams.get("next") || getStoredNextPath() || "/dashboard";
+      const nextPath = sanitizeNextPath(requestedNextPath, "/dashboard");
+
       try {
         const res = await fetch("/api/auth/oauth/session", {
           method: "POST",
@@ -53,8 +77,10 @@ export default function AuthCallbackPage() {
           return;
         }
 
+        clearStoredNextPath();
+
         if (!cancelled) {
-          router.replace("/dashboard");
+          router.replace(nextPath);
           router.refresh();
         }
       } catch {
@@ -66,7 +92,7 @@ export default function AuthCallbackPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, searchParams]);
 
   return (
     <main className="min-h-svh flex items-center justify-center p-5">
