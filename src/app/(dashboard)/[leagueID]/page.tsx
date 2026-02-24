@@ -10,6 +10,7 @@ import { OnboardingGate } from "@/components/common/OnboardingGate";
 import { EnrichedStanding } from "@/types/fpl";
 import { listUserLeagues } from "@/lib/userLeagues";
 import { getServerSessionUser } from "@/lib/supabaseAuth";
+import { sanitizeNextPath } from "@/lib/authNextPath";
 
 export default async function DashboardPage({
   searchParams,
@@ -24,7 +25,16 @@ export default async function DashboardPage({
 
   const sessionUser = await getServerSessionUser();
   if (!sessionUser?.id) {
-    redirect("/");
+    const nextParams = new URLSearchParams();
+    if (params.leagueId) nextParams.set("leagueId", params.leagueId);
+    if (params.gw) nextParams.set("gw", params.gw);
+
+    const nextPath = sanitizeNextPath(
+      `/dashboard${nextParams.size > 0 ? `?${nextParams.toString()}` : ""}`,
+      "/dashboard"
+    );
+
+    redirect(`/signin?next=${encodeURIComponent(nextPath)}`);
   }
 
   const configuredLeagues = await listUserLeagues(sessionUser.id);

@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
   // causing production OAuth callbacks to redirect to localhost.
   const origin = forwardedOrigin || request.nextUrl.origin || explicitAppUrl;
   const redirectTo = `${origin}/auth/callback`;
+
   const url =
     `${config.url}/auth/v1/authorize` +
     `?provider=google` +
