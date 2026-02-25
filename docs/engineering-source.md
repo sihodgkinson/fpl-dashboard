@@ -215,6 +215,7 @@ should include manual mobile QA (iPhone Safari + Chrome).
 ### Optional
 - `FPL_LIVE_CACHE_TTL_SECONDS`
 - `FPL_METRICS`
+- `SLACK_WEBHOOK_URL`
 
 ## 11) Local Development and Commands
 - install deps: `npm install`

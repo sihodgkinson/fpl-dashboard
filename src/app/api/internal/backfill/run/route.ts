@@ -6,6 +6,7 @@ import {
 } from "@/lib/backfillJobs";
 import { getCurrentGameweek } from "@/lib/fpl";
 import { warmLeagueCache } from "@/lib/leagueCacheWarmup";
+import { sendOpsNotification } from "@/lib/opsNotifications";
 
 const BACKFILL_VIEWS_PER_GW = 5;
 const MAX_BACKFILL_ATTEMPTS = 3;
@@ -63,6 +64,22 @@ export async function POST(request: NextRequest) {
           error: `Backfill incomplete: expected=${expectedTasks}, attempted=${result.attempted}, succeeded=${result.succeeded}, failed=${result.failed}, timedOut=${result.timedOut}`,
         });
 
+        void sendOpsNotification({
+          eventType: "backfill_failed",
+          message: "Backfill job failed due to incomplete warmup results.",
+          metadata: {
+            source: "backfill_runner",
+            jobId: job.id,
+            leagueId: job.league_id,
+            attempts: job.attempts,
+            expectedTasks,
+            attempted: result.attempted,
+            succeeded: result.succeeded,
+            failed: result.failed,
+            timedOut: result.timedOut,
+          },
+        });
+
         if (job.attempts < MAX_BACKFILL_ATTEMPTS) {
           await enqueueLeagueBackfillJob(job.league_id);
         }
@@ -76,6 +93,19 @@ export async function POST(request: NextRequest) {
         success: false,
         error: errorMessage,
       });
+
+      void sendOpsNotification({
+        eventType: "backfill_failed",
+        message: "Backfill runner encountered an exception.",
+        metadata: {
+          source: "backfill_runner",
+          jobId: job.id,
+          leagueId: job.league_id,
+          attempts: job.attempts,
+          error: errorMessage,
+        },
+      });
+
       if (job.attempts < MAX_BACKFILL_ATTEMPTS) {
         await enqueueLeagueBackfillJob(job.league_id);
       }

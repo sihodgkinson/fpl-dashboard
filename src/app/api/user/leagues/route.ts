@@ -29,6 +29,7 @@ import {
   attachAuthCookies,
   getRequestSessionUser,
 } from "@/lib/supabaseAuth";
+import { sendOpsNotification } from "@/lib/opsNotifications";
 
 function getFreshActiveJobs<T extends { status: string; updated_at: string }>(
   jobs: T[],
@@ -259,6 +260,23 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     }).catch(() => undefined);
   }
+
+  void sendOpsNotification({
+    eventType: "league_added",
+    message: "User added a league successfully.",
+    metadata: {
+      userId: user.id,
+      email: user.email || null,
+      leagueId,
+      leagueName: league.league.name,
+      managerCount,
+      fullBackfillQueued: backfillJob.queued,
+      cacheWarmupAttempted: warmup.attempted,
+      cacheWarmupSucceeded: warmup.succeeded,
+      cacheWarmupFailed: warmup.failed,
+      cacheWarmupTimedOut: warmup.timedOut,
+    },
+  });
 
   return attachAuthCookies(
     NextResponse.json({
