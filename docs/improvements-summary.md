@@ -1,4 +1,4 @@
-# FPL Dashboard Improvements summary
+# GameweekIQ Improvements Summary
 
 ## Routing and API Hardening
 
