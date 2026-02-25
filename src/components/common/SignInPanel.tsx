@@ -5,6 +5,7 @@ import Link from "next/link";
 import { GoogleSignInButton } from "@/components/common/GoogleSignInButton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { isValidEmailFormat, normalizeEmail } from "@/lib/emailValidation";
 
 interface SignInPanelProps {
   nextPath: string;
@@ -14,10 +15,11 @@ type SignInStep = "method" | "email" | "check" | "code";
 
 interface ApiErrorResponse {
   error?: string;
+  message?: string;
 }
 
 const AUTH_NEXT_KEY = "auth_next_path";
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const INVALID_EMAIL_ERROR = "Enter a valid email address.";
 
 function formatMaskedEmail(email: string) {
   const [local, domain] = email.split("@");
@@ -31,7 +33,10 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
   const [email, setEmail] = React.useState("");
   const [loginCode, setLoginCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [emailError, setEmailError] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const normalizedEmail = normalizeEmail(email);
+  const isEmailValid = isValidEmailFormat(normalizedEmail);
 
   function setAuthNextPath() {
     try {
@@ -41,10 +46,17 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
     }
   }
 
+  function validateEmailInput(value: string) {
+    if (!isValidEmailFormat(value)) {
+      setEmailError(INVALID_EMAIL_ERROR);
+      return false;
+    }
+    setEmailError(null);
+    return true;
+  }
+
   async function handleContinueWithEmail() {
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!EMAIL_PATTERN.test(normalizedEmail)) {
-      setError("Enter a valid email address.");
+    if (!validateEmailInput(email)) {
       return;
     }
 
@@ -65,7 +77,11 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
 
       const payload = (await res.json()) as ApiErrorResponse;
       if (!res.ok) {
-        setError(payload.error || "Could not send login code.");
+        if (payload.error === "invalid_email") {
+          setEmailError(INVALID_EMAIL_ERROR);
+          return;
+        }
+        setError(payload.message || payload.error || "Could not send login code.");
         return;
       }
 
@@ -79,11 +95,9 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
   }
 
   async function handleVerifyCode() {
-    const normalizedEmail = email.trim().toLowerCase();
     const normalizedCode = loginCode.trim();
 
-    if (!EMAIL_PATTERN.test(normalizedEmail)) {
-      setError("Enter a valid email address.");
+    if (!validateEmailInput(email)) {
       setStep("email");
       return;
     }
@@ -142,6 +156,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           className="h-[38px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
+            setEmailError(null);
             setStep("email");
           }}
           disabled={isSubmitting}
@@ -165,15 +180,27 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           autoComplete="email"
           placeholder="Enter your email address..."
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setEmail(nextValue);
+            setError(null);
+            if (emailError) {
+              validateEmailInput(nextValue);
+            }
+          }}
+          onBlur={(event) => {
+            validateEmailInput(event.target.value);
+          }}
           disabled={isSubmitting}
           className="h-[38px] w-[240px]"
+          aria-invalid={emailError ? true : false}
         />
+        {emailError ? <p className="w-[240px] text-left text-xs text-destructive">{emailError}</p> : null}
         <Button
           type="button"
           className="h-[38px] w-[240px] cursor-pointer"
           onClick={handleContinueWithEmail}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !isEmailValid}
         >
           {isSubmitting ? "Sending..." : "Continue with email"}
         </Button>
@@ -183,6 +210,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           className="h-[32px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
+            setEmailError(null);
             setStep("method");
           }}
           disabled={isSubmitting}
@@ -207,6 +235,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           className="h-[38px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
+            setEmailError(null);
             setStep("code");
           }}
           disabled={isSubmitting}
@@ -219,6 +248,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           className="h-[32px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
+            setEmailError(null);
             setStep("method");
           }}
           disabled={isSubmitting}
@@ -262,6 +292,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           className="h-[32px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
+            setEmailError(null);
             setStep("method");
           }}
           disabled={isSubmitting}

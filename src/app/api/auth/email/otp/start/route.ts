@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isValidEmailFormat, normalizeEmail } from "@/lib/emailValidation";
 import { requestEmailOtp } from "@/lib/supabaseAuth";
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function resolveEmailRedirectTo(request: NextRequest, requestedRedirectTo?: string) {
   // Force deterministic local callback targets during local development.
@@ -42,9 +41,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  const email = String(body.email || "").trim().toLowerCase();
-  if (!EMAIL_PATTERN.test(email)) {
-    return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 });
+  const email = normalizeEmail(String(body.email || ""));
+  if (!isValidEmailFormat(email)) {
+    return NextResponse.json(
+      { error: "invalid_email", message: "Enter a valid email address." },
+      { status: 400 }
+    );
   }
 
   const requestedRedirectTo = String(body.redirectTo || "").trim();
