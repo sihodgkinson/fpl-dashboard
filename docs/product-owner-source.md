@@ -229,68 +229,42 @@ Every story should define:
 
 ## 15) Suggested Story Template
 ```md
-Title: [Area] [Outcome]
+Title
 
-Problem
-- What user problem are we solving?
+[Short, outcome-focused title]
 
-User story
-- As a [type of user], I want [capability], so that [outcome].
+Description
 
-Scope
-- In scope:
-- Out of scope:
+[1-2 short paragraphs describing the user problem and the change needed. Keep this product-focused and avoid implementation detail.]
 
-Requirements
-- Functional:
-- Guardrails/capacity:
-- UX/content:
-- Analytics/telemetry:
+Acceptance Criteria
 
-Acceptance criteria
-- [ ]
-- [ ]
-- [ ]
-
-Non-regression checks
-- Auth flow unchanged
-- Onboarding flow unchanged
-- Mobile swipe GW unchanged
-- Backfill status behavior unchanged
-
-Risks / dependencies
-- 
+- [ ] [Clear behavior the user should experience]
+- [ ] [Validation/error handling expectation]
+- [ ] [Any important guardrail/business rule outcome]
+- [ ] [No regression to key existing user flows]
 ```
 
 ## 16) Suggested Bug Template
 ```md
-Title: [Bug] concise symptom
+Title
 
-Environment
-- Prod/dev:
-- Device/browser:
-- User state (signed in/out, leagues count):
+[Concise bug summary]
+
+Simple Description
+
+[One short paragraph describing the issue and impact.]
 
 Steps to reproduce
 1.
 2.
 3.
 
-Expected
+Expected behaviour
 -
 
-Actual
+Actual behaviour
 -
-
-Impact
-- User impact:
-- Frequency:
-- Severity:
-
-Technical hints
-- Suspected area/files:
-- Relevant API route:
-- Relevant guardrail/env:
 ```
 
 ## 17) Initial Backlog Themes for PO Agent
