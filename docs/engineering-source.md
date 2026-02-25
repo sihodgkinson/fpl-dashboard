@@ -303,6 +303,7 @@ From `package.json`:
 ## 18) Related Context Docs
 - Product context: `docs/product-owner-source.md`
 - Tech stack source: `docs/tech-stack-source.md`
+- Git workflow: `docs/git-workflow.md`
 - Guardrails: `docs/guardrails.md`
 - Historical improvements: `docs/improvements-summary.md`
 - Handoff doc: `docs/agent-handoff.md`
@@ -328,6 +329,10 @@ Template:
 ```
 
 Entries:
+- 2026-02-25: Added GitHub/Linear delivery workflow documentation.
+  - Why: standardize branch -> PR -> merge flow and keep branch hygiene consistent.
+  - Impacted files: `docs/git-workflow.md`, `docs/engineering-source.md`.
+  - Operational impact: process documentation only.
 - 2026-02-25: Added `docs/engineering-source.md` as canonical engineer onboarding reference.
   - Why: speed up engineer onboarding and reduce regressions in critical flows.
   - Impacted files: `docs/engineering-source.md`.
