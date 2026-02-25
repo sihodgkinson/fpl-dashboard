@@ -81,7 +81,6 @@ const pricingTiers = [
     features: [
       "Advanced manager edge and trend models",
       "Custom alerts for key league movements",
-      "Private leagues and priority refresh windows",
       "Extended historical analytics and exports",
       "Side-by-side rival comparison tools",
       "Early access to new intelligence modules",
