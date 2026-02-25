@@ -3,6 +3,7 @@ import {
   attachAuthCookies,
   signUpWithPassword,
 } from "@/lib/supabaseAuth";
+import { sendOpsNotification } from "@/lib/opsNotifications";
 
 export async function POST(request: NextRequest) {
   let body: { email?: unknown; password?: unknown };
@@ -25,6 +26,18 @@ export async function POST(request: NextRequest) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+
+  void sendOpsNotification({
+    eventType: "auth_success",
+    message: "User signup succeeded.",
+    metadata: {
+      authMethod: "password",
+      userId: result.user.id,
+      email: result.user.email || email,
+      sessionEstablished: Boolean(result.session),
+      requiresEmailConfirmation: result.session === null,
+    },
+  });
 
   const response = NextResponse.json({
     ok: true,

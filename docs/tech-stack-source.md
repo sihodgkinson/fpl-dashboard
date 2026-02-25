@@ -183,6 +183,7 @@ GameweekIQ is a full-stack web app using Next.js App Router, TypeScript, Tailwin
 ### Optional/ops
 - `FPL_LIVE_CACHE_TTL_SECONDS`
 - `FPL_METRICS`
+- `SLACK_WEBHOOK_URL`
 
 ## 11) Non-Functional Priorities Shaping Stack Decisions
 - Low-cost operation on free tiers during beta

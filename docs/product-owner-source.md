@@ -192,6 +192,7 @@ Used across app/scripts:
 - `APP_URL`
 - `BACKFILL_RUNNER_SECRET`
 - `LIVE_REFRESH_SECRET` (GitHub Action secret)
+- `SLACK_WEBHOOK_URL` (ops notifications)
 - Guardrail envs (`FPL_*`):
   - `FPL_MAX_LEAGUES_PER_USER`
   - `FPL_MAX_MANAGERS_PER_LEAGUE`

@@ -3,6 +3,7 @@ import {
   attachAuthCookies,
   getUserForAccessToken,
 } from "@/lib/supabaseAuth";
+import { sendOpsNotification } from "@/lib/opsNotifications";
 
 export async function POST(request: NextRequest) {
   let body: { accessToken?: unknown; refreshToken?: unknown };
@@ -25,6 +26,16 @@ export async function POST(request: NextRequest) {
   if (!user?.id) {
     return NextResponse.json({ error: "Invalid access token." }, { status: 401 });
   }
+
+  void sendOpsNotification({
+    eventType: "auth_success",
+    message: "OAuth authentication completed successfully.",
+    metadata: {
+      authMethod: "oauth",
+      userId: user.id,
+      email: user.email || null,
+    },
+  });
 
   return attachAuthCookies(
     NextResponse.json({
