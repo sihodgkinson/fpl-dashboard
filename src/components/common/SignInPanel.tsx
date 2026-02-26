@@ -20,6 +20,7 @@ interface ApiErrorResponse {
 
 const AUTH_NEXT_KEY = "auth_next_path";
 const INVALID_EMAIL_ERROR = "Enter a valid email address.";
+const RESEND_COOLDOWN_SECONDS = 45;
 
 function formatMaskedEmail(email: string) {
   const [local, domain] = email.split("@");
@@ -34,9 +35,43 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
   const [loginCode, setLoginCode] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [emailError, setEmailError] = React.useState<string | null>(null);
+  const [emailSentMessage, setEmailSentMessage] = React.useState<string | null>(null);
+  const [resendCooldownSeconds, setResendCooldownSeconds] = React.useState(0);
+  const [resendCooldownEmail, setResendCooldownEmail] = React.useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const normalizedEmail = normalizeEmail(email);
   const isEmailValid = isValidEmailFormat(normalizedEmail);
+  const isOtpCooldownActive =
+    resendCooldownSeconds > 0 &&
+    resendCooldownEmail !== null &&
+    normalizedEmail === resendCooldownEmail;
+  const emailInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  React.useEffect(() => {
+    if (step !== "email") return;
+    const handle = window.requestAnimationFrame(() => {
+      emailInputRef.current?.focus();
+      emailInputRef.current?.select();
+    });
+    return () => {
+      window.cancelAnimationFrame(handle);
+    };
+  }, [step]);
+
+  React.useEffect(() => {
+    if (resendCooldownSeconds <= 0) return;
+    const interval = window.setInterval(() => {
+      setResendCooldownSeconds((current) => (current > 0 ? current - 1 : 0));
+    }, 1000);
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, [resendCooldownSeconds]);
+
+  React.useEffect(() => {
+    if (resendCooldownSeconds > 0) return;
+    setResendCooldownEmail(null);
+  }, [resendCooldownSeconds]);
 
   function setAuthNextPath() {
     try {
@@ -55,13 +90,17 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
     return true;
   }
 
-  async function handleContinueWithEmail() {
+  async function sendEmailOtp(options?: { resend?: boolean }) {
+    const isResend = options?.resend === true;
     if (!validateEmailInput(email)) {
       return;
     }
 
     setIsSubmitting(true);
     setError(null);
+    if (isResend) {
+      setEmailSentMessage(null);
+    }
 
     try {
       setAuthNextPath();
@@ -86,12 +125,28 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
       }
 
       setEmail(normalizedEmail);
-      setStep("check");
+      setResendCooldownSeconds(RESEND_COOLDOWN_SECONDS);
+      setResendCooldownEmail(normalizedEmail);
+      if (isResend) {
+        setEmailSentMessage("Email resent.");
+      } else {
+        setEmailSentMessage(null);
+        setStep("check");
+      }
     } catch {
-      setError("Could not send login code.");
+      setError(isResend ? "Could not resend email." : "Could not send login code.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  async function handleContinueWithEmail() {
+    await sendEmailOtp();
+  }
+
+  async function handleResendEmail() {
+    if (resendCooldownSeconds > 0) return;
+    await sendEmailOtp({ resend: true });
   }
 
   async function handleVerifyCode() {
@@ -157,6 +212,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           onClick={() => {
             setError(null);
             setEmailError(null);
+            setEmailSentMessage(null);
             setStep("email");
           }}
           disabled={isSubmitting}
@@ -175,6 +231,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
       <>
         <h1 className="text-center text-base font-semibold">What&apos;s your email address?</h1>
         <Input
+          ref={emailInputRef}
           type="email"
           inputMode="email"
           autoComplete="email"
@@ -186,6 +243,9 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
             setError(null);
             if (emailError) {
               validateEmailInput(nextValue);
+            }
+            if (emailSentMessage) {
+              setEmailSentMessage(null);
             }
           }}
           onBlur={(event) => {
@@ -200,10 +260,15 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           type="button"
           className="h-[38px] w-[240px] cursor-pointer"
           onClick={handleContinueWithEmail}
-          disabled={isSubmitting || !isEmailValid}
+          disabled={isSubmitting || !isEmailValid || isOtpCooldownActive}
         >
           {isSubmitting ? "Sending..." : "Continue with email"}
         </Button>
+        {isOtpCooldownActive ? (
+          <p className="w-[260px] text-center text-xs text-muted-foreground">
+            You can request another email in {resendCooldownSeconds}s.
+          </p>
+        ) : null}
         <Button
           type="button"
           variant="ghost"
@@ -211,6 +276,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           onClick={() => {
             setError(null);
             setEmailError(null);
+            setEmailSentMessage(null);
             setStep("method");
           }}
           disabled={isSubmitting}
@@ -244,11 +310,43 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
         </Button>
         <Button
           type="button"
+          variant="outline"
+          className="h-[32px] w-[240px] cursor-pointer"
+          onClick={handleResendEmail}
+          disabled={isSubmitting || resendCooldownSeconds > 0}
+        >
+          {isSubmitting
+            ? "Sending..."
+            : resendCooldownSeconds > 0
+              ? `You can resend in ${resendCooldownSeconds}s`
+              : "Resend email"}
+        </Button>
+        <Button
+          type="button"
           variant="ghost"
           className="h-[32px] w-[240px] cursor-pointer"
           onClick={() => {
             setError(null);
             setEmailError(null);
+            setEmailSentMessage(null);
+            setLoginCode("");
+            setStep("email");
+          }}
+          disabled={isSubmitting}
+        >
+          Change email address
+        </Button>
+        {emailSentMessage ? (
+          <p className="w-[260px] text-center text-xs text-muted-foreground">{emailSentMessage}</p>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          className="h-[32px] w-[240px] cursor-pointer"
+          onClick={() => {
+            setError(null);
+            setEmailError(null);
+            setEmailSentMessage(null);
             setStep("method");
           }}
           disabled={isSubmitting}
@@ -293,6 +391,7 @@ export function SignInPanel({ nextPath }: SignInPanelProps) {
           onClick={() => {
             setError(null);
             setEmailError(null);
+            setEmailSentMessage(null);
             setStep("method");
           }}
           disabled={isSubmitting}
