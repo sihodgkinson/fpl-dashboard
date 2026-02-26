@@ -109,13 +109,13 @@ export default async function Home() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/landing/logo-light.svg"
+                src="/logo-light.svg"
                 alt="GameweekIQ logo"
                 className="h-8 w-8 object-contain dark:hidden"
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/landing/logo-dark.svg"
+                src="/logo-dark.svg"
                 alt="GameweekIQ logo"
                 className="hidden h-8 w-8 object-contain dark:block"
               />

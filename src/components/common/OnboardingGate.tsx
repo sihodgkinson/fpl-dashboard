@@ -198,13 +198,13 @@ export function OnboardingGate({ isAuthenticated, currentGw }: OnboardingGatePro
       <div className="w-full max-w-md flex flex-col items-center gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/landing/logo-light.svg"
+          src="/logo-light.svg"
           alt="GameweekIQ logo"
           className="h-18 w-18 object-contain dark:hidden"
         />
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/landing/logo-dark.svg"
+          src="/logo-dark.svg"
           alt="GameweekIQ logo"
           className="hidden h-18 w-18 object-contain dark:block"
         />
