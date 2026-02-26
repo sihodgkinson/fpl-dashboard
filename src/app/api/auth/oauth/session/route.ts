@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   attachAuthCookies,
   getUserForAccessToken,
+  isLikelyNewAuthUser,
 } from "@/lib/supabaseAuth";
 import { sendOpsNotification } from "@/lib/opsNotifications";
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   void sendOpsNotification({
-    eventType: "auth_success",
+    eventType: isLikelyNewAuthUser(user) ? "user_signup" : "user_login",
     message: "OAuth authentication completed successfully.",
     metadata: {
       authMethod: "oauth",

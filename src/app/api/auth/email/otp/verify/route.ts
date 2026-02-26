@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { attachAuthCookies, verifyEmailOtp } from "@/lib/supabaseAuth";
+import {
+  attachAuthCookies,
+  isLikelyNewAuthUser,
+  verifyEmailOtp,
+} from "@/lib/supabaseAuth";
 import { sendOpsNotification } from "@/lib/opsNotifications";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -29,7 +33,7 @@ export async function POST(request: NextRequest) {
   }
 
   void sendOpsNotification({
-    eventType: "auth_success",
+    eventType: isLikelyNewAuthUser(result.user) ? "user_signup" : "user_login",
     message: "Email OTP authentication completed successfully.",
     metadata: {
       authMethod: "email_otp",

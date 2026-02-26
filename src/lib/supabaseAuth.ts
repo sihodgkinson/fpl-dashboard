@@ -5,9 +5,11 @@ export const ACCESS_TOKEN_COOKIE = "fpl_access_token";
 export const REFRESH_TOKEN_COOKIE = "fpl_refresh_token";
 const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
-interface SupabaseAuthUser {
+export interface SupabaseAuthUser {
   id: string;
   email?: string;
+  created_at?: string;
+  last_sign_in_at?: string;
   user_metadata?: {
     name?: string;
     full_name?: string;
@@ -20,6 +22,8 @@ interface SupabaseAuthSession {
   access_token: string;
   refresh_token: string;
 }
+
+const NEW_USER_TIME_WINDOW_MS = 2 * 60 * 1000;
 
 interface SupabaseAuthResponse {
   user?: SupabaseAuthUser;
@@ -160,6 +164,17 @@ export async function getUserForAccessToken(accessToken: string) {
   const payload = (await res.json()) as SupabaseAuthUser;
   if (!payload?.id) return null;
   return payload;
+}
+
+export function isLikelyNewAuthUser(user: SupabaseAuthUser): boolean {
+  const createdAtMs = Date.parse(user.created_at || "");
+  const lastSignInAtMs = Date.parse(user.last_sign_in_at || "");
+
+  if (!Number.isFinite(createdAtMs) || !Number.isFinite(lastSignInAtMs)) {
+    return false;
+  }
+
+  return Math.abs(lastSignInAtMs - createdAtMs) <= NEW_USER_TIME_WINDOW_MS;
 }
 
 export async function getRequestSessionUser(

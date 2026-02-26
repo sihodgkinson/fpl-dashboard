@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   void sendOpsNotification({
-    eventType: "auth_success",
+    eventType: "user_signup",
     message: "User signup succeeded.",
     metadata: {
       authMethod: "password",
