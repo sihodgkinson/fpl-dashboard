@@ -1,5 +1,6 @@
 type OpsNotificationEvent =
-  | "auth_success"
+  | "user_signup"
+  | "user_login"
   | "league_added"
   | "backfill_failed";
 
@@ -64,11 +65,11 @@ function formatNotificationContent(
   message: string,
   metadata: Record<string, unknown>
 ): { title: string; summary: string; fields: SlackField[] } {
-  if (eventType === "auth_success") {
+  if (eventType === "user_signup" || eventType === "user_login") {
     const email = asString(metadata.email) || "Unknown";
     const authMethod = formatAuthMethod(asString(metadata.authMethod));
     return {
-      title: "New User Signup",
+      title: eventType === "user_signup" ? "New User Signup" : "User Login",
       summary: message,
       fields: [
         { label: "User email", value: email },
