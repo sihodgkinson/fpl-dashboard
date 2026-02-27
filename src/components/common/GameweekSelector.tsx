@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSWRConfig } from "swr";
 import {
   Select,
@@ -29,6 +29,7 @@ export function GameweekSelector({
   showArrows = true,
 }: GameweekSelectorProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { mutate } = useSWRConfig();
 
@@ -67,7 +68,7 @@ export function GameweekSelector({
     void prefetchForGw(gw);
     const params = new URLSearchParams(searchParams.toString());
     params.set("gw", String(gw));
-    router.push(`/dashboard?${params.toString()}`, { scroll: false });
+    router.push(`${pathname || "/dashboard"}?${params.toString()}`, { scroll: false });
   };
 
   const handleChange = (value: string) => {

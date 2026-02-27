@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   Select,
   SelectContent,
@@ -32,6 +32,7 @@ export function LeagueSelector({
   className,
 }: LeagueSelectorProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [optimisticLeagueId, setOptimisticLeagueId] = React.useState(selectedLeagueId);
   const [singleLeagueHintOpen, setSingleLeagueHintOpen] = React.useState(false);
@@ -82,7 +83,10 @@ export function LeagueSelector({
         if (Number.isInteger(parsedValue) && parsedValue > 0) {
           setOptimisticLeagueId(parsedValue);
         }
-        router.push(`/dashboard?leagueId=${value}&gw=${gw}`);
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("leagueId", value);
+        params.set("gw", String(gw));
+        router.push(`${pathname || "/dashboard"}?${params.toString()}`);
       }}
     >
       <SelectTrigger className={cn("w-56", className)}>

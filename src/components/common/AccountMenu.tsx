@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import {
   CircleHelp,
@@ -112,6 +112,7 @@ export function AccountMenu({
   currentGw,
 }: AccountMenuProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [avatarFailed, setAvatarFailed] = React.useState(false);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -175,6 +176,7 @@ export function AccountMenu({
   const email = user?.email || "No email";
   const avatarUrl = !avatarFailed ? user?.avatarUrl : null;
   const gw = searchParams.get("gw") || String(currentGw);
+  const dashboardPath = pathname || "/dashboard";
   const queuedJobs = backfillStatus?.summary.queued ?? 0;
   const runningJobs = backfillStatus?.summary.running ?? 0;
   const hasActiveBackfillJobs = queuedJobs + runningJobs > 0;
@@ -336,7 +338,7 @@ export function AccountMenu({
       const nextLeagueId = payload.leagues?.[0]?.id;
 
       if (nextLeagueId) {
-        router.push(`/dashboard?leagueId=${nextLeagueId}&gw=${gw}`, { scroll: false });
+        router.push(`${dashboardPath}?leagueId=${nextLeagueId}&gw=${gw}`, { scroll: false });
       } else {
         router.push("/dashboard", { scroll: false });
       }
@@ -354,10 +356,10 @@ export function AccountMenu({
     if (hasActiveBackfillJobs) return;
 
     window.location.assign(
-      `/dashboard?leagueId=${pendingLeagueSelectionId}&gw=${currentGw}`
+      `${dashboardPath}?leagueId=${pendingLeagueSelectionId}&gw=${currentGw}`
     );
     setPendingLeagueSelectionId(null);
-  }, [currentGw, hasActiveBackfillJobs, pendingLeagueSelectionId]);
+  }, [currentGw, dashboardPath, hasActiveBackfillJobs, pendingLeagueSelectionId]);
 
   return (
     <DropdownMenu
