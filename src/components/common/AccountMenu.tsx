@@ -105,7 +105,7 @@ export function AccountMenu({ className }: AccountMenuProps) {
           </div>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" side="right" className="w-64 p-0">
+      <DropdownMenuContent align="end" side="top" sideOffset={8} className="w-64 p-0">
         <div className="p-1.5">
           <DropdownMenuItem disabled className="h-8 rounded-md px-2.5 text-sm">
             <UserCircle className="h-4 w-4" />

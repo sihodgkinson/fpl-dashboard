@@ -727,7 +727,7 @@ export default function DashboardClient({
             onClick={() => setMobileSidebarOpen(false)}
             aria-label="Close sidebar"
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 py-4 shadow-2xl sm:hidden">
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 pb-4 shadow-2xl sm:hidden">
             <div className="mx-[-16px] flex h-16 items-center justify-between border-b border-border px-4">
               <Link href="/" className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -786,15 +786,6 @@ export default function DashboardClient({
                 );
               })}
             </nav>
-
-            <GameweekSelector
-              selectedLeagueId={selectedLeagueId}
-              currentGw={currentGw}
-              maxGw={maxGw}
-              showArrows={false}
-              size="sm"
-              className="h-10 w-full text-sm"
-            />
 
             <div className="mt-auto space-y-4" data-sidebar-interactive="true">
               <button
@@ -887,17 +878,26 @@ export default function DashboardClient({
             hasError={Boolean(error)}
           />
 
-          <div className="block w-full sm:hidden">
-            <Select value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
-              <SelectTrigger className="w-full !h-12 text-base">
-                <SelectValue placeholder="Select table" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="league">League</SelectItem>
-                <SelectItem value="activity">ManagerIQ</SelectItem>
-                <SelectItem value="gw1">GW 1 Team</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="flex w-full items-center gap-2 sm:hidden">
+            <div className="min-w-0 flex-1">
+              <Select value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue placeholder="Select table" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="league">League</SelectItem>
+                  <SelectItem value="activity">ManagerIQ</SelectItem>
+                  <SelectItem value="gw1">GW 1 Team</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <GameweekSelector
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              maxGw={maxGw}
+              size="sm"
+              className="h-8 text-sm"
+            />
           </div>
 
           <div className="hidden w-full items-center justify-between gap-3 sm:flex">
