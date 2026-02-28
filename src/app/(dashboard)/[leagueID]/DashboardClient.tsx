@@ -14,8 +14,6 @@ import {
   Coins,
   Loader2,
   Menu,
-  PanelLeftClose,
-  PanelLeftOpen,
   RefreshCw,
   Table2,
   X,
@@ -92,7 +90,6 @@ const LIVE_POLL_LOCK_TTL_MS = 45_000;
 const LIVE_REFRESH_INTERVAL_MS = 30_000;
 const ORIENTATION_HINT_DISMISSED_KEY = "fpl-orientation-hint-dismissed-v2";
 const SWIPE_HINT_DISMISSED_KEY = "fpl-swipe-hint-dismissed-v1";
-const SIDEBAR_COLLAPSED_KEY = "gameweekiq-appshell-sidebar-collapsed-v1";
 const MOBILE_SWIPE_MIN_X_LEFT = 48;
 const MOBILE_SWIPE_MIN_X_RIGHT = 54;
 const MOBILE_SWIPE_MIN_X_FAST = 28;
@@ -180,7 +177,7 @@ export default function DashboardClient({
     toGw: number;
   } | null>(null);
   const [tab, setTab] = React.useState<"league" | "activity" | "gw1">("league");
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const sidebarCollapsed = false;
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const swipeRef = React.useRef<{
     startX: number;
@@ -420,19 +417,6 @@ export default function DashboardClient({
     };
   }, []);
 
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    const persisted = window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (persisted === "1") {
-      setSidebarCollapsed(true);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed ? "1" : "0");
-  }, [sidebarCollapsed]);
-
   const dismissOrientationHint = React.useCallback(() => {
     if (typeof window !== "undefined") {
       window.localStorage.setItem(ORIENTATION_HINT_DISMISSED_KEY, "1");
@@ -664,14 +648,6 @@ export default function DashboardClient({
               <span className="text-sm font-medium">GameweekIQ</span>
             </Link>
           ) : null}
-          <button
-            type="button"
-            onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground"
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </button>
         </div>
 
         <div className={cn("mt-4", sidebarCollapsed ? "px-2" : "px-3")}>
