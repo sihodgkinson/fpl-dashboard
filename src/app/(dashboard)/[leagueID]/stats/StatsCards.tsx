@@ -155,12 +155,12 @@ function MiniTrendChart({
   signedTooltipValue?: boolean;
 }) {
   if (isLoading) {
-    return <Skeleton className="h-16 w-full" />;
+    return <Skeleton className="h-12 w-full" />;
   }
 
   if (!trend || trend.points.length === 0) {
     return (
-      <div className="h-16 flex items-center justify-center text-xs text-muted-foreground">
+      <div className="h-12 flex items-center justify-center text-xs text-muted-foreground">
         No trend data
       </div>
     );
@@ -174,7 +174,7 @@ function MiniTrendChart({
   const gradientId = `trend-fill-${chartId}`;
 
   return (
-    <div className="h-16 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
+    <div className="h-12 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
           <defs>
@@ -193,10 +193,10 @@ function MiniTrendChart({
             dataKey="value"
             connectNulls={false}
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={1.5}
             fill={`url(#${gradientId})`}
-            dot={{ r: 2.5, fill: "currentColor", stroke: "currentColor" }}
-            activeDot={{ r: 4, fill: "currentColor", stroke: "currentColor" }}
+            dot={{ r: 2, fill: "currentColor", stroke: "currentColor" }}
+            activeDot={{ r: 3, fill: "currentColor", stroke: "currentColor" }}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -299,17 +299,17 @@ function StatCard({
   if (value === null) {
     // ✅ Skeleton while loading
     return (
-      <Card className="p-4 min-h-[220px]">
-        <Skeleton className="h-4 w-24 mb-2" />
+      <Card className="h-[184px] gap-4 p-4">
+        <Skeleton className="mb-2 h-4 w-24" />
         <div className="stat-card-metric-row flex items-center">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
-            <Skeleton className="h-12 w-20" />
+            <Skeleton className="h-12 w-24" />
           </div>
           <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
-            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         </div>
-        <div className="leading-tight">
+        <div className="mt-2 leading-tight">
           <Skeleton className="mb-1 h-4 w-32" />
           <Skeleton className="h-3 w-20" />
         </div>
@@ -319,7 +319,7 @@ function StatCard({
 
   return (
     <Card
-      className={cn("p-4 min-h-[220px] flex flex-col", onToggleMode ? "cursor-pointer" : "")}
+      className={cn("flex h-[184px] flex-col gap-4 p-4", onToggleMode ? "cursor-pointer" : "")}
       onClick={handleCardClick}
       onTouchStart={handleCardTouchStart}
       onTouchMove={handleCardTouchMove}
@@ -328,7 +328,7 @@ function StatCard({
         cardTouchRef.current = null;
       }}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-1 flex items-start justify-between gap-2">
         <p className="text-sm text-muted-foreground">{title}</p>
         {onToggleMode ? (
           <button
@@ -351,11 +351,11 @@ function StatCard({
       </div>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col transition-opacity duration-200",
+          "flex min-h-0 flex-1 flex-col gap-2 transition-opacity duration-200",
           contentVisible ? "opacity-100" : "opacity-0"
         )}
       >
-        <div className="stat-card-metric-row mb-2 flex items-center">
+        <div className="stat-card-metric-row flex items-center">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
             <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
               {displayValue ?? value}
@@ -375,7 +375,7 @@ function StatCard({
             />
           </div>
         </div>
-        <div className="mt-auto leading-tight">
+        <div className="mt-1 leading-tight">
           <p className="text-base font-semibold">{team}</p>
           <p className="text-sm">{manager}</p>
         </div>
