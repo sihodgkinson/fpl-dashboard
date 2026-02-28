@@ -43,6 +43,8 @@ This document is the canonical technical onboarding source for new engineers on 
 - `src/components/common/LeagueSelector.tsx`: league switcher + in-menu league management
 - `src/components/common/AccountMenu.tsx`: sidebar profile trigger + account dropdown
 - `src/lib/supabaseAuth.ts`: auth API integrations + cookie/session helpers
+- `src/lib/authSessionRefresh.ts`: shared refresh-token rotation logic (single-flight + resilience)
+- `src/lib/authTelemetry.ts`: auth/session telemetry event emitter
 - `src/lib/supabaseCache.ts`: cache read/write layer for `fpl_cache`
 - `src/lib/leagueCacheWarmup.ts`: cache warmup/backfill logic
 - `src/lib/backfillJobs.ts`: backfill job queue table interactions
@@ -50,6 +52,7 @@ This document is the canonical technical onboarding source for new engineers on 
 - `src/lib/betaLimits.ts`: all guardrail env defaults
 - `src/app/api/**/route.ts`: all backend APIs
 - `supabase/*.sql`: DB schema and operational SQL files
+- `docs/auth-session-config.md`: required Supabase Auth dashboard settings for rolling 90-day sessions
 
 ## 5) Data Model and Persistence
 ## 5.1 Core tables

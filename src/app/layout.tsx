@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/common/ThemeProvider"; // ✅ import ThemeProvider
+import { AuthSessionKeepAlive } from "@/components/common/AuthSessionKeepAlive";
+import { ThemeProvider } from "@/components/common/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,11 +68,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <ThemeProvider
-          attribute="class"              // ✅ toggles dark mode via class
-          defaultTheme="system"          // ✅ default follows system preference
-          enableSystem                   // ✅ allow system theme
-          disableTransitionOnChange      // ✅ prevents flicker when toggling
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
+          <AuthSessionKeepAlive />
           {children}
         </ThemeProvider>
       </body>
