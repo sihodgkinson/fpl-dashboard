@@ -34,9 +34,6 @@ function TableRowSkeleton() {
       <td className="p-2 sm:p-4 text-right hidden sm:table-cell">
         <Skeleton className="h-4 w-8" />
       </td>
-      <td className="p-2 sm:p-4 text-right hidden sm:table-cell">
-        <Skeleton className="h-4 w-8" />
-      </td>
       <td className="p-2 sm:p-4 text-right">
         <Skeleton className="h-4 w-10" />
       </td>
@@ -61,17 +58,14 @@ export function LeagueTable({
             <th className="p-2 hidden md:table-cell sm:p-4 text-left w-22/100">
               Manager
             </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
-            <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
-              Transfers
-            </th>
+            <th className="p-2 sm:p-4 text-right w-10/100">GW</th>
             <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
               Hit
             </th>
             <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
-              Bench Points
+              Bench
             </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">Total Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -149,38 +143,6 @@ export function LeagueTable({
                     )}
                   </td>
 
-                  {/* Transfers */}
-                  {/* Transfers */}
-                  <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
-                    {entry.transfers > 0 ? (
-                      <ResponsiveInfoCard
-                        trigger={
-                          <button className="cursor-pointer underline decoration-dotted">
-                            {entry.transfers}
-                          </button>
-                        }
-                        content={
-                          entry.transfersList && entry.transfersList.length > 0 ? (
-                            <ul className="space-y-1 text-sm">
-                              {entry.transfersList.map((t, i) => (
-                                <li key={i}>
-                                  <span className="text-muted-foreground">{t.out}</span>
-                                  <span className="text-muted-foreground mx-2">→</span>
-                                  <span className="text-muted-foreground">{t.in}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground text-sm">No transfers</p>
-                          )
-                        }
-                        className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
-                      />
-                    ) : (
-                      <span>{entry.transfers}</span>
-                    )}
-                  </td>
-
                   {/* Hit */}
                   <td className="p-2 sm:p-4 text-right font-mono hidden sm:table-cell">
                     {entry.hit}
@@ -228,7 +190,7 @@ export function LeagueTable({
             : (
               <tr>
                 <td
-                  colSpan={8}
+                  colSpan={7}
                   className="text-center text-muted-foreground p-4"
                 >
                   No standings available

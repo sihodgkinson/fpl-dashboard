@@ -68,11 +68,11 @@ export function GW1Table({ standings, isLoading, hasError }: GW1TableProps) {
             <th className="w-3/100 p-2 text-left sm:p-4">Pos</th>
             <th className="w-25/100 p-2 text-left sm:p-4">Team</th>
             <th className="hidden w-22/100 p-2 text-left md:table-cell sm:p-4">Manager</th>
-            <th className="w-10/100 p-2 text-right sm:p-4">GW Points</th>
+            <th className="w-10/100 p-2 text-right sm:p-4">GW</th>
             <th className="hidden w-10/100 p-2 text-right sm:table-cell sm:p-4">
-              Bench Points
+              Bench
             </th>
-            <th className="w-10/100 p-2 text-right sm:p-4">Total Points</th>
+            <th className="w-10/100 p-2 text-right sm:p-4">Total</th>
           </tr>
         </thead>
         <tbody>

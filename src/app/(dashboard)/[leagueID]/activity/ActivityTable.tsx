@@ -203,8 +203,8 @@ export function ActivityTab({
                 />
               </div>
             </th>
-            <th className="p-2 text-right sm:p-4 w-10/100">GW Gain</th>
-            <th className="p-2 text-right sm:p-4 w-10/100">Total Gain</th>
+            <th className="p-2 text-right sm:p-4 w-10/100">GW</th>
+            <th className="p-2 text-right sm:p-4 w-10/100">Total</th>
           </tr>
         </thead>
         <tbody>
