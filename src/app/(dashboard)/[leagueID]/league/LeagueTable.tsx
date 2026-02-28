@@ -61,7 +61,7 @@ export function LeagueTable({
             <th className="p-2 hidden md:table-cell sm:p-4 text-left w-22/100">
               Manager
             </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">GW Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">GW</th>
             <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
               Transfers
             </th>
@@ -69,9 +69,9 @@ export function LeagueTable({
               Hit
             </th>
             <th className="p-2 sm:p-4 text-right w-10/100 hidden sm:table-cell">
-              Bench Points
+              Bench
             </th>
-            <th className="p-2 sm:p-4 text-right w-10/100">Total Points</th>
+            <th className="p-2 sm:p-4 text-right w-10/100">Total</th>
           </tr>
         </thead>
         <tbody>
