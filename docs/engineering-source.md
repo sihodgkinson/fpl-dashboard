@@ -354,6 +354,10 @@ Template:
 ```
 
 Entries:
+- 2026-02-28: Expanded `docs/git-workflow.md` with explicit Linear automation runbook.
+  - Why: make issue status updates reliable across all engineers using a single, command-driven PR process.
+  - Impacted files: `docs/git-workflow.md`, `docs/engineering-source.md`.
+  - Operational impact: documentation/process only.
 - 2026-02-25: Added GitHub/Linear delivery workflow documentation.
   - Why: standardize branch -> PR -> merge flow and keep branch hygiene consistent.
   - Impacted files: `docs/git-workflow.md`, `docs/engineering-source.md`.
