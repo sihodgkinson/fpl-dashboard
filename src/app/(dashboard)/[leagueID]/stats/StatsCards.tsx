@@ -519,7 +519,7 @@ export function LeagueStatsCards({
   if (hasError) return <div>Error loading stats</div>;
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:gap-4 sm:grid-cols-4">
+    <div className="stats-cards-landscape-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         title="GW Points"
         value={

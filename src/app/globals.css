@@ -125,7 +125,11 @@
   }
 }
 
-@media (orientation: landscape) and (pointer: coarse) and (max-height: 540px) {
+@media (orientation: landscape) and (max-width: 932px) and (hover: none) {
+  .stats-cards-landscape-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
   .mobile-landscape-scroll-shell {
     height: auto !important;
     min-height: auto !important;
