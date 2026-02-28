@@ -127,6 +127,7 @@ export default async function DashboardPage({
       currentGw={currentGw}
       maxGw={maxGw}
       gw={gw}
+      activeView="tables"
     />
   );
 }
