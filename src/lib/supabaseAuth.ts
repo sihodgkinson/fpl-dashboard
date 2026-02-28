@@ -1,9 +1,15 @@
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
+import { emitAuthTelemetry } from "@/lib/authTelemetry";
+import {
+  SESSION_COOKIE_MAX_AGE,
+  SupabaseAuthSession,
+  isExpiredOrNearExpiry,
+  refreshSessionSingleFlight,
+} from "@/lib/authSessionRefresh";
 
 export const ACCESS_TOKEN_COOKIE = "fpl_access_token";
 export const REFRESH_TOKEN_COOKIE = "fpl_refresh_token";
-const SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export interface SupabaseAuthUser {
   id: string;
@@ -16,11 +22,6 @@ export interface SupabaseAuthUser {
     avatar_url?: string;
     picture?: string;
   };
-}
-
-interface SupabaseAuthSession {
-  access_token: string;
-  refresh_token: string;
 }
 
 const NEW_USER_TIME_WINDOW_MS = 2 * 60 * 1000;
@@ -133,23 +134,22 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function refreshAuthSession(refreshToken: string) {
-  const res = await authFetch("/auth/v1/token?grant_type=refresh_token", {
-    method: "POST",
-    body: JSON.stringify({ refresh_token: refreshToken }),
+  const result = await refreshSessionSingleFlight({
+    refreshToken,
+    source: "api",
+    path: "supabaseAuth:refreshAuthSession",
   });
-  if (!res) return { ok: false as const };
 
-  const payload = (await res.json()) as SupabaseAuthResponse;
-  if (!res.ok || !payload.access_token || !payload.refresh_token) {
-    return { ok: false as const };
+  if (result.kind !== "success") {
+    return {
+      ok: false as const,
+      reason: result.kind,
+    };
   }
 
   return {
     ok: true as const,
-    session: {
-      access_token: payload.access_token,
-      refresh_token: payload.refresh_token,
-    },
+    session: result.session,
   };
 }
 
@@ -179,24 +179,51 @@ export function isLikelyNewAuthUser(user: SupabaseAuthUser): boolean {
 
 export async function getRequestSessionUser(
   request: NextRequest
-): Promise<{ user: SupabaseAuthUser | null; refreshedSession: SupabaseAuthSession | null }> {
+): Promise<{
+  user: SupabaseAuthUser | null;
+  refreshedSession: SupabaseAuthSession | null;
+  reauthReason: "cookies_missing" | "session_expired" | "refresh_invalid" | null;
+}> {
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+  const path = request.nextUrl.pathname;
 
-  if (accessToken) {
+  if (accessToken && !isExpiredOrNearExpiry(accessToken)) {
     const user = await getUserForAccessToken(accessToken);
-    if (user) return { user, refreshedSession: null };
+    if (user) return { user, refreshedSession: null, reauthReason: null };
   }
 
-  if (!refreshToken) return { user: null, refreshedSession: null };
+  if (!refreshToken) {
+    const reason = accessToken ? "session_expired" : "cookies_missing";
+    emitAuthTelemetry("forced_reauth_reason", {
+      source: "api",
+      path,
+      reason,
+    });
+    return { user: null, refreshedSession: null, reauthReason: reason };
+  }
 
-  const refreshed = await refreshAuthSession(refreshToken);
-  if (!refreshed.ok) return { user: null, refreshedSession: null };
+  const refreshed = await refreshSessionSingleFlight({
+    refreshToken,
+    source: "api",
+    path,
+  });
+  if (refreshed.kind !== "success") {
+    if (refreshed.kind === "invalid") {
+      emitAuthTelemetry("forced_reauth_reason", {
+        source: "api",
+        path,
+        reason: "refresh_invalid",
+      });
+      return { user: null, refreshedSession: null, reauthReason: "refresh_invalid" };
+    }
+    return { user: null, refreshedSession: null, reauthReason: null };
+  }
 
   const user = await getUserForAccessToken(refreshed.session.access_token);
-  if (!user) return { user: null, refreshedSession: null };
+  if (!user) return { user: null, refreshedSession: null, reauthReason: null };
 
-  return { user, refreshedSession: refreshed.session };
+  return { user, refreshedSession: refreshed.session, reauthReason: null };
 }
 
 export function attachAuthCookies(
@@ -252,7 +279,7 @@ export function clearAuthCookies(response: NextResponse) {
 export async function getServerSessionUser() {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
-  if (!accessToken) return null;
+  if (!accessToken || isExpiredOrNearExpiry(accessToken)) return null;
   return getUserForAccessToken(accessToken);
 }
 
