@@ -249,22 +249,38 @@ export function ActivityTab({
                             {formatSignedNumber(row.transferImpactNet)}
                           </button>
                         }
-                        content={
-                          <ul className="space-y-1 text-sm">
-                            {row.transfers.map((transfer, index) => (
-                              <li key={index} className="flex items-center justify-between gap-4">
-                                <span className="text-muted-foreground">
-                                  {transfer.out}
-                                  <span className="mx-2">→</span>
-                                  {transfer.in}
-                                </span>
-                                <span className={`font-mono text-right ${scoreClass(transfer.impact)}`}>
-                                  {formatSignedNumber(transfer.impact)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        }
+                        content={(() => {
+                          const transferImpactGross = row.transfers.reduce(
+                            (sum, transfer) => sum + transfer.impact,
+                            0
+                          );
+                          const transferHit = row.transferImpactNet - transferImpactGross;
+
+                          return (
+                            <ul className="space-y-1 text-sm">
+                              {row.transfers.map((transfer, index) => (
+                                <li key={index} className="flex items-center justify-between gap-4">
+                                  <span className="text-muted-foreground">
+                                    {transfer.out}
+                                    <span className="mx-2">→</span>
+                                    {transfer.in}
+                                  </span>
+                                  <span className={`font-mono text-right ${scoreClass(transfer.impact)}`}>
+                                    {formatSignedNumber(transfer.impact)}
+                                  </span>
+                                </li>
+                              ))}
+                              {transferHit < 0 ? (
+                                <li className="flex items-center justify-between gap-4">
+                                  <span className="text-muted-foreground">Hit</span>
+                                  <span className={`font-mono text-right ${scoreClass(transferHit)}`}>
+                                    {formatSignedNumber(transferHit)}
+                                  </span>
+                                </li>
+                              ) : null}
+                            </ul>
+                          );
+                        })()}
                         className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
                       />
                     ) : (
