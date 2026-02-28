@@ -3,12 +3,12 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
-import { LogOut, Menu, Monitor, Moon, Sun, User } from "lucide-react";
+import { Bell, LogOut, MoreVertical, Settings, User, UserCircle } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -67,16 +67,37 @@ export function AccountMenu({ className }: AccountMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          size="icon"
-          className={cn("h-12 w-12", className)}
-          aria-label="Account settings"
+        <button
+          type="button"
+          className={cn(
+            "inline-flex h-12 w-full items-center justify-between rounded-lg px-3 text-left transition-colors hover:bg-muted/70",
+            className
+          )}
+          aria-label="Open account menu"
         >
-          <Menu className="h-5 w-5" />
-        </Button>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border bg-background">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={avatarUrl}
+                  alt={name}
+                  className="h-full w-full rounded-full object-cover"
+                  onError={() => setAvatarFailed(true)}
+                />
+              ) : (
+                <User className="h-4 w-4" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium leading-none">{name}</p>
+              <p className="truncate pt-px text-xs text-muted-foreground">{email}</p>
+            </div>
+          </div>
+          <MoreVertical className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 p-0">
+      <DropdownMenuContent align="end" side="right" className="w-64 p-0">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border bg-background">
             {avatarUrl ? (
@@ -97,55 +118,32 @@ export function AccountMenu({ className }: AccountMenuProps) {
           </div>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <div className="flex items-center justify-between gap-3 px-4 py-3">
-          <span className="text-sm text-muted-foreground">Theme</span>
-          <div className="inline-flex rounded-md border p-0.5">
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-sm",
-                theme === "light" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-              )}
-              onClick={() => setTheme("light")}
-              aria-label="Set light theme"
-            >
-              <Sun className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-sm",
-                theme === "dark" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-              )}
-              onClick={() => setTheme("dark")}
-              aria-label="Set dark theme"
-            >
-              <Moon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-8 w-8 items-center justify-center rounded-sm",
-                theme === "system" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-              )}
-              onClick={() => setTheme("system")}
-              aria-label="Use system theme"
-            >
-              <Monitor className="h-4 w-4" />
-            </button>
-          </div>
+        <div className="p-1.5">
+          <DropdownMenuItem disabled className="h-9 rounded-md px-2.5 text-sm">
+            <UserCircle className="h-4 w-4" />
+            Account (Coming Soon)
+          </DropdownMenuItem>
+          <DropdownMenuItem disabled className="h-9 rounded-md px-2.5 text-sm">
+            <Bell className="h-4 w-4" />
+            Notifications (Coming Soon)
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="h-9 rounded-md px-2.5 text-sm"
+            onSelect={(event) => {
+              event.preventDefault();
+              setTheme(theme === "dark" ? "light" : "dark");
+            }}
+          >
+            <Settings className="h-4 w-4" />
+            Theme: {theme === "dark" ? "Dark" : theme === "light" ? "Light" : "System"}
+          </DropdownMenuItem>
         </div>
         <DropdownMenuSeparator className="my-0" />
-        <div className="px-4 py-3">
-          <Button
-            type="button"
-            variant="ghost"
-            className="w-full justify-start gap-2 px-0"
-            onClick={() => void handleLogout()}
-          >
+        <div className="p-1.5">
+          <DropdownMenuItem className="h-10 rounded-md px-2.5 text-base" onSelect={() => void handleLogout()}>
             <LogOut className="h-4 w-4" />
             Log out
-          </Button>
+          </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

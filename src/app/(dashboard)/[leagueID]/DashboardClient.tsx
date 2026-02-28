@@ -14,6 +14,7 @@ import {
   Coins,
   Loader2,
   Menu,
+  Settings,
   RefreshCw,
   Table2,
   X,
@@ -700,9 +701,17 @@ export default function DashboardClient({
         >
         </div>
 
-        <div className={cn("pb-3", sidebarCollapsed ? "px-2" : "px-3")} data-sidebar-interactive="true">
+        <div className={cn("space-y-4 pb-3", sidebarCollapsed ? "px-2" : "px-3")} data-sidebar-interactive="true">
+          <button
+            type="button"
+            className="inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground transition-colors duration-150 hover:bg-muted/70"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </button>
           <AccountMenu
-            className={cn("h-9", sidebarCollapsed ? "mx-auto w-9" : "w-full justify-start")}
+            className={cn("w-full")}
           />
         </div>
       </aside>
@@ -782,9 +791,17 @@ export default function DashboardClient({
               className="h-10 w-full text-sm"
             />
 
-            <div className="mt-auto" data-sidebar-interactive="true">
+            <div className="mt-auto space-y-4" data-sidebar-interactive="true">
+              <button
+                type="button"
+                className="inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground transition-colors duration-150 hover:bg-muted/70"
+                aria-label="Settings"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </button>
               <AccountMenu
-                className="h-10 w-full"
+                className="w-full"
               />
             </div>
           </aside>
