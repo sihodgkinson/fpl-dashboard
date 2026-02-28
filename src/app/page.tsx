@@ -43,9 +43,9 @@ const pillars = [
 ];
 
 const features = [
-  "League Table with trend widgets and gameweek navigation",
-  "Manager Influence with Transfer, Chip, and Captain impact",
-  "GW 1 Table to compare original squads over the season",
+  "League with trend widgets and gameweek navigation",
+  "ManagerIQ with Transfer, Chip, and Captain impact",
+  "GW 1 to compare original squads over the season",
   "Automatic historical backfill when adding a new league",
   "Cache-first data pipeline for fast historical browsing",
   "Touch-friendly mobile UX with swipe gameweek controls",
@@ -61,8 +61,8 @@ const pricingTiers = [
     cta: "Get started",
     href: "/signin",
     features: [
-      "Live League Table + GW 1 Table",
-      "Manager Influence with decision scoring",
+      "Live League + GW 1",
+      "ManagerIQ with decision scoring",
       "Near-live updates during active gameweeks",
       "Automatic league backfill on add",
       "Up to 3 tracked leagues per account",

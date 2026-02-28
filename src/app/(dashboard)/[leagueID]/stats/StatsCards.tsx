@@ -155,12 +155,12 @@ function MiniTrendChart({
   signedTooltipValue?: boolean;
 }) {
   if (isLoading) {
-    return <Skeleton className="h-16 w-full" />;
+    return <Skeleton className="h-10 w-full" />;
   }
 
   if (!trend || trend.points.length === 0) {
     return (
-      <div className="h-16 flex items-center justify-center text-xs text-muted-foreground">
+      <div className="h-10 flex items-center justify-center text-xs text-muted-foreground">
         No trend data
       </div>
     );
@@ -174,7 +174,7 @@ function MiniTrendChart({
   const gradientId = `trend-fill-${chartId}`;
 
   return (
-    <div className="h-16 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
+    <div className="h-10 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
           <defs>
@@ -193,10 +193,10 @@ function MiniTrendChart({
             dataKey="value"
             connectNulls={false}
             stroke="currentColor"
-            strokeWidth={2}
+            strokeWidth={1.5}
             fill={`url(#${gradientId})`}
-            dot={{ r: 2.5, fill: "currentColor", stroke: "currentColor" }}
-            activeDot={{ r: 4, fill: "currentColor", stroke: "currentColor" }}
+            dot={{ r: 2, fill: "currentColor", stroke: "currentColor" }}
+            activeDot={{ r: 3, fill: "currentColor", stroke: "currentColor" }}
           />
         </AreaChart>
       </ResponsiveContainer>
@@ -219,6 +219,8 @@ function StatCard({
   signedTooltipValue,
   mode,
   onToggleMode,
+  modeGoodLabel = "Highest",
+  modePoorLabel = "Lowest",
 }: {
   title: string;
   value: number | null;
@@ -234,6 +236,8 @@ function StatCard({
   signedTooltipValue?: boolean;
   mode?: WidgetMode;
   onToggleMode?: () => void;
+  modeGoodLabel?: string;
+  modePoorLabel?: string;
 }) {
   const [contentVisible, setContentVisible] = React.useState(true);
   const ignoreNextClickRef = React.useRef(false);
@@ -295,17 +299,17 @@ function StatCard({
   if (value === null) {
     // ✅ Skeleton while loading
     return (
-      <Card className="p-4 min-h-[220px]">
-        <Skeleton className="h-4 w-24 mb-2" />
-        <div className="stat-card-metric-row flex items-center">
+      <Card className="h-[184px] gap-4 p-4">
+        <Skeleton className="mb-2 h-4 w-24" />
+        <div className="stat-card-metric-row flex items-end">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
-            <Skeleton className="h-12 w-20" />
+            <Skeleton className="h-12 w-24" />
           </div>
           <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
-            <Skeleton className="h-16 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
         </div>
-        <div className="leading-tight">
+        <div className="mt-auto leading-tight">
           <Skeleton className="mb-1 h-4 w-32" />
           <Skeleton className="h-3 w-20" />
         </div>
@@ -315,7 +319,7 @@ function StatCard({
 
   return (
     <Card
-      className={cn("p-4 min-h-[220px] flex flex-col", onToggleMode ? "cursor-pointer" : "")}
+      className={cn("flex h-[184px] flex-col gap-4 p-4", onToggleMode ? "cursor-pointer" : "")}
       onClick={handleCardClick}
       onTouchStart={handleCardTouchStart}
       onTouchMove={handleCardTouchMove}
@@ -324,7 +328,7 @@ function StatCard({
         cardTouchRef.current = null;
       }}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
+      <div className="mb-1 flex items-start justify-between gap-2">
         <p className="text-sm text-muted-foreground">{title}</p>
         {onToggleMode ? (
           <button
@@ -339,19 +343,19 @@ function StatCard({
                 ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
                 : "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
             )}
-            aria-label={`Show ${mode === "good" ? "poor" : "good"} performance`}
+            aria-label={`Show ${mode === "good" ? modePoorLabel.toLowerCase() : modeGoodLabel.toLowerCase()} performance`}
           >
-            {mode === "good" ? "Good" : "Poor"}
+            {mode === "good" ? modeGoodLabel : modePoorLabel}
           </button>
         ) : null}
       </div>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col transition-opacity duration-200",
+          "flex min-h-0 flex-1 flex-col gap-1 transition-opacity duration-200",
           contentVisible ? "opacity-100" : "opacity-0"
         )}
       >
-        <div className="stat-card-metric-row mb-2 flex items-center">
+        <div className="stat-card-metric-row flex items-end">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
             <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
               {displayValue ?? value}
@@ -515,9 +519,9 @@ export function LeagueStatsCards({
   if (hasError) return <div>Error loading stats</div>;
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:gap-4 sm:grid-cols-4">
       <StatCard
-        title={widgetMode.points === "good" ? "Most GW Points" : "Fewest GW Points"}
+        title="GW Points"
         value={
           widgetMode.points === "good"
             ? (effectiveStats?.mostPoints?.gwPoints ?? null)
@@ -542,7 +546,7 @@ export function LeagueStatsCards({
         onToggleMode={() => toggleWidgetMode("points")}
       />
       <StatCard
-        title={widgetMode.influence === "good" ? "Most GW Influence" : "Least GW Influence"}
+        title="ManagerIQ"
         value={widgetMode.influence === "good" ? mostInfluenceScore : leastInfluenceScore}
         displayValue={
           widgetMode.influence === "good" ? mostInfluenceDisplay : leastInfluenceDisplay
@@ -568,7 +572,7 @@ export function LeagueStatsCards({
         onToggleMode={() => toggleWidgetMode("influence")}
       />
       <StatCard
-        title={widgetMode.bench === "good" ? "Fewest GW Bench Points" : "Most GW Bench Points"}
+        title="Bench Points"
         value={
           widgetMode.bench === "good"
             ? (fewestBenchRow?.benchPoints ?? null)
@@ -590,10 +594,12 @@ export function LeagueStatsCards({
         chartId={widgetMode.bench === "good" ? "fewest-bench" : "most-bench"}
         enableTooltip={!disableTooltipOnTouch}
         mode={widgetMode.bench}
+        modeGoodLabel="Lowest"
+        modePoorLabel="Highest"
         onToggleMode={() => toggleWidgetMode("bench")}
       />
       <StatCard
-        title={widgetMode.captain === "good" ? "Best Captain Call" : "Worst Captain Call"}
+        title="Captain Pick"
         value={widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue}
         displayValue={formatSigned(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}
         valueClassName={captainClass(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}

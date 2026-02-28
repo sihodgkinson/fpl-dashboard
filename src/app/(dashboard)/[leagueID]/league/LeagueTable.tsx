@@ -54,8 +54,8 @@ export function LeagueTable({
   return (
     <div className="w-full overflow-x-auto rounded-md border border-border sm:h-full sm:overflow-auto mobile-landscape-table">
       <table className="w-full table-auto text-sm">
-        <thead className="sticky top-0 bg-muted dark:bg-card z-10">
-          <tr className="border-b text-foreground font-semibold">
+        <thead className="sticky top-0 z-10 bg-muted dark:bg-card [&_th]:h-10 [&_th]:!py-0 [&_th]:font-normal">
+          <tr className="border-b text-foreground font-normal">
             <th className="p-2 sm:p-4 text-left w-3/100">Pos</th>
             <th className="p-2 sm:p-4 text-left w-25/100">Team</th>
             <th className="p-2 hidden md:table-cell sm:p-4 text-left w-22/100">

@@ -57,8 +57,8 @@ export function TransfersTab({
       className="w-full overflow-x-auto rounded-md border border-border sm:h-full sm:overflow-auto mobile-landscape-table"
     >
       <table className="w-full table-auto text-sm">
-        <thead className="sticky top-0 bg-muted z-10">
-          <tr className="border-b text-foreground font-semibold bg-card">
+        <thead className="sticky top-0 z-10 bg-muted [&_th]:h-10 [&_th]:!py-0 [&_th]:font-normal">
+          <tr className="border-b text-foreground font-normal bg-card">
             <th className="p-2 sm:p-4 text-left w-1/3">Team</th>
             <th className="p-2 sm:p-4 text-left w-1/3 hidden sm:table-cell">
               Manager

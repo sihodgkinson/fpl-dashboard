@@ -2,13 +2,23 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { LeagueStatsCards } from "@/app/(dashboard)/[leagueID]/stats/StatsCards";
 import { LeagueTable } from "@/app/(dashboard)/[leagueID]/league/LeagueTable";
 import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable";
 import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
-import { AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Coins,
+  Loader2,
+  Menu,
+  Settings,
+  RefreshCw,
+  Table2,
+  X,
+} from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { AccountMenu } from "@/components/common/AccountMenu";
@@ -20,6 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
+import {
+  LEAGUEIQ_VIEW_BY_KEY,
+  LeagueIQView,
+} from "@/lib/leagueiqRoutes";
 import { EnrichedStanding } from "@/types/fpl";
 
 const fetcher = async (url: string) => {
@@ -68,6 +83,7 @@ interface DashboardClientProps {
   currentGw: number;
   maxGw: number;
   gw: number;
+  activeView: LeagueIQView;
 }
 
 const LIVE_POLL_LOCK_KEY = "fpl-live-refresh-lock";
@@ -80,7 +96,7 @@ const MOBILE_SWIPE_MIN_X_RIGHT = 54;
 const MOBILE_SWIPE_MIN_X_FAST = 28;
 const MOBILE_SWIPE_MAX_Y = 80;
 const MOBILE_SWIPE_LOCK_X = 8;
-const MOBILE_SWIPE_MIN_VELOCITY = 0.5; // px/ms
+const MOBILE_SWIPE_MIN_VELOCITY = 0.5;
 const MOBILE_SWIPE_COOLDOWN_MS = 280;
 
 function useLivePollingLeader() {
@@ -150,16 +166,21 @@ export default function DashboardClient({
   currentGw,
   maxGw,
   gw,
+  activeView,
 }: DashboardClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [tab, setTab] = React.useState("league");
   const [showOrientationHint, setShowOrientationHint] = React.useState(false);
   const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+  const [useDrawerNav, setUseDrawerNav] = React.useState(false);
   const [swipeGwFeedback, setSwipeGwFeedback] = React.useState<{
     fromGw: number;
     toGw: number;
   } | null>(null);
+  const [tab, setTab] = React.useState<"league" | "activity" | "gw1">("league");
+  const sidebarCollapsed = false;
+  const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const swipeRef = React.useRef<{
     startX: number;
     startY: number;
@@ -172,13 +193,12 @@ export default function DashboardClient({
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
   const isPollingLeader = useLivePollingLeader();
+  const activeTabKey = tab;
+  const currentPath = pathname || LEAGUEIQ_VIEW_BY_KEY.tables.path;
 
-  // Find the selected league's preloaded data
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
   const hasPreloadedCurrentGwData =
-    gw === currentGw &&
-    !!selectedLeague?.standings &&
-    selectedLeague.standings.length > 0;
+    gw === currentGw && !!selectedLeague?.standings && selectedLeague.standings.length > 0;
 
   const { data, error } = useSWR<StandingsResponse>(
     `/api/league?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
@@ -194,6 +214,7 @@ export default function DashboardClient({
       revalidateOnFocus: false,
     }
   );
+
   const { data: backfillStatus, mutate: mutateBackfillStatus } = useSWR<BackfillStatusResponse>(
     "/api/user/backfill-status",
     fetcher,
@@ -207,13 +228,8 @@ export default function DashboardClient({
     }
   );
 
-  const standings = Array.isArray(data?.standings)
-    ? data.standings
-    : [];
-  const {
-    data: gw1Data,
-    error: gw1Error,
-  } = useSWR<GW1TableResponse>(
+  const standings = Array.isArray(data?.standings) ? data.standings : [];
+  const { data: gw1Data, error: gw1Error } = useSWR<GW1TableResponse>(
     `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`,
     fetcher,
     {
@@ -233,6 +249,43 @@ export default function DashboardClient({
   const [isRetryingBackfill, setIsRetryingBackfill] = React.useState(false);
   const previousHasActiveBackfillJobsRef = React.useRef(false);
 
+  const sidebarQueryString = React.useMemo(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("leagueId", String(selectedLeagueId));
+    params.set("gw", String(gw));
+    return params.toString();
+  }, [gw, searchParams, selectedLeagueId]);
+
+  const leagueIQSidebarItems = React.useMemo(
+    () => [
+      {
+        key: "tables",
+        label: "Tables",
+        href: `${LEAGUEIQ_VIEW_BY_KEY.tables.path}?${sidebarQueryString}`,
+        icon: Table2,
+        active: activeView === "tables",
+        placeholder: false,
+      },
+      {
+        key: "transfers",
+        label: "Transfers",
+        href: "#",
+        icon: RefreshCw,
+        active: false,
+        placeholder: true,
+      },
+      {
+        key: "chips",
+        label: "Chips",
+        href: "#",
+        icon: Coins,
+        active: false,
+        placeholder: true,
+      },
+    ],
+    [activeView, sidebarQueryString]
+  );
+
   const prefetchKey = React.useCallback(
     async (key: string) => {
       if (prefetchedKeysRef.current.has(key)) return;
@@ -244,7 +297,6 @@ export default function DashboardClient({
           revalidate: false,
         });
       } catch {
-        // Allow retries if a background prefetch fails.
         prefetchedKeysRef.current.delete(key);
       }
     },
@@ -255,27 +307,22 @@ export default function DashboardClient({
     const keysToPrefetch = new Set<string>();
     const immutableGwLookback = 2;
 
-    // Current GW activity is effectively immutable after lock.
     keysToPrefetch.add(
       `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
     );
-    keysToPrefetch.add(
-      `/api/stats-trend?leagueId=${selectedLeagueId}&gw=${gw}&window=8`
-    );
+    keysToPrefetch.add(`/api/stats-trend?leagueId=${selectedLeagueId}&gw=${gw}&window=8`);
 
-    // Prefetch inactive tab payload for the currently selected GW.
-    if (tab !== "activity") {
+    if (activeTabKey !== "activity") {
       keysToPrefetch.add(
         `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
     }
-    if (tab !== "gw1") {
+    if (activeTabKey !== "gw1") {
       keysToPrefetch.add(
         `/api/gw1-table?leagueId=${selectedLeagueId}&gw=${gw}&currentGw=${currentGw}`
       );
     }
 
-    // Warm nearby immutable GWs so backward navigation feels instant.
     if (gw > 1) {
       const fromGw = Math.max(1, gw - immutableGwLookback);
       for (let candidateGw = fromGw; candidateGw < gw; candidateGw += 1) {
@@ -306,7 +353,7 @@ export default function DashboardClient({
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [currentGw, gw, prefetchKey, selectedLeagueId, tab]);
+  }, [activeTabKey, currentGw, gw, prefetchKey, selectedLeagueId]);
 
   React.useEffect(() => {
     if (gw !== currentGw) return;
@@ -315,9 +362,7 @@ export default function DashboardClient({
 
     const refreshCurrentGw = async () => {
       await Promise.allSettled([
-        mutate(
-          `/api/league?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
-        ),
+        mutate(`/api/league?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`),
         mutate(
           `/api/activity-impact?leagueId=${selectedLeagueId}&gw=${currentGw}&currentGw=${currentGw}`
         ),
@@ -332,10 +377,37 @@ export default function DashboardClient({
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const evaluateDrawerMode = () => {
+      const isNarrowMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isPhoneLandscape = window.matchMedia(
+        "(orientation: landscape) and (pointer: coarse) and (max-height: 540px)"
+      ).matches;
+      setUseDrawerNav(isNarrowMobile || isPhoneLandscape);
+    };
+
+    evaluateDrawerMode();
+    window.addEventListener("resize", evaluateDrawerMode);
+    window.addEventListener("orientationchange", evaluateDrawerMode);
+
+    return () => {
+      window.removeEventListener("resize", evaluateDrawerMode);
+      window.removeEventListener("orientationchange", evaluateDrawerMode);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!useDrawerNav) {
+      setMobileSidebarOpen(false);
+    }
+  }, [useDrawerNav]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const evaluateHintVisibility = () => {
       const isLandscape = window.matchMedia("(orientation: landscape)").matches;
       const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const isMobileViewport = useDrawerNav;
       const persistedDismissed =
         window.localStorage.getItem(ORIENTATION_HINT_DISMISSED_KEY) === "1";
 
@@ -356,13 +428,13 @@ export default function DashboardClient({
       window.removeEventListener("resize", evaluateHintVisibility);
       window.removeEventListener("orientationchange", evaluateHintVisibility);
     };
-  }, []);
+  }, [useDrawerNav]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
     const evaluateSwipeHintVisibility = () => {
-      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const isMobileViewport = useDrawerNav;
       const dismissed = window.localStorage.getItem(SWIPE_HINT_DISMISSED_KEY) === "1";
       setShowSwipeHint(isMobileViewport && !dismissed);
     };
@@ -372,7 +444,7 @@ export default function DashboardClient({
     return () => {
       window.removeEventListener("resize", evaluateSwipeHintVisibility);
     };
-  }, []);
+  }, [useDrawerNav]);
 
   const dismissOrientationHint = React.useCallback(() => {
     if (typeof window !== "undefined") {
@@ -428,6 +500,10 @@ export default function DashboardClient({
     return () => window.clearTimeout(timeout);
   }, [showBackfillSuccess]);
 
+  React.useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [gw, selectedLeagueId]);
+
   const handleRetryBackfill = React.useCallback(async () => {
     if (isRetryingBackfill) return;
     setIsRetryingBackfill(true);
@@ -467,10 +543,9 @@ export default function DashboardClient({
       const params = new URLSearchParams(currentParams.toString());
       params.set("gw", String(clampedTargetGw));
       params.set("leagueId", String(selectedLeagueId));
-      router.push(`/dashboard?${params.toString()}`, { scroll: false });
+      router.push(`${currentPath}?${params.toString()}`, { scroll: false });
 
       if (typeof window !== "undefined") {
-        // iOS/Safari can still jump despite scroll:false, so force-restore a few frames.
         let attempts = 0;
         const restoreScroll = () => {
           window.scrollTo({ top: currentScrollY, left: 0, behavior: "auto" });
@@ -486,20 +561,21 @@ export default function DashboardClient({
         isSwipeNavigatingRef.current = false;
       }
     },
-    [gw, maxGw, router, searchParams, selectedLeagueId]
+    [currentPath, gw, maxGw, router, searchParams, selectedLeagueId]
   );
 
   const isSwipeEligibleTarget = React.useCallback((target: EventTarget | null) => {
     const element = target instanceof HTMLElement ? target : null;
     if (!element) return false;
     return !element.closest(
-      'button, a, input, select, textarea, [role="button"], [role="menuitem"], [data-radix-select-trigger]'
+      'button, a, input, select, textarea, [role="button"], [role="menuitem"], [data-radix-select-trigger], [data-sidebar-interactive="true"]'
     );
   }, []);
 
   const handleMobileSwipeStart = React.useCallback(
     (event: React.TouchEvent<HTMLElement>) => {
       if (window.matchMedia("(min-width: 640px)").matches) return;
+      if (mobileSidebarOpen) return;
       if (event.touches.length !== 1) return;
       if (!isSwipeEligibleTarget(event.target)) return;
       const touch = event.touches[0];
@@ -511,11 +587,12 @@ export default function DashboardClient({
         valid: true,
       };
     },
-    [isSwipeEligibleTarget]
+    [isSwipeEligibleTarget, mobileSidebarOpen]
   );
 
   const handleMobileSwipeMove = React.useCallback((event: React.TouchEvent<HTMLElement>) => {
     if (window.matchMedia("(min-width: 640px)").matches) return;
+    if (mobileSidebarOpen) return;
     const state = swipeRef.current;
     if (!state || !state.valid || event.touches.length !== 1) return;
 
@@ -530,18 +607,18 @@ export default function DashboardClient({
     }
 
     if (state.horizontalLocked && absX > absY) {
-      // Keep vertical scroll from stealing the gesture once horizontal intent is clear.
       event.preventDefault();
     }
 
     if (absY > MOBILE_SWIPE_MAX_Y && absY > absX) {
       state.valid = false;
     }
-  }, []);
+  }, [mobileSidebarOpen]);
 
   const handleMobileSwipeEnd = React.useCallback(
     (event: React.TouchEvent<HTMLElement>) => {
       if (window.matchMedia("(min-width: 640px)").matches) return;
+      if (mobileSidebarOpen) return;
       const state = swipeRef.current;
       swipeRef.current = null;
       if (!state || !state.valid) return;
@@ -560,8 +637,7 @@ export default function DashboardClient({
 
       const minimumDistance = deltaX < 0 ? MOBILE_SWIPE_MIN_X_LEFT : MOBILE_SWIPE_MIN_X_RIGHT;
       const hasDistanceSwipe = absX >= minimumDistance;
-      const hasFastSwipe =
-        absX >= MOBILE_SWIPE_MIN_X_FAST && velocityX >= MOBILE_SWIPE_MIN_VELOCITY;
+      const hasFastSwipe = absX >= MOBILE_SWIPE_MIN_X_FAST && velocityX >= MOBILE_SWIPE_MIN_VELOCITY;
       if (!hasDistanceSwipe && !hasFastSwipe) return;
 
       if (deltaX < 0 && gw < maxGw) {
@@ -570,7 +646,7 @@ export default function DashboardClient({
         navigateToGw(gw - 1, "swipe");
       }
     },
-    [gw, maxGw, navigateToGw]
+    [gw, maxGw, mobileSidebarOpen, navigateToGw]
   );
 
   const handleMobileSwipeCancel = React.useCallback(() => {
@@ -578,99 +654,210 @@ export default function DashboardClient({
   }, []);
 
   return (
-    <div className="mobile-landscape-scroll-shell flex min-h-svh flex-col sm:h-svh sm:min-h-svh sm:overflow-hidden">
-      {/* Header with selectors */}
-      <header className="px-4 pt-0 pb-0 sm:border-b sm:border-border sm:px-4 sm:pt-0 md:px-5">
-        <div className="flex flex-col gap-0">
-          {/* Top row: Brand + controls */}
-          <div className="flex h-[72px] w-full items-center justify-between gap-3">
-            <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
+    <div className="flex min-h-svh bg-background text-foreground">
+      <aside
+        className={cn(
+          "hidden border-r border-border bg-muted/20 sm:flex sm:flex-col sm:transition-[width] sm:duration-200",
+          useDrawerNav && "sm:hidden",
+          sidebarCollapsed ? "sm:w-16" : "sm:w-64"
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-16 items-center border-b border-border",
+            sidebarCollapsed ? "justify-center" : "justify-between gap-2",
+            sidebarCollapsed ? "px-2" : "px-3"
+          )}
+        >
+          {!sidebarCollapsed ? (
+            <Link href="/" className="flex items-center gap-2 overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo-light.svg"
-                alt="GameweekIQ logo"
-                className="h-8 w-8 object-contain dark:hidden"
-              />
+              <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/logo-dark.svg"
-                alt="GameweekIQ logo"
-                className="hidden h-8 w-8 object-contain dark:block"
-              />
-              <span className="text-base font-medium tracking-tight">GameweekIQ</span>
+              <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
+              <span className="text-sm font-medium">GameweekIQ</span>
             </Link>
+          ) : null}
+        </div>
 
-            <div className="sm:hidden">
-              <AccountMenu
-                className="h-8 w-8 shrink-0"
-                selectedLeagueId={selectedLeagueId}
-                selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
-                currentGw={currentGw}
-              />
+        <div className={cn("mt-4", sidebarCollapsed ? "px-2" : "px-3")}>
+          {!sidebarCollapsed ? (
+            <p className="px-2 pb-1 text-xs font-medium tracking-wide text-muted-foreground">
+              LeagueIQ
+            </p>
+          ) : null}
+        </div>
+
+        <nav className={cn("mt-1 flex flex-col gap-1", sidebarCollapsed ? "px-2" : "px-3")}>
+          {leagueIQSidebarItems.map((item) => {
+            const Icon = item.icon;
+            const itemClasses = cn(
+              "inline-flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150",
+              item.active
+                ? "bg-muted/70 text-foreground"
+                : item.placeholder
+                  ? "text-foreground"
+                  : "text-foreground hover:bg-muted/70 hover:text-foreground",
+              sidebarCollapsed && "mx-auto w-8 justify-center px-0",
+              item.placeholder && "pointer-events-none cursor-default opacity-50"
+            );
+
+            if (item.placeholder) {
+              return (
+                <div key={item.key} className={itemClasses} aria-disabled="true">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                </div>
+              );
+            }
+
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={itemClasses}
+              >
+                <Icon className="h-4 w-4 shrink-0" />
+                {!sidebarCollapsed ? <span>{item.label}</span> : null}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div
+          className={cn(
+            "mt-1 flex flex-1 flex-col gap-3 overflow-y-auto",
+            sidebarCollapsed ? "px-2" : "px-3"
+          )}
+        >
+        </div>
+
+        <div className={cn("space-y-4 pb-3", sidebarCollapsed ? "px-2" : "px-3")} data-sidebar-interactive="true">
+          <button
+            type="button"
+            disabled
+            className="inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground opacity-50 disabled:pointer-events-none"
+            aria-label="Settings"
+          >
+            <Settings className="h-4 w-4" />
+            <span>Settings</span>
+          </button>
+          <AccountMenu
+            className={cn("w-full")}
+          />
+        </div>
+      </aside>
+
+      {useDrawerNav && mobileSidebarOpen ? (
+        <>
+          <button
+            type="button"
+            className={cn("fixed inset-0 z-40 bg-background/70", !useDrawerNav && "sm:hidden")}
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-label="Close sidebar"
+          />
+          <aside className={cn(
+            "fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 pb-4 shadow-2xl",
+            !useDrawerNav && "sm:hidden"
+          )}>
+            <div className="mx-[-16px] flex h-16 items-center justify-between border-b border-border px-4">
+              <Link href="/" className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
+                <span className="text-sm font-medium">GameweekIQ</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setMobileSidebarOpen(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border"
+                aria-label="Close sidebar"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
 
-            <div className="hidden items-center gap-2 sm:flex">
-              {hasActiveBackfillJobs ? (
-                <div className="inline-flex h-8 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  <span>Updating league data</span>
-                </div>
-              ) : null}
-              {!hasActiveBackfillJobs && failedJobs > 0 ? (
-                <button
-                  type="button"
-                  onClick={handleRetryBackfill}
-                  disabled={isRetryingBackfill}
-                  className="inline-flex h-8 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
-                >
-                  <AlertTriangle className="h-3.5 w-3.5" />
-                  <span>Failed to update league data. Click to retry.</span>
-                </button>
-              ) : null}
-              {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-                <div className="inline-flex h-8 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>League data updated successfully</span>
-                </div>
-              ) : null}
-              <LeagueSelector
-                leagues={leagues}
-                selectedLeagueId={selectedLeagueId}
-                currentGw={currentGw}
-                className="w-[240px] !h-8 text-sm"
-              />
+            <div>
+              <p className="pb-1 text-xs font-medium text-muted-foreground">
+                LeagueIQ
+              </p>
+            </div>
+
+            <nav className="flex flex-col gap-1">
+              {leagueIQSidebarItems.map((item) => {
+                const Icon = item.icon;
+                const itemClasses = cn(
+                  "inline-flex h-8 items-center rounded-md px-3 text-sm transition-colors duration-150",
+                  item.active
+                    ? "bg-muted/70 text-foreground"
+                    : item.placeholder
+                      ? "text-foreground"
+                      : "text-foreground hover:bg-muted/70 hover:text-foreground",
+                  item.placeholder && "pointer-events-none cursor-default opacity-50"
+                );
+
+                if (item.placeholder) {
+                  return (
+                    <div key={item.key} className={itemClasses} aria-disabled="true">
+                      <Icon className="mr-2 h-4 w-4 shrink-0" />
+                      {item.label}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.key}
+                    href={item.href}
+                    className={itemClasses}
+                  >
+                    <Icon className="mr-2 h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <div className="mt-auto space-y-4" data-sidebar-interactive="true">
+              <button
+                type="button"
+                disabled
+                className="inline-flex h-8 w-full items-center gap-2 rounded-md px-2 text-sm text-foreground opacity-50 disabled:pointer-events-none"
+                aria-label="Settings"
+              >
+                <Settings className="h-4 w-4" />
+                <span>Settings</span>
+              </button>
               <AccountMenu
-                className="h-8 w-8 shrink-0"
-                selectedLeagueId={selectedLeagueId}
-                selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
-                currentGw={currentGw}
+                className="w-full"
               />
             </div>
+          </aside>
+        </>
+      ) : null}
+
+      <div className="mobile-landscape-scroll-shell flex min-h-svh flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className={cn(
+                "inline-flex h-9 w-9 items-center justify-center rounded-md border border-border",
+                !useDrawerNav && "sm:hidden"
+              )}
+              aria-label="Open sidebar"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+            <h1 className="text-base font-semibold tracking-tight sm:text-lg">
+              {LEAGUEIQ_VIEW_BY_KEY.tables.label}
+            </h1>
           </div>
-
-          <div className="-mx-4 border-b border-border sm:hidden md:-mx-5" />
-
-          {/* Mobile row: League selector + GW selector */}
-          <div className="w-full pb-0 pt-4 sm:hidden">
-            <div className="flex w-full items-center gap-2">
-              <LeagueSelector
-                leagues={leagues}
-                selectedLeagueId={selectedLeagueId}
-                currentGw={currentGw}
-                className="min-w-0 flex-1 !h-8 [@media(orientation:portrait)]:!h-12 text-sm"
-              />
-              <div className="ml-auto w-[96px] shrink-0">
-                <GameweekSelector
-                  selectedLeagueId={selectedLeagueId}
-                  currentGw={currentGw}
-                  maxGw={maxGw}
-                  showArrows={false}
-                  className="!h-8 [@media(orientation:portrait)]:!h-12 w-full text-sm"
-                />
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
             {hasActiveBackfillJobs ? (
-              <div className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+              <div className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 <span>Updating league data</span>
               </div>
@@ -680,138 +867,154 @@ export default function DashboardClient({
                 type="button"
                 onClick={handleRetryBackfill}
                 disabled={isRetryingBackfill}
-                className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+                className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
               >
                 <AlertTriangle className="h-3.5 w-3.5" />
-                <span>Failed to update league data. Click to retry.</span>
+                <span>Failed to update league data. Retry.</span>
               </button>
             ) : null}
             {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-              <div className="mt-2 inline-flex h-8 w-full items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+              <div className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>League data updated successfully</span>
+                <span>League data updated</span>
               </div>
             ) : null}
-            <div className="w-full">
-              {showSwipeHint ? (
-                <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                  <span>Swipe left/right to change GW.</span>
-                  <button
-                    type="button"
-                    onClick={dismissSwipeHint}
-                    aria-label="Dismiss swipe hint"
-                    className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ) : null}
+            <LeagueSelector
+              leagues={leagues}
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              className="h-8 w-[170px] sm:w-[220px] text-sm"
+            />
+          </div>
+        </header>
+
+        {swipeGwFeedback ? (
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center sm:hidden">
+            <div className="rounded-xl border border-border/60 bg-background/60 px-5 py-4 text-2xl font-semibold tracking-tight shadow-2xl backdrop-blur-md">
+              GW {swipeGwFeedback.fromGw} → {swipeGwFeedback.toGw}
             </div>
-          </div>
-        </div>
-      </header>
-
-      {swipeGwFeedback ? (
-        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center sm:hidden">
-          <div className="rounded-xl border border-border/60 bg-background/60 px-5 py-4 text-2xl font-semibold tracking-tight shadow-2xl backdrop-blur-md">
-            GW {swipeGwFeedback.fromGw} → {swipeGwFeedback.toGw}
-          </div>
-        </div>
-      ) : null}
-
-      {/* Main content */}
-      <main
-        className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-5"
-        onTouchStart={handleMobileSwipeStart}
-        onTouchMove={handleMobileSwipeMove}
-        onTouchEnd={handleMobileSwipeEnd}
-        onTouchCancel={handleMobileSwipeCancel}
-      >
-        {/* Stats cards */}
-        <LeagueStatsCards
-          stats={stats}
-          standings={standings}
-          leagueId={selectedLeagueId}
-          gw={gw}
-          currentGw={currentGw}
-          isLoading={isLeagueDataLoading}
-          hasError={Boolean(error)}
-        />
-
-        {/* ✅ Mobile dropdown for tabs */}
-        <div className="block sm:hidden w-full">
-          <Select value={tab} onValueChange={setTab}>
-            <SelectTrigger className="w-full !h-12 text-base">
-              <SelectValue placeholder="Select view" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="league">League Table</SelectItem>
-              <SelectItem value="activity">Manager Influence</SelectItem>
-              <SelectItem value="gw1">GW 1 Table</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* ✅ Desktop tabs + gameweek row */}
-        <div className="hidden w-full items-center justify-between sm:flex">
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList>
-              <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
-                League Table
-              </TabsTrigger>
-              <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
-                Manager Influence
-              </TabsTrigger>
-              <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
-                GW 1 Table
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <GameweekSelector
-            selectedLeagueId={selectedLeagueId}
-            currentGw={currentGw}
-            maxGw={maxGw}
-            className="!h-12 sm:text-sm"
-          />
-        </div>
-
-        {showOrientationHint ? (
-          <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-            <span>Viewing compact table. Rotate to landscape for full columns.</span>
-            <button
-              type="button"
-              onClick={dismissOrientationHint}
-              aria-label="Dismiss orientation hint"
-              className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
           </div>
         ) : null}
 
-        {/* ✅ Tab content (all pre-mounted, hidden with CSS) */}
-        <div className="flex w-full min-h-0 flex-1 flex-col">
-          <div className={tab === "league" ? "min-h-0 flex-1" : "hidden"}>
-            <LeagueTable
-              standings={standings}
-              isLoading={isLeagueDataLoading}
-              hasError={Boolean(error)}
+        <main
+          className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-4 sm:overflow-hidden sm:p-4 md:p-4"
+          onTouchStart={handleMobileSwipeStart}
+          onTouchMove={handleMobileSwipeMove}
+          onTouchEnd={handleMobileSwipeEnd}
+          onTouchCancel={handleMobileSwipeCancel}
+        >
+          <LeagueStatsCards
+            stats={stats}
+            standings={standings}
+            leagueId={selectedLeagueId}
+            gw={gw}
+            currentGw={currentGw}
+            isLoading={isLeagueDataLoading}
+            hasError={Boolean(error)}
+          />
+
+          <div className="flex w-full items-center gap-2 sm:hidden">
+            <div className="min-w-0 flex-1">
+              <Select value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
+                <SelectTrigger className="h-8 w-full text-sm">
+                  <SelectValue placeholder="Select table" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="league">League</SelectItem>
+                  <SelectItem value="activity">ManagerIQ</SelectItem>
+                  <SelectItem value="gw1">GW 1 Team</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <GameweekSelector
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              maxGw={maxGw}
+              size="sm"
+              className="h-8 text-sm"
             />
           </div>
 
-          <div className={tab === "activity" ? "min-h-0 flex-1" : "hidden"}>
-            <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
-          </div>
-
-          <div className={tab === "gw1" ? "min-h-0 flex-1" : "hidden"}>
-            <GW1Table
-              standings={gw1Standings}
-              isLoading={!gw1Data && !gw1Error}
-              hasError={Boolean(gw1Error)}
+          <div className="hidden w-full items-center justify-between gap-3 sm:flex">
+            <Tabs value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
+              <TabsList className="h-8 p-[2px]">
+                <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
+                  League
+                </TabsTrigger>
+                <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
+                  ManagerIQ
+                </TabsTrigger>
+                <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
+                  GW 1 Team
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <GameweekSelector
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              maxGw={maxGw}
+              size="sm"
+              className="h-8 text-sm"
             />
           </div>
-        </div>
-      </main>
+
+          {showSwipeHint ? (
+            <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              <span>Swipe left/right to change GW.</span>
+              <button
+                type="button"
+                onClick={dismissSwipeHint}
+                aria-label="Dismiss swipe hint"
+                className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : null}
+
+          {showOrientationHint ? (
+            <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+              <span>Viewing compact table. Rotate to landscape for full columns.</span>
+              <button
+                type="button"
+                onClick={dismissOrientationHint}
+                aria-label="Dismiss orientation hint"
+                className="rounded-sm p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : null}
+
+          <div className="flex w-full min-h-0 flex-1 flex-col">
+            {tab === "league" ? (
+              <div className="min-h-0 flex-1">
+                <LeagueTable
+                  standings={standings}
+                  isLoading={isLeagueDataLoading}
+                  hasError={Boolean(error)}
+                />
+              </div>
+            ) : null}
+
+            {tab === "activity" ? (
+              <div className="min-h-0 flex-1">
+                <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
+              </div>
+            ) : null}
+
+            {tab === "gw1" ? (
+              <div className="min-h-0 flex-1">
+                <GW1Table
+                  standings={gw1Standings}
+                  isLoading={!gw1Data && !gw1Error}
+                  hasError={Boolean(gw1Error)}
+                />
+              </div>
+            ) : null}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

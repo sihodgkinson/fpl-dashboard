@@ -1,5 +1,7 @@
 # GameweekIQ Product Owner Source Document
 
+Last updated: 2026-02-28
+
 ## 1) Product Snapshot
 - Product name: `GameweekIQ`
 - Domain: `https://gameweekiq.com`
@@ -28,17 +30,27 @@
 - Waitlist capture on Pricing card via `src/components/common/WaitlistSignup.tsx` -> `POST /api/waitlist`.
 - Contact link uses mailto to `hello@gameweekiq.com`.
 
-### Authenticated app (`/dashboard` -> `/app/(dashboard)/[leagueID]`)
-Main tabs:
-- `League Table`
-- `Manager Influence`
-- `GW 1 Table`
+### Authenticated app (AppShell foundation)
+- Persistent AppShell with:
+  - left navigation sidebar
+  - main content area
+  - slim utility header
+- LeagueIQ is now the formal scoped surface.
+- Primary LeagueIQ nav:
+  - `Tables` (active page)
+  - `Transfers` (placeholder, disabled)
+  - `Chips` (placeholder, disabled)
+- LeagueIQ table view retains in-content tabs:
+  - `League`
+  - `ManagerIQ`
+  - `GW 1 Team`
 
 Supporting behaviors:
 - League selector
 - Gameweek selector
 - Stats cards with trend sparklines
 - Backfill status pills in header (queued/running/success/failure + retry)
+- Sidebar account/profile menu with placeholder disabled items (Account/Billing/Notifications/Settings)
 
 ### Onboarding gate (first-time auth users)
 - If user has no leagues, onboarding gate asks user to add first league.
@@ -162,11 +174,15 @@ Backlog decisions should be capacity-aware:
 
 ## 10) Mobile and UX Requirements (Do Not Regress)
 Critical UX commitments already implemented:
-- swipe left/right for GW change (mobile)
 - portrait touch-target tuning
 - orientation hint behavior
 - header parity and status pills
 - full light/dark coverage across landing + dashboard
+- slide-out drawer navigation for mobile, including phone landscape
+
+Current known behavior (as of this update):
+- mobile GW swipe-to-change-week is temporarily disabled while card/drawer interactions are stabilized
+- phone landscape now uses slide-out navigation instead of fixed desktop sidebar to avoid content breakage
 
 If stories touch dashboard shell/header/selectors, regression testing must include:
 - iPhone Safari + Chrome
