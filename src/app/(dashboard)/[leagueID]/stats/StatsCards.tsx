@@ -219,6 +219,8 @@ function StatCard({
   signedTooltipValue,
   mode,
   onToggleMode,
+  modeGoodLabel = "Highest",
+  modePoorLabel = "Lowest",
 }: {
   title: string;
   value: number | null;
@@ -234,6 +236,8 @@ function StatCard({
   signedTooltipValue?: boolean;
   mode?: WidgetMode;
   onToggleMode?: () => void;
+  modeGoodLabel?: string;
+  modePoorLabel?: string;
 }) {
   const [contentVisible, setContentVisible] = React.useState(true);
   const ignoreNextClickRef = React.useRef(false);
@@ -339,9 +343,9 @@ function StatCard({
                 ? "border-green-500/40 bg-green-500/10 text-green-600 dark:text-green-400"
                 : "border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-400"
             )}
-            aria-label={`Show ${mode === "good" ? "poor" : "good"} performance`}
+            aria-label={`Show ${mode === "good" ? modePoorLabel.toLowerCase() : modeGoodLabel.toLowerCase()} performance`}
           >
-            {mode === "good" ? "Good" : "Poor"}
+            {mode === "good" ? modeGoodLabel : modePoorLabel}
           </button>
         ) : null}
       </div>
@@ -515,9 +519,9 @@ export function LeagueStatsCards({
   if (hasError) return <div>Error loading stats</div>;
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:gap-6 sm:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:gap-4 sm:grid-cols-4">
       <StatCard
-        title={widgetMode.points === "good" ? "Most GW Points" : "Fewest GW Points"}
+        title="GW Points"
         value={
           widgetMode.points === "good"
             ? (effectiveStats?.mostPoints?.gwPoints ?? null)
@@ -542,7 +546,7 @@ export function LeagueStatsCards({
         onToggleMode={() => toggleWidgetMode("points")}
       />
       <StatCard
-        title={widgetMode.influence === "good" ? "Most GW Influence" : "Least GW Influence"}
+        title="ManagerIQ"
         value={widgetMode.influence === "good" ? mostInfluenceScore : leastInfluenceScore}
         displayValue={
           widgetMode.influence === "good" ? mostInfluenceDisplay : leastInfluenceDisplay
@@ -568,7 +572,7 @@ export function LeagueStatsCards({
         onToggleMode={() => toggleWidgetMode("influence")}
       />
       <StatCard
-        title={widgetMode.bench === "good" ? "Fewest GW Bench Points" : "Most GW Bench Points"}
+        title="Bench Points"
         value={
           widgetMode.bench === "good"
             ? (fewestBenchRow?.benchPoints ?? null)
@@ -590,10 +594,12 @@ export function LeagueStatsCards({
         chartId={widgetMode.bench === "good" ? "fewest-bench" : "most-bench"}
         enableTooltip={!disableTooltipOnTouch}
         mode={widgetMode.bench}
+        modeGoodLabel="Lowest"
+        modePoorLabel="Highest"
         onToggleMode={() => toggleWidgetMode("bench")}
       />
       <StatCard
-        title={widgetMode.captain === "good" ? "Best Captain Call" : "Worst Captain Call"}
+        title="Captain Pick"
         value={widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue}
         displayValue={formatSigned(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}
         valueClassName={captainClass(widgetMode.captain === "good" ? bestCaptainValue : worstCaptainValue)}

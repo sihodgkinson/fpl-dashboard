@@ -58,6 +58,7 @@ export function LeagueSelector({
           <Button
             type="button"
             variant="outline"
+            size="sm"
             className={cn(
               "w-56 justify-start overflow-hidden text-left",
               className
@@ -89,7 +90,7 @@ export function LeagueSelector({
         router.push(`${pathname || "/dashboard"}?${params.toString()}`);
       }}
     >
-      <SelectTrigger className={cn("w-56", className)}>
+      <SelectTrigger size="sm" className={cn("w-56", className)}>
         <SelectValue placeholder="Select League" />
       </SelectTrigger>
       <SelectContent>

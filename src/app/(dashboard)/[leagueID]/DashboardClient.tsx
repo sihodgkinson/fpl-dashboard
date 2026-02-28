@@ -10,23 +10,30 @@ import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable
 import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
 import {
   AlertTriangle,
-  BarChart3,
   CheckCircle2,
+  Coins,
   Loader2,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
+  RefreshCw,
   Table2,
-  Trophy,
   X,
 } from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
 import { LeagueSelector } from "@/components/common/LeagueSelector";
 import { AccountMenu } from "@/components/common/AccountMenu";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   LEAGUEIQ_VIEW_BY_KEY,
-  LEAGUEIQ_VIEWS,
   LeagueIQView,
 } from "@/lib/leagueiqRoutes";
 import { EnrichedStanding } from "@/types/fpl";
@@ -155,12 +162,6 @@ function useLivePollingLeader() {
   return isLeader;
 }
 
-function getActiveTabKey(activeView: LeagueIQView): "league" | "activity" | "gw1" {
-  if (activeView === "manager-influence") return "activity";
-  if (activeView === "gw1-table") return "gw1";
-  return "league";
-}
-
 export default function DashboardClient({
   leagues,
   selectedLeagueId,
@@ -178,6 +179,7 @@ export default function DashboardClient({
     fromGw: number;
     toGw: number;
   } | null>(null);
+  const [tab, setTab] = React.useState<"league" | "activity" | "gw1">("league");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const swipeRef = React.useRef<{
@@ -192,8 +194,8 @@ export default function DashboardClient({
   const prefetchedKeysRef = React.useRef<Set<string>>(new Set());
   const { mutate } = useSWRConfig();
   const isPollingLeader = useLivePollingLeader();
-  const activeTabKey = getActiveTabKey(activeView);
-  const currentPath = pathname || LEAGUEIQ_VIEW_BY_KEY["league-table"].path;
+  const activeTabKey = tab;
+  const currentPath = pathname || LEAGUEIQ_VIEW_BY_KEY.tables.path;
 
   const selectedLeague = leagues.find((l) => l.id === selectedLeagueId);
   const hasPreloadedCurrentGwData =
@@ -254,6 +256,34 @@ export default function DashboardClient({
     params.set("gw", String(gw));
     return params.toString();
   }, [gw, searchParams, selectedLeagueId]);
+
+  const leagueIQSidebarItems = React.useMemo(
+    () => [
+      {
+        key: "tables",
+        label: "Tables",
+        href: `${LEAGUEIQ_VIEW_BY_KEY.tables.path}?${sidebarQueryString}`,
+        icon: Table2,
+        active: activeView === "tables",
+        placeholder: false,
+      },
+      {
+        key: "transfers",
+        label: "Transfers",
+        icon: RefreshCw,
+        active: false,
+        placeholder: true,
+      },
+      {
+        key: "chips",
+        label: "Chips",
+        icon: Coins,
+        active: false,
+        placeholder: true,
+      },
+    ],
+    [activeView, sidebarQueryString]
+  );
 
   const prefetchKey = React.useCallback(
     async (key: string) => {
@@ -457,7 +487,7 @@ export default function DashboardClient({
 
   React.useEffect(() => {
     setMobileSidebarOpen(false);
-  }, [activeView, gw, selectedLeagueId]);
+  }, [gw, selectedLeagueId]);
 
   const handleRetryBackfill = React.useCallback(async () => {
     if (isRetryingBackfill) return;
@@ -612,71 +642,84 @@ export default function DashboardClient({
     <div className="flex min-h-svh bg-background text-foreground">
       <aside
         className={cn(
-          "hidden border-r border-border bg-muted/20 sm:flex sm:flex-col sm:gap-4 sm:py-4 sm:transition-[width] sm:duration-200",
-          sidebarCollapsed ? "sm:w-[88px] sm:px-2" : "sm:w-72 sm:px-3"
+          "hidden border-r border-border bg-muted/20 sm:flex sm:flex-col sm:transition-[width] sm:duration-200",
+          sidebarCollapsed ? "sm:w-16" : "sm:w-64"
         )}
       >
-        <div className="flex items-center justify-between gap-2 px-1">
-          <Link href="/" className="flex items-center gap-2 overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
-            {!sidebarCollapsed ? <span className="text-sm font-medium">GameweekIQ</span> : null}
-          </Link>
+        <div
+          className={cn(
+            "flex h-16 items-center border-b border-border",
+            sidebarCollapsed ? "justify-center" : "justify-between gap-2",
+            sidebarCollapsed ? "px-2" : "px-3"
+          )}
+        >
+          {!sidebarCollapsed ? (
+            <Link href="/" className="flex items-center gap-2 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
+              <span className="text-sm font-medium">GameweekIQ</span>
+            </Link>
+          ) : null}
           <button
             type="button"
             onClick={() => setSidebarCollapsed((collapsed) => !collapsed)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-background text-muted-foreground hover:text-foreground"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-transparent bg-transparent text-muted-foreground transition-colors duration-150 hover:bg-muted/70 hover:text-foreground"
             aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {sidebarCollapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 px-1">
-          {LEAGUEIQ_VIEWS.map((view) => {
-            const isActive = activeView === view.key;
-            const icon = view.key === "league-table" ? Table2 : view.key === "manager-influence" ? BarChart3 : Trophy;
-            const Icon = icon;
+        <div className={cn("mt-4", sidebarCollapsed ? "px-2" : "px-3")}>
+          {!sidebarCollapsed ? (
+            <p className="px-2 pb-1 text-[11px] font-medium tracking-wide text-muted-foreground">
+              LeagueIQ
+            </p>
+          ) : null}
+        </div>
+
+        <nav className={cn("mt-1 flex flex-col gap-1", sidebarCollapsed ? "px-2" : "px-3")}>
+          {leagueIQSidebarItems.map((item) => {
+            const Icon = item.icon;
+            const itemClasses = cn(
+              "inline-flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150",
+              item.active
+                ? "bg-muted/70 text-foreground"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+              sidebarCollapsed && "mx-auto w-8 justify-center px-0",
+              item.placeholder && "cursor-default"
+            );
+
+            if (item.placeholder) {
+              return (
+                <div key={item.key} className={itemClasses} aria-disabled="true">
+                  <Icon className="h-4 w-4 shrink-0" />
+                  {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                </div>
+              );
+            }
+
             return (
               <Link
-                key={view.key}
-                href={`${view.path}?${sidebarQueryString}`}
-                className={cn(
-                  "inline-flex h-10 items-center gap-2 rounded-md px-2 text-sm",
-                  isActive
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  sidebarCollapsed && "justify-center"
-                )}
+                key={item.key}
+                href={item.href}
+                className={itemClasses}
               >
                 <Icon className="h-4 w-4 shrink-0" />
-                {!sidebarCollapsed ? <span>{view.label}</span> : null}
+                {!sidebarCollapsed ? <span>{item.label}</span> : null}
               </Link>
             );
           })}
         </nav>
 
-        <div className="mt-1 flex flex-1 flex-col gap-3 overflow-y-auto px-1">
-          {!sidebarCollapsed ? (
-            <>
-              <LeagueSelector
-                leagues={leagues}
-                selectedLeagueId={selectedLeagueId}
-                currentGw={currentGw}
-                className="h-9 w-full text-sm"
-              />
-              <GameweekSelector
-                selectedLeagueId={selectedLeagueId}
-                currentGw={currentGw}
-                maxGw={maxGw}
-                showArrows={false}
-                className="h-9 w-full text-sm"
-              />
-            </>
-          ) : null}
-
+        <div
+          className={cn(
+            "mt-1 flex flex-1 flex-col gap-3 overflow-y-auto",
+            sidebarCollapsed ? "px-2" : "px-3"
+          )}
+        >
           {hasActiveBackfillJobs ? (
             <div className={cn("rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300", sidebarCollapsed && "px-2 text-center") }>
               <div className={cn("inline-flex items-center gap-2", sidebarCollapsed && "justify-center") }>
@@ -709,9 +752,9 @@ export default function DashboardClient({
           ) : null}
         </div>
 
-        <div className="px-1 pb-1" data-sidebar-interactive="true">
+        <div className={cn("pb-3", sidebarCollapsed ? "px-2" : "px-3")} data-sidebar-interactive="true">
           <AccountMenu
-            className={cn("h-9 w-full", sidebarCollapsed ? "w-full" : "justify-start")}
+            className={cn("h-9", sidebarCollapsed ? "mx-auto w-9" : "w-full justify-start")}
             selectedLeagueId={selectedLeagueId}
             selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
             currentGw={currentGw}
@@ -728,7 +771,7 @@ export default function DashboardClient({
             aria-label="Close sidebar"
           />
           <aside className="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 py-4 shadow-2xl sm:hidden">
-            <div className="flex items-center justify-between">
+            <div className="mx-[-16px] flex h-16 items-center justify-between border-b border-border px-4">
               <Link href="/" className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
@@ -746,37 +789,51 @@ export default function DashboardClient({
               </button>
             </div>
 
+            <div>
+              <p className="pb-1 text-[11px] font-medium text-muted-foreground">
+                LeagueIQ
+              </p>
+            </div>
+
             <nav className="flex flex-col gap-1">
-              {LEAGUEIQ_VIEWS.map((view) => {
-                const isActive = activeView === view.key;
+              {leagueIQSidebarItems.map((item) => {
+                const Icon = item.icon;
+                const itemClasses = cn(
+                  "inline-flex h-8 items-center rounded-md px-3 text-sm transition-colors duration-150",
+                  item.active
+                    ? "bg-muted/70 text-foreground"
+                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                  item.placeholder && "cursor-default"
+                );
+
+                if (item.placeholder) {
+                  return (
+                    <div key={item.key} className={itemClasses} aria-disabled="true">
+                      <Icon className="mr-2 h-4 w-4 shrink-0" />
+                      {item.label}
+                    </div>
+                  );
+                }
+
                 return (
                   <Link
-                    key={view.key}
-                    href={`${view.path}?${sidebarQueryString}`}
-                    className={cn(
-                      "inline-flex h-10 items-center rounded-md px-3 text-sm",
-                      isActive
-                        ? "bg-foreground text-background"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
+                    key={item.key}
+                    href={item.href}
+                    className={itemClasses}
                   >
-                    {view.label}
+                    <Icon className="mr-2 h-4 w-4 shrink-0" />
+                    {item.label}
                   </Link>
                 );
               })}
             </nav>
 
-            <LeagueSelector
-              leagues={leagues}
-              selectedLeagueId={selectedLeagueId}
-              currentGw={currentGw}
-              className="h-10 w-full text-sm"
-            />
             <GameweekSelector
               selectedLeagueId={selectedLeagueId}
               currentGw={currentGw}
               maxGw={maxGw}
               showArrows={false}
+              size="sm"
               className="h-10 w-full text-sm"
             />
 
@@ -819,8 +876,8 @@ export default function DashboardClient({
       ) : null}
 
       <div className="mobile-landscape-scroll-shell flex min-h-svh flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur sm:px-5">
-          <div className="flex items-center gap-2">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
@@ -829,12 +886,16 @@ export default function DashboardClient({
             >
               <Menu className="h-4 w-4" />
             </button>
-            <div>
-              <p className="text-xs text-muted-foreground">LeagueIQ</p>
-              <p className="text-sm font-medium">{LEAGUEIQ_VIEW_BY_KEY[activeView].label}</p>
-            </div>
+            <h1 className="text-base font-semibold tracking-tight sm:text-lg">
+              {LEAGUEIQ_VIEW_BY_KEY.tables.label}
+            </h1>
           </div>
-          <p className="text-xs text-muted-foreground">GW {gw}</p>
+          <LeagueSelector
+            leagues={leagues}
+            selectedLeagueId={selectedLeagueId}
+            currentGw={currentGw}
+            className="h-8 w-[170px] sm:w-[220px] text-sm"
+          />
         </header>
 
         {swipeGwFeedback ? (
@@ -846,7 +907,7 @@ export default function DashboardClient({
         ) : null}
 
         <main
-          className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-6 sm:overflow-hidden sm:p-4 md:p-5"
+          className="mobile-landscape-scroll-main touch-pan-y flex flex-1 min-h-0 flex-col gap-4 p-4 sm:gap-4 sm:overflow-hidden sm:p-4 md:p-4"
           onTouchStart={handleMobileSwipeStart}
           onTouchMove={handleMobileSwipeMove}
           onTouchEnd={handleMobileSwipeEnd}
@@ -861,6 +922,42 @@ export default function DashboardClient({
             isLoading={isLeagueDataLoading}
             hasError={Boolean(error)}
           />
+
+          <div className="block w-full sm:hidden">
+            <Select value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
+              <SelectTrigger className="w-full !h-12 text-base">
+                <SelectValue placeholder="Select table" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="league">League</SelectItem>
+                <SelectItem value="activity">ManagerIQ</SelectItem>
+                <SelectItem value="gw1">GW 1 Team</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="hidden w-full items-center justify-between gap-3 sm:flex">
+            <Tabs value={tab} onValueChange={(value) => setTab(value as "league" | "activity" | "gw1")}>
+              <TabsList className="h-8 p-[2px]">
+                <TabsTrigger value="league" type="button" className="px-3 sm:px-4">
+                  League
+                </TabsTrigger>
+                <TabsTrigger value="activity" type="button" className="px-3 sm:px-4">
+                  ManagerIQ
+                </TabsTrigger>
+                <TabsTrigger value="gw1" type="button" className="px-3 sm:px-4">
+                  GW 1 Team
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <GameweekSelector
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              maxGw={maxGw}
+              size="sm"
+              className="h-8 text-sm"
+            />
+          </div>
 
           {showSwipeHint ? (
             <div className="sm:hidden flex items-center justify-between gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
@@ -891,7 +988,7 @@ export default function DashboardClient({
           ) : null}
 
           <div className="flex w-full min-h-0 flex-1 flex-col">
-            {activeView === "league-table" ? (
+            {tab === "league" ? (
               <div className="min-h-0 flex-1">
                 <LeagueTable
                   standings={standings}
@@ -901,13 +998,13 @@ export default function DashboardClient({
               </div>
             ) : null}
 
-            {activeView === "manager-influence" ? (
+            {tab === "activity" ? (
               <div className="min-h-0 flex-1">
                 <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
               </div>
             ) : null}
 
-            {activeView === "gw1-table" ? (
+            {tab === "gw1" ? (
               <div className="min-h-0 flex-1">
                 <GW1Table
                   standings={gw1Standings}

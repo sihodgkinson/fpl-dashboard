@@ -33,5 +33,5 @@ export default async function DashboardEntryPage({
   paramsForRedirect.set("leagueId", String(pageData.selectedLeagueId));
   paramsForRedirect.set("gw", String(pageData.gw));
 
-  redirect(`${LEAGUEIQ_VIEW_BY_KEY["league-table"].path}?${paramsForRedirect.toString()}`);
+  redirect(`${LEAGUEIQ_VIEW_BY_KEY.tables.path}?${paramsForRedirect.toString()}`);
 }

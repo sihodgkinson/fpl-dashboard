@@ -30,9 +30,9 @@
 
 ### Authenticated app (`/dashboard` -> `/app/(dashboard)/[leagueID]`)
 Main tabs:
-- `League Table`
-- `Manager Influence`
-- `GW 1 Table`
+- `League`
+- `ManagerIQ`
+- `GW 1`
 
 Supporting behaviors:
 - League selector
