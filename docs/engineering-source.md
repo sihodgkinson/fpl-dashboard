@@ -1,6 +1,6 @@
 # GameweekIQ Engineering Source Document
 
-Last updated: 2026-02-25
+Last updated: 2026-02-28
 Primary audience: software engineers joining the project
 Owner: Engineering
 
@@ -17,13 +17,14 @@ This document is the canonical technical onboarding source for new engineers on 
 - Landing page: `/`
 - Sign-in page: `/signin`
 - Auth callback: `/auth/callback`
-- Dashboard entry: `/dashboard` (re-export to dynamic dashboard route)
+- Dashboard entry: `/dashboard` (redirects to LeagueIQ tables route for selected league)
 - Main dashboard route: `/app/(dashboard)/[leagueID]`
+- LeagueIQ scoped route: `/dashboard/leagueiq/[view]` (current primary view: `tables`)
 
 ## 3) Core Technical Principles
 1. Preserve behavior over refactor elegance in critical flows.
 2. Prefer incremental, testable changes.
-3. Do not regress mobile GW swipe interactions.
+3. Preserve current mobile interaction behavior (GW swipe currently disabled while horizontal card/landscape work is stabilized).
 4. Do not regress auth callback and onboarding routing.
 5. Assume Supabase storage and request budgets are constrained.
 6. Keep historical data cache-first and immutable where intended.
@@ -37,6 +38,10 @@ This document is the canonical technical onboarding source for new engineers on 
 - `src/components/common/OnboardingGate.tsx`: first-league onboarding flow
 - `src/app/(dashboard)/[leagueID]/page.tsx`: server page entry for dashboard
 - `src/app/(dashboard)/[leagueID]/DashboardClient.tsx`: dashboard client shell and runtime behavior
+- `src/app/dashboard/leagueiq/[view]/page.tsx`: LeagueIQ scoped route entry
+- `src/lib/leagueiqRoutes.ts`: LeagueIQ view keys/routes metadata
+- `src/components/common/LeagueSelector.tsx`: league switcher + in-menu league management
+- `src/components/common/AccountMenu.tsx`: sidebar profile trigger + account dropdown
 - `src/lib/supabaseAuth.ts`: auth API integrations + cookie/session helpers
 - `src/lib/supabaseCache.ts`: cache read/write layer for `fpl_cache`
 - `src/lib/leagueCacheWarmup.ts`: cache warmup/backfill logic
@@ -134,6 +139,20 @@ Relevant files:
 - `src/lib/supabaseCache.ts`
 - `src/app/api/*/route.ts`
 
+## 6.6 AppShell and navigation flow (GWIQ-12)
+- Authenticated UI now uses a persistent AppShell:
+  - left sidebar (LeagueIQ nav + account area)
+  - main content column (header + cards + tables)
+- LeagueIQ is formalized as a scoped surface; current nav items:
+  - `Tables` (active page)
+  - `Transfers` (placeholder, disabled)
+  - `Chips` (placeholder, disabled)
+- Sidebar profile/account block uses dropdown menu with disabled placeholders for future items.
+- League management moved into `LeagueSelector` dropdown:
+  - add/check/remove flows in-menu
+  - league-limit messaging via tooltip next to disabled add action at cap
+- Backfill status pills remain in header next to league selector.
+
 ## 6.5 Backfill and live refresh flow
 ### Backfill
 - Add league enqueues job in `league_backfill_jobs`.
@@ -168,10 +187,15 @@ Defaults:
 
 ## 8) Mobile and Interaction-Critical Behavior
 High regression risk areas in `DashboardClient`:
-- swipe-to-change-gameweek thresholds and cooldown logic
 - orientation hints
 - prefetching and leader-tab live polling
 - header status pills for backfill progress and retries
+- drawer-vs-fixed-nav switching in landscape phone scenarios
+
+Current mobile nav behavior:
+- narrow/mobile and phone-landscape use slide-out drawer nav
+- fixed desktop sidebar is hidden in those modes
+- GW swipe gesture is currently feature-flagged off (`MOBILE_GW_SWIPE_ENABLED = false`) pending follow-up UX work
 
 Any change touching:
 - gameweek selector,
