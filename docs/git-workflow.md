@@ -42,7 +42,11 @@ Define a clean, repeatable workflow for Linear + GitHub so issue status automati
 ## Required Naming and Linking
 - Branch format: `feature/GWIQ-<id>-...`
 - PR title starts with `GWIQ-<id>`
-- PR body includes `Closes GWIQ-<id>`
+- PR body includes exactly one closing keyword for the issue:
+  - `Closes GWIQ-<id>` (preferred)
+  - `Fixes GWIQ-<id>`
+  - `Resolves GWIQ-<id>`
+- Do not use only `Refs GWIQ-<id>` for merge PRs (it links but does not auto-close in Linear)
 
 These conventions ensure Linear auto-transitions (`In Review` on PR open, `Done` on merge) when integration rules are configured.
 
@@ -99,8 +103,11 @@ gh pr merge --squash --delete-branch
 ## Troubleshooting
 - Issue stayed in `Backlog` or `In Progress` after merge:
   - Verify PR title starts with `GWIQ-<id>`
-  - Verify PR body includes `Closes GWIQ-<id>`
+  - Verify PR body includes a closing keyword (`Closes`/`Fixes`/`Resolves`), not only `Refs`
   - Verify merge happened via PR (not direct push to `main`)
+- Issue stayed in `In Review` after merge:
+  - Check merged PR body and confirm it used `Closes GWIQ-<id>` (or `Fixes`/`Resolves`)
+  - If the merged PR used only `Refs`, move the issue to `Done` manually in Linear
 - `gh` commands fail:
   - Run `gh auth status`
   - Re-auth with `gh auth login` if token expired
