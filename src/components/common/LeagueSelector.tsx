@@ -337,37 +337,53 @@ export function LeagueSelector({
       <SelectTrigger size="sm" className={cn("w-56", className)}>
         <SelectValue placeholder="Select League" />
       </SelectTrigger>
-      <SelectContent className="w-[min(18rem,92vw)] p-0" align="end">
-        <div className="p-1">
+      <SelectContent className="w-64 max-w-[92vw] p-0 [&_[data-radix-select-viewport]]:p-0" align="end">
+        <div className="p-1.5">
           {leagues.map((league) => (
-            <SelectItem key={league.id} value={String(league.id)}>
+            <SelectItem key={league.id} value={String(league.id)} className="h-8 rounded-md px-2.5 text-sm">
               {league.name}
             </SelectItem>
           ))}
         </div>
 
-        <div className="border-t border-border p-1">
-          <Button
-            type="button"
-            variant="ghost"
-            className="h-8 w-full justify-start gap-2 px-2 text-sm font-normal"
-            disabled={isAddActionDisabled}
-            onClick={() => {
-              setAddOpen((prev) => !prev);
-              setRemoveOpen(false);
-              setRemoveError(null);
-            }}
-          >
-            <CirclePlus className="h-4 w-4" />
-            Add league
-          </Button>
-
-          {addBlockedReason ? (
-            <p className="mt-1 px-2 text-xs text-muted-foreground">{addBlockedReason}</p>
-          ) : null}
+        <div className="border-t border-border p-1.5">
+          <div className="flex items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-8 flex-1 justify-start gap-2 rounded-md px-2.5 text-sm font-normal"
+              disabled={isAddActionDisabled}
+              onClick={() => {
+                setAddOpen((prev) => !prev);
+                setRemoveOpen(false);
+                setRemoveError(null);
+              }}
+            >
+              <CirclePlus className="h-4 w-4" />
+              Add league
+            </Button>
+            {isAtLeagueLimit ? (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 rounded-md p-0 text-muted-foreground hover:text-foreground"
+                    aria-label="League limits"
+                  >
+                    <CircleHelp className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-64 px-3 py-2 text-xs">
+                  Beta limits: up to {maxLeaguesPerUser} tracked clubs/leagues per account and up to{" "}
+                  {maxManagersPerLeague} managers per league.
+                </PopoverContent>
+              </Popover>
+            ) : null}
+          </div>
 
           {addOpen ? (
-            <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-2.5">
+            <div className="mt-1.5 space-y-1.5 rounded-md border border-border bg-muted/30 p-1.5">
               <p className="text-xs text-muted-foreground">
                 Enter an FPL classic league ID. Beta limits: up to {maxLeaguesPerUser} leagues, up to{" "}
                 {maxManagersPerLeague} managers per league.
@@ -417,7 +433,7 @@ export function LeagueSelector({
           <Button
             type="button"
             variant="ghost"
-            className="mt-1 h-8 w-full justify-start gap-2 px-2 text-sm font-normal"
+            className="mt-1 h-8 w-full justify-start gap-2 rounded-md px-2.5 text-sm font-normal"
             disabled={isRemoving}
             onClick={() => {
               setRemoveOpen((prev) => !prev);
@@ -425,12 +441,12 @@ export function LeagueSelector({
               setAddError(null);
             }}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4 text-muted-foreground" />
             Remove current league
           </Button>
 
           {removeOpen ? (
-            <div className="mt-2 space-y-2 rounded-md border border-border bg-muted/30 p-2.5">
+            <div className="mt-1.5 space-y-1.5 rounded-md border border-border bg-muted/30 p-1.5">
               <p className="text-xs text-muted-foreground">
                 Remove <span className="font-medium">{selectedLeagueName}</span> from your dashboard?
               </p>
@@ -445,25 +461,6 @@ export function LeagueSelector({
               {removeError ? <p className="text-xs text-destructive">{removeError}</p> : null}
             </div>
           ) : null}
-
-          <div className="mt-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-8 w-full justify-start gap-2 px-2 text-sm font-normal text-muted-foreground hover:text-foreground"
-                >
-                  <CircleHelp className="h-3.5 w-3.5" />
-                  League Limits
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 px-3 py-2 text-xs">
-                Beta limits: up to {maxLeaguesPerUser} tracked clubs/leagues per account and up to{" "}
-                {maxManagersPerLeague} managers per league.
-              </PopoverContent>
-            </Popover>
-          </div>
         </div>
       </SelectContent>
     </Select>
