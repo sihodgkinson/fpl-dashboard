@@ -687,7 +687,7 @@ export default function DashboardClient({
               "inline-flex h-8 items-center gap-2 rounded-md px-2 text-sm transition-colors duration-150",
               item.active
                 ? "bg-muted/70 text-foreground"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                : "text-foreground hover:bg-muted/70 hover:text-foreground",
               sidebarCollapsed && "mx-auto w-8 justify-center px-0",
               item.placeholder && "cursor-default"
             );
@@ -802,7 +802,7 @@ export default function DashboardClient({
                   "inline-flex h-8 items-center rounded-md px-3 text-sm transition-colors duration-150",
                   item.active
                     ? "bg-muted/70 text-foreground"
-                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
+                    : "text-foreground hover:bg-muted/70 hover:text-foreground",
                   item.placeholder && "cursor-default"
                 );
 

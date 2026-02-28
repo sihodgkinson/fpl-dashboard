@@ -108,8 +108,8 @@ export function ActivityTab({
   return (
     <div className="mobile-landscape-table w-full overflow-x-auto rounded-md border border-border sm:h-full sm:overflow-auto">
       <table className="w-full table-auto text-sm">
-        <thead className="sticky top-0 z-10 bg-muted">
-          <tr className="border-b bg-card font-semibold text-foreground">
+        <thead className="sticky top-0 z-10 bg-muted [&_th]:h-10 [&_th]:!py-0 [&_th]:font-normal">
+          <tr className="border-b bg-card font-normal text-foreground">
             <th className="p-2 text-left sm:p-4 w-3/100">Pos</th>
             <th className="p-2 text-left sm:p-4 w-25/100">Team</th>
             <th className="hidden p-2 text-left md:table-cell sm:p-4 w-22/100">Manager</th>
