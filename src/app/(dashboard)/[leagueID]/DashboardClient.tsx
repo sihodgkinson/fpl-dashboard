@@ -173,6 +173,7 @@ export default function DashboardClient({
   const searchParams = useSearchParams();
   const [showOrientationHint, setShowOrientationHint] = React.useState(false);
   const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+  const [useDrawerNav, setUseDrawerNav] = React.useState(false);
   const [swipeGwFeedback, setSwipeGwFeedback] = React.useState<{
     fromGw: number;
     toGw: number;
@@ -376,10 +377,37 @@ export default function DashboardClient({
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
+    const evaluateDrawerMode = () => {
+      const isNarrowMobile = window.matchMedia("(max-width: 639px)").matches;
+      const isPhoneLandscape = window.matchMedia(
+        "(orientation: landscape) and (pointer: coarse) and (max-height: 540px)"
+      ).matches;
+      setUseDrawerNav(isNarrowMobile || isPhoneLandscape);
+    };
+
+    evaluateDrawerMode();
+    window.addEventListener("resize", evaluateDrawerMode);
+    window.addEventListener("orientationchange", evaluateDrawerMode);
+
+    return () => {
+      window.removeEventListener("resize", evaluateDrawerMode);
+      window.removeEventListener("orientationchange", evaluateDrawerMode);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    if (!useDrawerNav) {
+      setMobileSidebarOpen(false);
+    }
+  }, [useDrawerNav]);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const evaluateHintVisibility = () => {
       const isLandscape = window.matchMedia("(orientation: landscape)").matches;
       const isPortrait = window.matchMedia("(orientation: portrait)").matches;
-      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const isMobileViewport = useDrawerNav;
       const persistedDismissed =
         window.localStorage.getItem(ORIENTATION_HINT_DISMISSED_KEY) === "1";
 
@@ -400,13 +428,13 @@ export default function DashboardClient({
       window.removeEventListener("resize", evaluateHintVisibility);
       window.removeEventListener("orientationchange", evaluateHintVisibility);
     };
-  }, []);
+  }, [useDrawerNav]);
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
 
     const evaluateSwipeHintVisibility = () => {
-      const isMobileViewport = window.matchMedia("(max-width: 639px)").matches;
+      const isMobileViewport = useDrawerNav;
       const dismissed = window.localStorage.getItem(SWIPE_HINT_DISMISSED_KEY) === "1";
       setShowSwipeHint(isMobileViewport && !dismissed);
     };
@@ -416,7 +444,7 @@ export default function DashboardClient({
     return () => {
       window.removeEventListener("resize", evaluateSwipeHintVisibility);
     };
-  }, []);
+  }, [useDrawerNav]);
 
   const dismissOrientationHint = React.useCallback(() => {
     if (typeof window !== "undefined") {
@@ -630,6 +658,7 @@ export default function DashboardClient({
       <aside
         className={cn(
           "hidden border-r border-border bg-muted/20 sm:flex sm:flex-col sm:transition-[width] sm:duration-200",
+          useDrawerNav && "sm:hidden",
           sidebarCollapsed ? "sm:w-16" : "sm:w-64"
         )}
       >
@@ -719,15 +748,18 @@ export default function DashboardClient({
         </div>
       </aside>
 
-      {mobileSidebarOpen ? (
+      {useDrawerNav && mobileSidebarOpen ? (
         <>
           <button
             type="button"
-            className="fixed inset-0 z-40 bg-background/70 sm:hidden"
+            className={cn("fixed inset-0 z-40 bg-background/70", !useDrawerNav && "sm:hidden")}
             onClick={() => setMobileSidebarOpen(false)}
             aria-label="Close sidebar"
           />
-          <aside className="fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 pb-4 shadow-2xl sm:hidden">
+          <aside className={cn(
+            "fixed inset-y-0 left-0 z-50 flex w-[86vw] max-w-[320px] flex-col gap-4 border-r border-border bg-background px-4 pb-4 shadow-2xl",
+            !useDrawerNav && "sm:hidden"
+          )}>
             <div className="mx-[-16px] flex h-16 items-center justify-between border-b border-border px-4">
               <Link href="/" className="flex items-center gap-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -811,7 +843,10 @@ export default function DashboardClient({
             <button
               type="button"
               onClick={() => setMobileSidebarOpen(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border sm:hidden"
+              className={cn(
+                "inline-flex h-9 w-9 items-center justify-center rounded-md border border-border",
+                !useDrawerNav && "sm:hidden"
+              )}
               aria-label="Open sidebar"
             >
               <Menu className="h-4 w-4" />

@@ -155,12 +155,12 @@ function MiniTrendChart({
   signedTooltipValue?: boolean;
 }) {
   if (isLoading) {
-    return <Skeleton className="h-12 w-full" />;
+    return <Skeleton className="h-10 w-full" />;
   }
 
   if (!trend || trend.points.length === 0) {
     return (
-      <div className="h-12 flex items-center justify-center text-xs text-muted-foreground">
+      <div className="h-10 flex items-center justify-center text-xs text-muted-foreground">
         No trend data
       </div>
     );
@@ -174,7 +174,7 @@ function MiniTrendChart({
   const gradientId = `trend-fill-${chartId}`;
 
   return (
-    <div className="h-12 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
+    <div className="h-10 w-full text-foreground" style={{ color: "hsl(var(--foreground))" }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={chartData} margin={{ top: 6, right: 4, left: 4, bottom: 0 }}>
           <defs>
@@ -301,15 +301,15 @@ function StatCard({
     return (
       <Card className="h-[184px] gap-4 p-4">
         <Skeleton className="mb-2 h-4 w-24" />
-        <div className="stat-card-metric-row flex items-center">
+        <div className="stat-card-metric-row flex items-end">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
             <Skeleton className="h-12 w-24" />
           </div>
           <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
-            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-10 w-full" />
           </div>
         </div>
-        <div className="mt-2 leading-tight">
+        <div className="mt-auto leading-tight">
           <Skeleton className="mb-1 h-4 w-32" />
           <Skeleton className="h-3 w-20" />
         </div>
@@ -351,11 +351,11 @@ function StatCard({
       </div>
       <div
         className={cn(
-          "flex min-h-0 flex-1 flex-col gap-2 transition-opacity duration-200",
+          "flex min-h-0 flex-1 flex-col gap-1 transition-opacity duration-200",
           contentVisible ? "opacity-100" : "opacity-0"
         )}
       >
-        <div className="stat-card-metric-row flex items-center">
+        <div className="stat-card-metric-row flex items-end">
           <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
             <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
               {displayValue ?? value}
@@ -375,7 +375,7 @@ function StatCard({
             />
           </div>
         </div>
-        <div className="mt-1 leading-tight">
+        <div className="mt-auto leading-tight">
           <p className="text-base font-semibold">{team}</p>
           <p className="text-sm">{manager}</p>
         </div>
