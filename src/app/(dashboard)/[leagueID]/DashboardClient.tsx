@@ -270,6 +270,7 @@ export default function DashboardClient({
       {
         key: "transfers",
         label: "Transfers",
+        href: "#",
         icon: RefreshCw,
         active: false,
         placeholder: true,
@@ -277,6 +278,7 @@ export default function DashboardClient({
       {
         key: "chips",
         label: "Chips",
+        href: "#",
         icon: Coins,
         active: false,
         placeholder: true,
@@ -720,44 +722,11 @@ export default function DashboardClient({
             sidebarCollapsed ? "px-2" : "px-3"
           )}
         >
-          {hasActiveBackfillJobs ? (
-            <div className={cn("rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300", sidebarCollapsed && "px-2 text-center") }>
-              <div className={cn("inline-flex items-center gap-2", sidebarCollapsed && "justify-center") }>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                {!sidebarCollapsed ? <span>Updating league data</span> : null}
-              </div>
-            </div>
-          ) : null}
-
-          {!hasActiveBackfillJobs && failedJobs > 0 ? (
-            <button
-              type="button"
-              onClick={handleRetryBackfill}
-              disabled={isRetryingBackfill}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300",
-                sidebarCollapsed && "justify-center px-2"
-              )}
-            >
-              <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-              {!sidebarCollapsed ? <span>Failed to update league data. Retry.</span> : null}
-            </button>
-          ) : null}
-
-          {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-            <div className={cn("inline-flex items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-700 dark:text-green-300", sidebarCollapsed && "justify-center px-2") }>
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              {!sidebarCollapsed ? <span>League data updated</span> : null}
-            </div>
-          ) : null}
         </div>
 
         <div className={cn("pb-3", sidebarCollapsed ? "px-2" : "px-3")} data-sidebar-interactive="true">
           <AccountMenu
             className={cn("h-9", sidebarCollapsed ? "mx-auto w-9" : "w-full justify-start")}
-            selectedLeagueId={selectedLeagueId}
-            selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
-            currentGw={currentGw}
           />
         </div>
       </aside>
@@ -837,38 +806,9 @@ export default function DashboardClient({
               className="h-10 w-full text-sm"
             />
 
-            {hasActiveBackfillJobs ? (
-              <div className="inline-flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-300">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span>Updating league data</span>
-              </div>
-            ) : null}
-
-            {!hasActiveBackfillJobs && failedJobs > 0 ? (
-              <button
-                type="button"
-                onClick={handleRetryBackfill}
-                disabled={isRetryingBackfill}
-                className="inline-flex items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 py-2 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
-              >
-                <AlertTriangle className="h-3.5 w-3.5" />
-                <span>Failed to update league data. Retry.</span>
-              </button>
-            ) : null}
-
-            {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
-              <div className="inline-flex items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 py-2 text-xs font-medium text-green-700 dark:text-green-300">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>League data updated</span>
-              </div>
-            ) : null}
-
             <div className="mt-auto" data-sidebar-interactive="true">
               <AccountMenu
                 className="h-10 w-full"
-                selectedLeagueId={selectedLeagueId}
-                selectedLeagueName={selectedLeague?.name ?? `League ${selectedLeagueId}`}
-                currentGw={currentGw}
               />
             </div>
           </aside>
@@ -890,12 +830,37 @@ export default function DashboardClient({
               {LEAGUEIQ_VIEW_BY_KEY.tables.label}
             </h1>
           </div>
-          <LeagueSelector
-            leagues={leagues}
-            selectedLeagueId={selectedLeagueId}
-            currentGw={currentGw}
-            className="h-8 w-[170px] sm:w-[220px] text-sm"
-          />
+          <div className="flex items-center gap-2">
+            {hasActiveBackfillJobs ? (
+              <div className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 text-xs font-medium text-amber-700 dark:text-amber-300">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span>Updating league data</span>
+              </div>
+            ) : null}
+            {!hasActiveBackfillJobs && failedJobs > 0 ? (
+              <button
+                type="button"
+                onClick={handleRetryBackfill}
+                disabled={isRetryingBackfill}
+                className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-3 text-left text-xs font-medium text-red-700 transition-colors hover:bg-red-500/15 disabled:cursor-not-allowed disabled:opacity-70 dark:text-red-300"
+              >
+                <AlertTriangle className="h-3.5 w-3.5" />
+                <span>Failed to update league data. Retry.</span>
+              </button>
+            ) : null}
+            {!hasActiveBackfillJobs && failedJobs === 0 && showBackfillSuccess ? (
+              <div className="hidden sm:inline-flex h-8 items-center gap-2 rounded-md border border-green-500/40 bg-green-500/10 px-3 text-xs font-medium text-green-700 dark:text-green-300">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                <span>League data updated</span>
+              </div>
+            ) : null}
+            <LeagueSelector
+              leagues={leagues}
+              selectedLeagueId={selectedLeagueId}
+              currentGw={currentGw}
+              className="h-8 w-[170px] sm:w-[220px] text-sm"
+            />
+          </div>
         </header>
 
         {swipeGwFeedback ? (
