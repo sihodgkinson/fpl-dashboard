@@ -1,6 +1,6 @@
 # GameweekIQ Git Workflow
 
-Last updated: 2026-02-28
+Last updated: 2026-03-01
 Owner: Engineering
 
 ## Purpose
@@ -80,7 +80,8 @@ gh pr create \
   --title "${ISSUE} ${TITLE}" \
   --body "Closes ${ISSUE}"
 
-gh pr merge --squash --delete-branch
+PR_NUMBER="$(gh pr view --json number --jq '.number')"
+gh pr merge "$PR_NUMBER" --squash --delete-branch
 ```
 
 ## Branch Hygiene

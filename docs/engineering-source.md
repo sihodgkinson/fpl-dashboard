@@ -1,6 +1,6 @@
 # GameweekIQ Engineering Source Document
 
-Last updated: 2026-02-28
+Last updated: 2026-03-01
 Primary audience: software engineers joining the project
 Owner: Engineering
 
@@ -18,13 +18,13 @@ This document is the canonical technical onboarding source for new engineers on 
 - Sign-in page: `/signin`
 - Auth callback: `/auth/callback`
 - Dashboard entry: `/dashboard` (redirects to LeagueIQ tables route for selected league)
-- Main dashboard route: `/app/(dashboard)/[leagueID]`
+- Legacy/internal dashboard implementation path: `src/app/(dashboard)/[leagueID]` (filesystem path, not public URL)
 - LeagueIQ scoped route: `/dashboard/leagueiq/[view]` (current primary view: `tables`)
 
 ## 3) Core Technical Principles
 1. Preserve behavior over refactor elegance in critical flows.
 2. Prefer incremental, testable changes.
-3. Preserve current mobile interaction behavior (GW swipe currently disabled while horizontal card/landscape work is stabilized).
+3. Preserve current mobile interaction behavior (GW swipe is enabled on mobile; keep gesture thresholds/eligibility stable unless intentionally changing UX).
 4. Do not regress auth callback and onboarding routing.
 5. Assume Supabase storage and request budgets are constrained.
 6. Keep historical data cache-first and immutable where intended.
@@ -142,7 +142,7 @@ Relevant files:
 - `src/lib/supabaseCache.ts`
 - `src/app/api/*/route.ts`
 
-## 6.6 AppShell and navigation flow (GWIQ-12)
+## 6.5 AppShell and navigation flow (GWIQ-12)
 - Authenticated UI now uses a persistent AppShell:
   - left sidebar (LeagueIQ nav + account area)
   - main content column (header + cards + tables)
@@ -156,7 +156,7 @@ Relevant files:
   - league-limit messaging via tooltip next to disabled add action at cap
 - Backfill status pills remain in header next to league selector.
 
-## 6.5 Backfill and live refresh flow
+## 6.6 Backfill and live refresh flow
 ### Backfill
 - Add league enqueues job in `league_backfill_jobs`.
 - `/api/internal/backfill/run` claims jobs, runs `warmLeagueCache` across GWs/views, finalizes job status.
@@ -198,7 +198,7 @@ High regression risk areas in `DashboardClient`:
 Current mobile nav behavior:
 - narrow/mobile and phone-landscape use slide-out drawer nav
 - fixed desktop sidebar is hidden in those modes
-- GW swipe gesture is currently feature-flagged off (`MOBILE_GW_SWIPE_ENABLED = false`) pending follow-up UX work
+- GW swipe gesture is active on mobile in `DashboardClient` touch handlers (no separate `MOBILE_GW_SWIPE_ENABLED` flag currently in use)
 
 Any change touching:
 - gameweek selector,
@@ -357,6 +357,10 @@ Template:
 ```
 
 Entries:
+- 2026-03-01: Corrected route/path terminology, mobile swipe status, and section numbering consistency.
+  - Why: eliminate onboarding ambiguity and prevent regressions from stale behavior notes.
+  - Impacted files: `docs/engineering-source.md`, `docs/git-workflow.md`.
+  - Operational impact: documentation/process only.
 - 2026-02-28: Expanded `docs/git-workflow.md` with explicit Linear automation runbook.
   - Why: make issue status updates reliable across all engineers using a single, command-driven PR process.
   - Impacted files: `docs/git-workflow.md`, `docs/engineering-source.md`.
