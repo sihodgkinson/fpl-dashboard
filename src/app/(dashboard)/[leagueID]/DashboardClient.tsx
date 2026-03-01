@@ -654,7 +654,7 @@ export default function DashboardClient({
   }, []);
 
   return (
-    <div className="flex min-h-svh bg-background text-foreground">
+    <div className="flex min-h-svh bg-background text-foreground sm:h-svh sm:overflow-hidden">
       <aside
         className={cn(
           "hidden border-r border-border bg-muted/20 sm:flex sm:flex-col sm:transition-[width] sm:duration-200",
@@ -837,7 +837,7 @@ export default function DashboardClient({
         </>
       ) : null}
 
-      <div className="mobile-landscape-scroll-shell flex min-h-svh flex-1 flex-col">
+      <div className="mobile-landscape-scroll-shell flex min-h-svh flex-1 flex-col sm:h-svh sm:min-h-0 sm:overflow-hidden">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-3 backdrop-blur sm:px-4">
           <div className="flex min-w-0 items-center gap-2">
             <button
@@ -986,9 +986,9 @@ export default function DashboardClient({
             </div>
           ) : null}
 
-          <div className="flex w-full min-h-0 flex-1 flex-col">
+          <div className="flex w-full min-h-0 flex-1 flex-col overflow-hidden">
             {tab === "league" ? (
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <LeagueTable
                   standings={standings}
                   isLoading={isLeagueDataLoading}
@@ -998,13 +998,13 @@ export default function DashboardClient({
             ) : null}
 
             {tab === "activity" ? (
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <ActivityTab leagueId={selectedLeagueId} currentGw={currentGw} />
               </div>
             ) : null}
 
             {tab === "gw1" ? (
-              <div className="min-h-0 flex-1">
+              <div className="min-h-0 flex-1 overflow-hidden">
                 <GW1Table
                   standings={gw1Standings}
                   isLoading={!gw1Data && !gw1Error}
