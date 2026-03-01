@@ -69,6 +69,23 @@ const WIDGET_MODE_STORAGE_KEYS: Record<WidgetKey, string> = {
   captain: "fpl-widget-mode-captain-v1",
 };
 
+function useIsPhoneSizedViewport(): boolean {
+  const [isPhoneSized, setIsPhoneSized] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const media = window.matchMedia("(hover: none) and (max-width: 932px)");
+    const update = () => setIsPhoneSized(media.matches);
+
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return isPhoneSized;
+}
+
 function useDisableChartTooltipOnTouch(): boolean {
   const [disableTooltip, setDisableTooltip] = React.useState(false);
 
@@ -217,10 +234,11 @@ function StatCard({
   chartId,
   enableTooltip,
   signedTooltipValue,
+  showSparkline = true,
   mode,
   onToggleMode,
-  modeGoodLabel = "Highest",
-  modePoorLabel = "Lowest",
+  modeGoodLabel = "High",
+  modePoorLabel = "Low",
 }: {
   title: string;
   value: number | null;
@@ -234,6 +252,7 @@ function StatCard({
   chartId: string;
   enableTooltip: boolean;
   signedTooltipValue?: boolean;
+  showSparkline?: boolean;
   mode?: WidgetMode;
   onToggleMode?: () => void;
   modeGoodLabel?: string;
@@ -302,12 +321,19 @@ function StatCard({
       <Card className="h-[184px] gap-4 p-4">
         <Skeleton className="mb-2 h-4 w-24" />
         <div className="stat-card-metric-row flex items-end">
-          <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
+          <div
+            className={cn(
+              "stat-card-metric-value flex items-center justify-start",
+              showSparkline ? "w-1/2" : "w-full"
+            )}
+          >
             <Skeleton className="h-12 w-24" />
           </div>
-          <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
-            <Skeleton className="h-10 w-full" />
-          </div>
+          {showSparkline ? (
+            <div className="stat-card-metric-trend w-1/2 flex items-center justify-center">
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : null}
         </div>
         <div className="mt-auto leading-tight">
           <Skeleton className="mb-1 h-4 w-32" />
@@ -356,27 +382,34 @@ function StatCard({
         )}
       >
         <div className="stat-card-metric-row flex items-end">
-          <div className="stat-card-metric-value w-1/2 flex items-center justify-start">
+          <div
+            className={cn(
+              "stat-card-metric-value flex items-center justify-start",
+              showSparkline ? "w-1/2" : "w-full"
+            )}
+          >
             <h2 className={`text-5xl font-mono font-semibold ${valueClassName ?? ""}`}>
               {displayValue ?? value}
             </h2>
           </div>
-          <div
-            data-widget-chart
-            className="stat-card-metric-trend w-1/2 flex items-center justify-center"
-          >
-            <MiniTrendChart
-              trend={trend}
-              isLoading={isTrendLoading}
-              unit={unit}
-              chartId={chartId}
-              enableTooltip={enableTooltip}
-              signedTooltipValue={signedTooltipValue}
-            />
-          </div>
+          {showSparkline ? (
+            <div
+              data-widget-chart
+              className="stat-card-metric-trend w-1/2 flex items-center justify-center"
+            >
+              <MiniTrendChart
+                trend={trend}
+                isLoading={isTrendLoading}
+                unit={unit}
+                chartId={chartId}
+                enableTooltip={enableTooltip}
+                signedTooltipValue={signedTooltipValue}
+              />
+            </div>
+          ) : null}
         </div>
         <div className="mt-auto leading-tight">
-          <p className="text-base font-semibold">{team}</p>
+          <p className="stat-card-team-name text-base font-semibold">{team}</p>
           <p className="text-sm">{manager}</p>
         </div>
       </div>
@@ -408,6 +441,7 @@ export function LeagueStatsCards({
   isLoading,
   hasError,
 }: LeagueStatsCardsProps) {
+  const isPhoneSizedViewport = useIsPhoneSizedViewport();
   const disableTooltipOnTouch = useDisableChartTooltipOnTouch();
   const { data: trendData, error: trendError } = useSWR<TrendResponse>(
     `/api/stats-trend?leagueId=${leagueId}&gw=${gw}&window=8`,
@@ -519,7 +553,10 @@ export function LeagueStatsCards({
   if (hasError) return <div>Error loading stats</div>;
 
   return (
-    <div className="stats-cards-landscape-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div
+      className="stats-cards-landscape-grid grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      data-gw-swipe-exempt="true"
+    >
       <StatCard
         title="GW Points"
         value={
@@ -541,7 +578,8 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId={widgetMode.points === "good" ? "most-points" : "fewest-points"}
-        enableTooltip={!disableTooltipOnTouch}
+        enableTooltip={!isPhoneSizedViewport && !disableTooltipOnTouch}
+        showSparkline={!isPhoneSizedViewport}
         mode={widgetMode.points}
         onToggleMode={() => toggleWidgetMode("points")}
       />
@@ -566,7 +604,8 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit=""
         chartId={widgetMode.influence === "good" ? "most-influence" : "least-influence"}
-        enableTooltip={!disableTooltipOnTouch}
+        enableTooltip={!isPhoneSizedViewport && !disableTooltipOnTouch}
+        showSparkline={!isPhoneSizedViewport}
         signedTooltipValue
         mode={widgetMode.influence}
         onToggleMode={() => toggleWidgetMode("influence")}
@@ -592,10 +631,11 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit="pts"
         chartId={widgetMode.bench === "good" ? "fewest-bench" : "most-bench"}
-        enableTooltip={!disableTooltipOnTouch}
+        enableTooltip={!isPhoneSizedViewport && !disableTooltipOnTouch}
+        showSparkline={!isPhoneSizedViewport}
         mode={widgetMode.bench}
-        modeGoodLabel="Lowest"
-        modePoorLabel="Highest"
+        modeGoodLabel="Low"
+        modePoorLabel="High"
         onToggleMode={() => toggleWidgetMode("bench")}
       />
       <StatCard
@@ -617,7 +657,8 @@ export function LeagueStatsCards({
         isTrendLoading={isTrendLoading}
         unit=""
         chartId={widgetMode.captain === "good" ? "best-captain-call" : "worst-captain-call"}
-        enableTooltip={!disableTooltipOnTouch}
+        enableTooltip={!isPhoneSizedViewport && !disableTooltipOnTouch}
+        showSparkline={!isPhoneSizedViewport}
         signedTooltipValue
         mode={widgetMode.captain}
         onToggleMode={() => toggleWidgetMode("captain")}

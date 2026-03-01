@@ -127,7 +127,21 @@
 
 @media (orientation: landscape) and (max-width: 932px) and (hover: none) {
   .stats-cards-landscape-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+
+  .stats-cards-landscape-grid > * {
+    min-width: 0;
+  }
+
+  .stats-cards-landscape-grid .stat-card-metric-value h2 {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  .stats-cards-landscape-grid .stat-card-team-name {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 
   .mobile-landscape-scroll-shell {
@@ -144,5 +158,25 @@
     height: auto !important;
     max-height: none !important;
     overflow-y: visible !important;
+  }
+}
+
+@media (orientation: portrait) and (max-width: 639px) and (hover: none) {
+  .stats-cards-landscape-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .stats-cards-landscape-grid > * {
+    min-width: 0;
+  }
+
+  .stats-cards-landscape-grid .stat-card-metric-value h2 {
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  .stats-cards-landscape-grid .stat-card-team-name {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
   }
 }
