@@ -144,6 +144,7 @@ export async function getPlayers(): Promise<Player[]> {
 
 export interface TeamPick {
   element: number;
+  position?: number;
   multiplier: number;
   is_captain: boolean;
   is_vice_captain: boolean;

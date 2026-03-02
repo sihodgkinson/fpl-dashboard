@@ -40,6 +40,7 @@ interface ActivityImpactRow extends ActivityImpactCachePayloadItem {
 
 const ENTRY_CONCURRENCY = 4;
 const CAPTAIN_IMPACT_VERSION = 2;
+const DECISION_IMPACT_VERSION = 1;
 
 function hasIncompleteTripleCaptainData(rows: ActivityImpactCachePayloadItem[]): boolean {
   return rows.some(
@@ -75,6 +76,10 @@ function hasOutdatedCaptainImpactVersion(rows: ActivityImpactCachePayloadItem[])
   return rows.some((row) => row.captainImpactVersion !== CAPTAIN_IMPACT_VERSION);
 }
 
+function hasOutdatedDecisionImpactVersion(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some((row) => row.decisionImpactVersion !== DECISION_IMPACT_VERSION);
+}
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -104,6 +109,21 @@ function sortForRanking<T extends { value: number; entryId: number }>(rows: T[])
     if (b.value !== a.value) return b.value - a.value;
     return a.entryId - b.entryId;
   });
+}
+
+function getBenchBoostImpact(
+  picks: Array<{ element: number; position?: number }>,
+  pointsMap: Map<number, number>
+): number {
+  // FPL bench slots are positions 12-15. If position is absent, fall back to pick order.
+  const benchPicks = picks.filter((pick, index) => {
+    if (typeof pick.position === "number") {
+      return pick.position >= 12;
+    }
+    return index >= 11;
+  });
+
+  return benchPicks.reduce((sum, pick) => sum + (pointsMap.get(pick.element) ?? 0), 0);
 }
 
 export async function GET(req: Request) {
@@ -144,7 +164,8 @@ export async function GET(req: Request) {
           hasIncompleteTripleCaptainData(cached.payload) ||
           hasMissingCaptainImpactData(cached.payload) ||
           hasMissingCaptainSwapDetailData(cached.payload) ||
-          hasOutdatedCaptainImpactVersion(cached.payload);
+          hasOutdatedCaptainImpactVersion(cached.payload) ||
+          hasOutdatedDecisionImpactVersion(cached.payload);
         const cacheAgeSeconds = Math.floor(
           (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
         );
@@ -255,7 +276,7 @@ export async function GET(req: Request) {
 
           let chipImpact = 0;
           if (chipName === "bboost") {
-            chipImpact = teamEventData.entry_history.points_on_bench;
+            chipImpact = getBenchBoostImpact(teamEventData.picks, pointsMap);
           } else if (chipName === "3xc") {
             const captainPick = teamEventData.picks.find((pick) => pick.is_captain);
             const captainBasePoints = captainPick
@@ -348,6 +369,7 @@ export async function GET(req: Request) {
           currentCaptainName: selectedCurrentCaptainName,
           currentCaptainPoints: selectedCurrentCaptainPoints,
           captainImpactVersion: CAPTAIN_IMPACT_VERSION,
+          decisionImpactVersion: DECISION_IMPACT_VERSION,
           gwDecisionScore: selectedGwDecisionScore,
           runningInfluenceTotal,
           previousRunningInfluenceTotal,
