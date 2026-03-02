@@ -22,6 +22,7 @@ interface DashboardTabRowProps {
   options: DashboardTabOption[];
   rightSlot?: React.ReactNode;
   touchMode?: boolean;
+  mobileSplit?: boolean;
 }
 
 export function DashboardTabRow({
@@ -30,11 +31,12 @@ export function DashboardTabRow({
   options,
   rightSlot,
   touchMode = false,
+  mobileSplit = false,
 }: DashboardTabRowProps) {
   return (
     <>
-      <div className="flex w-full items-center gap-2 sm:hidden">
-        <div className="min-w-0 flex-1">
+      <div className={cn("flex w-full items-center gap-2 sm:hidden", mobileSplit && "gap-4")}>
+        <div className={cn("min-w-0 flex-1", mobileSplit && "basis-1/2")}>
           <Select value={value} onValueChange={onValueChange}>
             <SelectTrigger
               size={touchMode ? "default" : "sm"}
@@ -56,7 +58,9 @@ export function DashboardTabRow({
             </SelectContent>
           </Select>
         </div>
-        {rightSlot}
+        {rightSlot ? (
+          <div className={cn(mobileSplit && "min-w-0 flex-1 basis-1/2")}>{rightSlot}</div>
+        ) : null}
       </div>
 
       <div className="hidden w-full items-center justify-between gap-3 sm:flex">
