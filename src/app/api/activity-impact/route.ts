@@ -40,7 +40,7 @@ interface ActivityImpactRow extends ActivityImpactCachePayloadItem {
 
 const ENTRY_CONCURRENCY = 4;
 const CAPTAIN_IMPACT_VERSION = 2;
-const DECISION_IMPACT_VERSION = 1;
+const DECISION_IMPACT_VERSION = 3;
 
 function hasIncompleteTripleCaptainData(rows: ActivityImpactCachePayloadItem[]): boolean {
   return rows.some(
@@ -78,6 +78,15 @@ function hasOutdatedCaptainImpactVersion(rows: ActivityImpactCachePayloadItem[])
 
 function hasOutdatedDecisionImpactVersion(rows: ActivityImpactCachePayloadItem[]): boolean {
   return rows.some((row) => row.decisionImpactVersion !== DECISION_IMPACT_VERSION);
+}
+
+function hasMissingRunningComponentTotals(rows: ActivityImpactCachePayloadItem[]): boolean {
+  return rows.some(
+    (row) =>
+      typeof row.runningTransferImpactTotal !== "number" ||
+      typeof row.runningChipImpactTotal !== "number" ||
+      typeof row.runningCaptainImpactTotal !== "number"
+  );
 }
 
 async function mapWithConcurrency<T, R>(
@@ -154,7 +163,7 @@ export async function GET(req: Request) {
     }
 
     const clampedGw = Math.min(gw, currentGw);
-    const isLockedGw = gw <= currentGw;
+    const isHistoricalGw = clampedGw < currentGw;
     const supabaseCacheEnabled = isSupabaseCacheConfigured();
 
     if (supabaseCacheEnabled) {
@@ -165,17 +174,18 @@ export async function GET(req: Request) {
           hasMissingCaptainImpactData(cached.payload) ||
           hasMissingCaptainSwapDetailData(cached.payload) ||
           hasOutdatedCaptainImpactVersion(cached.payload) ||
-          hasOutdatedDecisionImpactVersion(cached.payload);
+          hasOutdatedDecisionImpactVersion(cached.payload) ||
+          hasMissingRunningComponentTotals(cached.payload);
         const cacheAgeSeconds = Math.floor(
           (Date.now() - new Date(cached.fetchedAt).getTime()) / 1000
         );
 
-        if (!cacheNeedsRepair && cached.isFinal) {
+        if (!cacheNeedsRepair && cached.isFinal && isHistoricalGw) {
           incrementCounter("cache.activity_impact.hit");
           return NextResponse.json(cached.payload);
         }
 
-        if (!cacheNeedsRepair && isLockedGw) {
+        if (!cacheNeedsRepair && isHistoricalGw) {
           await upsertActivityImpactPayload(leagueId, clampedGw, cached.payload, true);
           incrementCounter("cache.activity_impact.hit");
           return NextResponse.json(cached.payload);
@@ -239,6 +249,9 @@ export async function GET(req: Request) {
         }
 
         let runningInfluenceTotal = 0;
+        let runningTransferImpactTotal = 0;
+        let runningChipImpactTotal = 0;
+        let runningCaptainImpactTotal = 0;
         let previousRunningInfluenceTotal = 0;
         let selectedChip: string | null = null;
         let selectedChipCaptainName: string | null = null;
@@ -309,6 +322,9 @@ export async function GET(req: Request) {
 
           const gwDecisionScore = transferImpactNet + chipImpact + captainImpact;
           runningInfluenceTotal += gwDecisionScore;
+          runningTransferImpactTotal += transferImpactNet;
+          runningChipImpactTotal += chipImpact;
+          runningCaptainImpactTotal += captainImpact;
 
           if (candidateGw < clampedGw) {
             previousRunningInfluenceTotal += gwDecisionScore;
@@ -364,6 +380,9 @@ export async function GET(req: Request) {
           transferImpactNet: selectedTransferImpactNet,
           chipImpact: selectedChipImpact,
           captainImpact: selectedCaptainImpact,
+          runningTransferImpactTotal,
+          runningChipImpactTotal,
+          runningCaptainImpactTotal,
           previousCaptainName: selectedPreviousCaptainName,
           previousCaptainPoints: selectedPreviousCaptainPoints,
           currentCaptainName: selectedCurrentCaptainName,
@@ -406,7 +425,7 @@ export async function GET(req: Request) {
       .sort((a, b) => a.pos - b.pos);
 
     if (supabaseCacheEnabled) {
-      await upsertActivityImpactPayload(leagueId, clampedGw, finalRows, isLockedGw);
+      await upsertActivityImpactPayload(leagueId, clampedGw, finalRows, isHistoricalGw);
     }
 
     return NextResponse.json(finalRows);

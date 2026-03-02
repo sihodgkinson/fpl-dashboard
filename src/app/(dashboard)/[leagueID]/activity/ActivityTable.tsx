@@ -29,6 +29,9 @@ interface ActivityImpactRow {
   transferImpactNet: number;
   chipImpact: number;
   captainImpact: number;
+  runningTransferImpactTotal?: number;
+  runningChipImpactTotal?: number;
+  runningCaptainImpactTotal?: number;
   previousCaptainName: string | null;
   previousCaptainPoints: number | null;
   currentCaptainName: string | null;
@@ -366,19 +369,19 @@ export function ActivityTab({
                       content={
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Transfer Impact</span>
+                            <span className="text-muted-foreground">Transfers</span>
                             <span className={`font-mono text-right ${scoreClass(row.transferImpactNet)}`}>
                               {formatSignedNumber(row.transferImpactNet)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Chip Impact</span>
+                            <span className="text-muted-foreground">Chips</span>
                             <span className={`font-mono text-right ${scoreClass(row.chipImpact)}`}>
                               {formatSignedNumber(row.chipImpact)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Captain Impact</span>
+                            <span className="text-muted-foreground">Captain</span>
                             <span className={`font-mono text-right ${scoreClass(row.captainImpact)}`}>
                               {formatSignedNumber(row.captainImpact)}
                             </span>
@@ -394,7 +397,60 @@ export function ActivityTab({
                       row.runningInfluenceTotal
                     )}`}
                   >
-                    {formatSignedNumber(row.runningInfluenceTotal)}
+                    <ResponsiveInfoCard
+                      trigger={
+                        <button className="cursor-pointer underline decoration-dotted">
+                          {formatSignedNumber(row.runningInfluenceTotal)}
+                        </button>
+                      }
+                      content={
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Transfers</span>
+                            {typeof row.runningTransferImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningTransferImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningTransferImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Chips</span>
+                            {typeof row.runningChipImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningChipImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningChipImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Captain</span>
+                            {typeof row.runningCaptainImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningCaptainImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningCaptainImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                        </div>
+                      }
+                      className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
