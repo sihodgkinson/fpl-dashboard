@@ -29,6 +29,7 @@ import {
   LEAGUEIQ_VIEW_BY_KEY,
   LeagueIQView,
 } from "@/lib/leagueiqRoutes";
+import { cn } from "@/lib/utils";
 import { EnrichedStanding } from "@/types/fpl";
 
 const fetcher = async (url: string) => {
@@ -170,6 +171,7 @@ export default function DashboardClient({
   const { useDrawerNav, mobileSidebarOpen, setMobileSidebarOpen } = useAppShellNavigation();
   const [showOrientationHint, setShowOrientationHint] = React.useState(false);
   const [showSwipeHint, setShowSwipeHint] = React.useState(false);
+  const [isPortraitOrientation, setIsPortraitOrientation] = React.useState(false);
   const [swipeGwFeedback, setSwipeGwFeedback] = React.useState<{
     fromGw: number;
     toGw: number;
@@ -645,10 +647,28 @@ export default function DashboardClient({
         size={useDrawerNav ? "default" : "sm"}
         className="sm:h-8 sm:text-sm"
         touchMode={useDrawerNav}
+        showArrows={!(useDrawerNav && isPortraitOrientation)}
       />
     ),
-    [currentGw, maxGw, selectedLeagueId, useDrawerNav]
+    [currentGw, isPortraitOrientation, maxGw, selectedLeagueId, useDrawerNav]
   );
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const evaluateOrientation = () => {
+      setIsPortraitOrientation(window.matchMedia("(orientation: portrait)").matches);
+    };
+
+    evaluateOrientation();
+    window.addEventListener("resize", evaluateOrientation);
+    window.addEventListener("orientationchange", evaluateOrientation);
+
+    return () => {
+      window.removeEventListener("resize", evaluateOrientation);
+      window.removeEventListener("orientationchange", evaluateOrientation);
+    };
+  }, []);
 
   return (
     <AppShell
@@ -706,7 +726,12 @@ export default function DashboardClient({
             leagues={leagues}
             selectedLeagueId={selectedLeagueId}
             currentGw={currentGw}
-            className="w-[170px] sm:h-8 sm:w-[220px] sm:text-sm"
+            className={cn(
+              "sm:h-8 sm:w-[220px] sm:text-sm",
+              useDrawerNav && isPortraitOrientation
+                ? "w-[calc((100vw-3rem)/2)]"
+                : "w-[170px]"
+            )}
             touchMode={useDrawerNav}
           />
         </>
@@ -736,6 +761,7 @@ export default function DashboardClient({
         options={tabOptions}
         rightSlot={gameweekSelectorControl}
         touchMode={useDrawerNav}
+        mobileSplit={useDrawerNav && isPortraitOrientation}
       />
 
       {showSwipeHint ? (
