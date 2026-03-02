@@ -44,6 +44,7 @@ export interface ActivityImpactCachePayloadItem {
   currentCaptainName: string | null;
   currentCaptainPoints: number | null;
   captainImpactVersion: number;
+  decisionImpactVersion?: number;
   gwDecisionScore: number;
   runningInfluenceTotal: number;
   previousRunningInfluenceTotal: number;
