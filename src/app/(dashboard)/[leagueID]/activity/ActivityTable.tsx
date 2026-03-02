@@ -29,6 +29,9 @@ interface ActivityImpactRow {
   transferImpactNet: number;
   chipImpact: number;
   captainImpact: number;
+  runningTransferImpactTotal?: number;
+  runningChipImpactTotal?: number;
+  runningCaptainImpactTotal?: number;
   previousCaptainName: string | null;
   previousCaptainPoints: number | null;
   currentCaptainName: string | null;
@@ -137,18 +140,13 @@ export function ActivityTab({
                     </button>
                   }
                   content={
-                    <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                      <p className="font-medium text-foreground">
-                        How Transfer Impact is calculated
-                      </p>
-                      <p>
-                        <span className="text-foreground">Transfer Impact</span> = points from
-                        players bought {" − "}points from players sold{" − "}transfer hit cost.
-                      </p>
-                      <p>For Free Hit, transfer hit cost is always treated as 0.</p>
+                    <div className="text-sm leading-relaxed text-muted-foreground">
+                      Transfer impact shows how many points your transfers earned you this
+                      gameweek, after subtracting any points spent on transfer hits. If you used
+                      a Free Hit, no transfer cost is deducted.
                     </div>
                   }
-                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="!w-80 max-w-[85vw] whitespace-normal break-words rounded-sm border bg-popover p-2.5 text-popover-foreground shadow-sm"
                 />
               </div>
             </TableHead>
@@ -165,18 +163,14 @@ export function ActivityTab({
                     </button>
                   }
                   content={
-                    <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                      <p className="font-medium text-foreground">How Chip Impact is calculated</p>
-                      <p>
-                        <span className="text-foreground">Chip Impact</span> = extra points
-                        gained from chip effects in this GW.
-                      </p>
-                      <p>Bench Boost: bench points.</p>
-                      <p>Triple Captain: extra captain points from the third multiplier.</p>
-                      <p>Wildcard and Free Hit: currently 0 impact.</p>
+                    <div className="text-sm leading-relaxed text-muted-foreground">
+                      Chip impact shows the extra points gained from using a chip this gameweek.
+                      Bench Boost adds your bench points, Triple Captain adds the additional
+                      captain points, and Wildcard or Free Hit do not directly add points so are
+                      shown as zero.
                     </div>
                   }
-                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="!w-80 max-w-[85vw] whitespace-normal break-words rounded-sm border bg-popover p-2.5 text-popover-foreground shadow-sm"
                 />
               </div>
             </TableHead>
@@ -193,22 +187,15 @@ export function ActivityTab({
                     </button>
                   }
                   content={
-                    <div className="space-y-2 text-sm leading-relaxed text-muted-foreground">
-                      <p className="font-medium text-foreground">
-                        How Captain Impact is calculated
-                      </p>
-                      <p>
-                        If captain changed from last GW:{" "}
-                        <span className="text-foreground">
-                          2 × (new captain points − previous captain points)
-                        </span>
-                        .
-                      </p>
-                      <p>If captain did not change, impact is 0.</p>
-                      <p>If the old captain left the squad, impact is 0 (covered by transfers).</p>
+                    <div className="text-sm leading-relaxed text-muted-foreground">
+                      Captain impact shows the points gained or lost from changing your captain
+                      compared to last gameweek. It is calculated as double the points difference
+                      between your new captain and your previous captain. If you keep the same
+                      captain, or your previous captain is no longer in your squad, the impact is
+                      zero.
                     </div>
                   }
-                  className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                  className="!w-80 max-w-[85vw] whitespace-normal break-words rounded-sm border bg-popover p-2.5 text-popover-foreground shadow-sm"
                 />
               </div>
             </TableHead>
@@ -366,19 +353,19 @@ export function ActivityTab({
                       content={
                         <div className="space-y-1 text-sm">
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Transfer Impact</span>
+                            <span className="text-muted-foreground">Transfers</span>
                             <span className={`font-mono text-right ${scoreClass(row.transferImpactNet)}`}>
                               {formatSignedNumber(row.transferImpactNet)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Chip Impact</span>
+                            <span className="text-muted-foreground">Chips</span>
                             <span className={`font-mono text-right ${scoreClass(row.chipImpact)}`}>
                               {formatSignedNumber(row.chipImpact)}
                             </span>
                           </div>
                           <div className="flex items-center justify-between gap-3">
-                            <span className="text-muted-foreground">Captain Impact</span>
+                            <span className="text-muted-foreground">Captain</span>
                             <span className={`font-mono text-right ${scoreClass(row.captainImpact)}`}>
                               {formatSignedNumber(row.captainImpact)}
                             </span>
@@ -394,7 +381,60 @@ export function ActivityTab({
                       row.runningInfluenceTotal
                     )}`}
                   >
-                    {formatSignedNumber(row.runningInfluenceTotal)}
+                    <ResponsiveInfoCard
+                      trigger={
+                        <button className="cursor-pointer underline decoration-dotted">
+                          {formatSignedNumber(row.runningInfluenceTotal)}
+                        </button>
+                      }
+                      content={
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Transfers</span>
+                            {typeof row.runningTransferImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningTransferImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningTransferImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Chips</span>
+                            {typeof row.runningChipImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningChipImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningChipImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">Captain</span>
+                            {typeof row.runningCaptainImpactTotal === "number" ? (
+                              <span
+                                className={`font-mono text-right ${scoreClass(
+                                  row.runningCaptainImpactTotal
+                                )}`}
+                              >
+                                {formatSignedNumber(row.runningCaptainImpactTotal)}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </div>
+                        </div>
+                      }
+                      className="max-w-[90vw] rounded-sm border bg-popover p-3 text-popover-foreground shadow-sm"
+                    />
                   </TableCell>
                 </TableRow>
               ))}

@@ -39,6 +39,9 @@ export interface ActivityImpactCachePayloadItem {
   transferImpactNet: number;
   chipImpact: number;
   captainImpact: number;
+  runningTransferImpactTotal?: number;
+  runningChipImpactTotal?: number;
+  runningCaptainImpactTotal?: number;
   previousCaptainName: string | null;
   previousCaptainPoints: number | null;
   currentCaptainName: string | null;
