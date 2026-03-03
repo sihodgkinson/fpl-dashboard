@@ -54,13 +54,13 @@ export function AppSidebar({
           )}
         >
           {!sidebarCollapsed ? (
-            <div className="flex items-center gap-2 overflow-hidden">
+            <Link href="/" className="flex items-center gap-2 overflow-hidden transition-opacity hover:opacity-90">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
               <span className="text-sm font-medium">GameweekIQ</span>
-            </div>
+            </Link>
           ) : null}
         </div>
 
@@ -161,13 +161,17 @@ export function AppSidebar({
             !useDrawerNav && "sm:hidden"
           )}>
             <div className="mx-[-16px] flex h-16 items-center justify-between border-b border-border px-4">
-              <div className="flex items-center gap-2">
+              <Link
+                href="/"
+                onClick={() => onMobileSidebarOpenChange(false)}
+                className="flex items-center gap-2 transition-opacity hover:opacity-90"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo-light.svg" alt="GameweekIQ logo" className="h-7 w-7 object-contain dark:hidden" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo-dark.svg" alt="GameweekIQ logo" className="hidden h-7 w-7 object-contain dark:block" />
                 <span className="text-sm font-medium">GameweekIQ</span>
-              </div>
+              </Link>
               <button
                 type="button"
                 onClick={() => onMobileSidebarOpenChange(false)}
