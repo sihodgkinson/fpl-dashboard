@@ -23,12 +23,26 @@ function buildCookieHeader(request: NextRequest, accessToken: string, refreshTok
     .join("; ");
 }
 
+function shouldAttemptMiddlewareRefresh(request: NextRequest): boolean {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return false;
+  }
+
+  const fetchDest = request.headers.get("sec-fetch-dest");
+  if (fetchDest === "document") {
+    return true;
+  }
+
+  const accept = request.headers.get("accept") || "";
+  return accept.includes("text/html");
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const accessToken = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
-  if (accessToken && !isExpiredOrNearExpiry(accessToken)) {
+  if (accessToken && !isExpiredOrNearExpiry(accessToken, 0)) {
     return NextResponse.next();
   }
 
@@ -38,6 +52,10 @@ export async function middleware(request: NextRequest) {
       path,
       reason: accessToken ? "session_expired" : "cookies_missing",
     });
+    return NextResponse.next();
+  }
+
+  if (!shouldAttemptMiddlewareRefresh(request)) {
     return NextResponse.next();
   }
 
@@ -51,29 +69,10 @@ export async function middleware(request: NextRequest) {
     emitAuthTelemetry("forced_reauth_reason", {
       source: "middleware",
       path,
-      reason: "refresh_invalid",
+      reason: "refresh_invalid_deferred_to_api",
     });
-
-    const response = NextResponse.next();
-    response.cookies.set({
-      name: ACCESS_TOKEN_COOKIE,
-      value: "",
-      maxAge: 0,
-      path: "/",
-      sameSite: "lax",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
-    response.cookies.set({
-      name: REFRESH_TOKEN_COOKIE,
-      value: "",
-      maxAge: 0,
-      path: "/",
-      sameSite: "lax",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    });
-    return response;
+    // Do not clear cookies in middleware. Let /api/auth/session confirm and clear if needed.
+    return NextResponse.next();
   }
 
   if (refreshed.kind !== "success") {

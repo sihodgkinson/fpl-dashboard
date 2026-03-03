@@ -44,6 +44,8 @@ interface RefreshRequest {
 }
 
 const inFlightRefreshes = new Map<string, Promise<RefreshOutcome>>();
+const TRANSIENT_RETRY_DELAY_MS = 150;
+const INVALID_CONFIRMATION_DELAY_MS = 250;
 
 function getAuthConfig(): AuthConfig | null {
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
@@ -225,11 +227,23 @@ export async function refreshSessionSingleFlight(
 
   const promise = (async () => {
     const firstAttempt = await runRefreshRequest(request, 1);
-    if (firstAttempt.kind !== "transient") {
+    if (firstAttempt.kind === "success") {
       return firstAttempt;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    if (firstAttempt.kind === "invalid") {
+      await new Promise((resolve) => setTimeout(resolve, INVALID_CONFIRMATION_DELAY_MS));
+      const confirmationAttempt = await runRefreshRequest(request, 2);
+
+      // Only force re-auth when invalid refresh is reproduced on a second attempt.
+      if (confirmationAttempt.kind === "invalid") {
+        return confirmationAttempt;
+      }
+
+      return confirmationAttempt.kind === "success" ? confirmationAttempt : firstAttempt;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, TRANSIENT_RETRY_DELAY_MS));
     return runRefreshRequest(request, 2);
   })().finally(() => {
     const active = inFlightRefreshes.get(request.refreshToken);
