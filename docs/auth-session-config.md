@@ -1,20 +1,35 @@
-# Rolling 90-Day Session Configuration (Supabase)
+# Auth Session Configuration (Supabase Free + App Hardening)
 
-This project now supports sliding session refresh in app code, but Supabase Auth settings must also be configured for the full 90-day behavior.
+This project uses app-managed session persistence with refresh-token rotation. On Supabase Free, session time-box and inactivity controls are not configurable, so we harden refresh behavior in application code.
 
-## Required Supabase Dashboard Settings
+## Supabase Dashboard Settings
 
-In Supabase Dashboard for this project:
+In Supabase Dashboard:
 
 1. Open `Authentication` -> `Settings` -> `Sessions`.
-2. Set `Time-box user sessions` to **90 days**.
-3. Enable `Refresh token rotation`.
-4. Keep `Reuse interval` at a non-zero safety window (recommended: **30 seconds** or more) to reduce race-related refresh failures.
-5. Save changes.
+2. Ensure `Detect and revoke potentially compromised refresh tokens` is enabled.
+3. Set `Refresh token reuse interval` to **120 seconds**.
+4. Save changes.
+
+## App-Side Session Hardening (Implemented)
+
+The app applies these protections to reduce accidental sign-outs:
+
+1. **Deferred middleware invalidation**
+   - Middleware no longer clears auth cookies immediately on first invalid refresh.
+   - Invalid refresh handling is deferred to API session confirmation.
+
+2. **Double-confirm invalid refresh before logout**
+   - Refresh logic now re-attempts once after a short delay when the first result is invalid.
+   - Users are only forced to re-authenticate if invalid refresh is reproduced.
+
+3. **Reduced middleware refresh contention**
+   - Middleware refresh is limited to document navigations (HTML requests), not all dashboard requests.
+   - Middleware only refreshes when access token is actually expired (no near-expiry skew).
 
 ## Expected Behavior
 
-- Active users stay signed in as long as they return within each 90-day window.
-- Users are asked to sign in again after 90 days of inactivity, explicit logout, revoked sessions, or cleared cookies/site data.
-- Transient refresh failures do not immediately clear cookies.
-- Invalid refresh failures (401/403 or invalid grant) clear auth cookies and force re-auth.
+- Users generally remain signed in across browser restarts while cookies/site data are retained.
+- Transient refresh failures should not immediately log users out.
+- Forced re-auth should primarily happen for true invalid sessions (revoked/expired/invalid refresh token), explicit logout, or cleared browser data.
+- Mobile browsers may still clear site data under OS/browser policies; this is outside app control.
