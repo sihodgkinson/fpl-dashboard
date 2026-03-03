@@ -9,12 +9,12 @@ import { ActivityTab } from "@/app/(dashboard)/[leagueID]/activity/ActivityTable
 import { GW1Table, GW1Standing } from "@/app/(dashboard)/[leagueID]/gw1/GW1Table";
 import {
   AlertTriangle,
+  ArrowRightLeft,
   CheckCircle2,
   CircleGauge,
-  Coins,
+  Dices,
   Loader2,
-  RefreshCw,
-  Table2,
+  TableOfContents,
   X,
 } from "lucide-react";
 import { GameweekSelector } from "@/components/common/GameweekSelector";
@@ -258,7 +258,7 @@ export default function DashboardClient({
         key: "tables",
         label: "Tables",
         href: `${LEAGUEIQ_VIEW_BY_KEY.tables.path}?${sidebarQueryString}`,
-        icon: Table2,
+        icon: TableOfContents,
         active: activeView === "tables",
         placeholder: false,
       },
@@ -266,7 +266,7 @@ export default function DashboardClient({
         key: "transfers",
         label: "Transfers",
         href: "#",
-        icon: RefreshCw,
+        icon: ArrowRightLeft,
         active: false,
         placeholder: true,
       },
@@ -274,7 +274,7 @@ export default function DashboardClient({
         key: "chips",
         label: "Chips",
         href: "#",
-        icon: Coins,
+        icon: Dices,
         active: false,
         placeholder: true,
       },

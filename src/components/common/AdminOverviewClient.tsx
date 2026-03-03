@@ -3,11 +3,11 @@
 import * as React from "react";
 import useSWR from "swr";
 import {
-  Coins,
+  ArrowRightLeft,
   CircleGauge,
   Database,
-  RefreshCw,
-  Table2,
+  Dices,
+  TableOfContents,
 } from "lucide-react";
 import { AppShell, useAppShellNavigation } from "@/components/common/AppShell";
 import type { AppSidebarSection } from "@/components/common/AppSidebar";
@@ -112,7 +112,7 @@ export function AdminOverviewClient() {
           key: "tables",
           label: "Tables",
           href: "/dashboard/leagueiq/tables",
-          icon: Table2,
+          icon: TableOfContents,
           active: false,
           placeholder: false,
         },
@@ -120,7 +120,7 @@ export function AdminOverviewClient() {
           key: "transfers",
           label: "Transfers",
           href: "#",
-          icon: RefreshCw,
+          icon: ArrowRightLeft,
           active: false,
           placeholder: true,
         },
@@ -128,7 +128,7 @@ export function AdminOverviewClient() {
           key: "chips",
           label: "Chips",
           href: "#",
-          icon: Coins,
+          icon: Dices,
           active: false,
           placeholder: true,
         },
